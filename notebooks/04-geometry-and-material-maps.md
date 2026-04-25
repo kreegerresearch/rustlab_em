@@ -1,0 +1,32 @@
+# Lesson 04: Geometry & Material Maps
+
+> **Status:** Planned — outline only. See [`dev/plans.md`](../../dev/plans.md#lesson-04--geometry--material-maps).
+
+## Learning Objectives
+
+- Rasterize geometric primitives (rectangle, disk, polygon, half-space) into boolean masks on a uniform grid
+- Compose shapes via boolean set operations (union, intersection, difference) to build complex regions
+- Assign material properties ($\varepsilon_r$, $\mu_r$, $\sigma$) per region to produce spatial arrays
+- Understand staircase error at curved boundaries and apply an area-weighted conformal correction
+- Extend cleanly to 3D via `Tensor3` material arrays
+
+## Background
+
+Lessons 01–03.
+
+## Theory
+
+_To be written._ Key ideas: boolean mask composition $M_A \lor M_B$, $M_A \land M_B$, $M_A \land \lnot M_B$. Material-map reduction $\varepsilon_r(i,j) = \sum_k M_k(i,j)\,\varepsilon_{r,k}$ over disjoint regions plus background. Area-weighted conformal correction for cells straddling interfaces.
+
+## Simulations
+
+| Script | What it builds |
+|---|---|
+| `shape_rasterization.r` | `rect_mask`, `disk_mask`, `polygon_mask` helpers; display each as `imagesc` |
+| `boolean_regions.r` | C-shape, annulus, Pac-Man via union/intersection/difference |
+| `material_map_2d.r` | Air + dielectric block ($\varepsilon_r = 4.4$) + metallic disk; synchronized $\varepsilon$, $\mu$, $\sigma$ arrays |
+| `conformal_disk.r` | Staircase vs area-weighted $\varepsilon$ for a disk; grid-convergence check via Lesson 05's solver |
+
+## Exercises
+
+_To be written._

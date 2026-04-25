@@ -1,0 +1,45 @@
+# gradient_field.r — Gradient of a 2-D Gaussian bump.
+#
+# Physical system: scalar field f(x, y) = exp(-(x² + y²)/σ²) on [-2, 2]².
+# Key equations:   ∇f = -(2/σ²)·(x, y)·f(x, y)
+# Units:           dimensionless (coordinates in units of σ).
+#
+# Lesson 01 — Vector Calculus & Fields.
+
+# === Grid and scalar field ===
+sigma = 1.0;
+dx    = 0.2;
+dy    = 0.2;
+xs    = -2:dx:2;                       # 21 points across [-2, 2]
+ys    = -2:dy:2;
+[X, Y] = meshgrid(xs, ys);
+f     = exp(-(X .^ 2 + Y .^ 2) / (sigma * sigma));
+
+# === Numerical gradient ===
+[fx, fy] = gradient(f, dx, dy);
+
+# Center cell (x = y = 0): ∇f = (0, 0)
+print(fx(11, 11))                      # ≈ 0
+print(fy(11, 11))                      # ≈ 0
+
+# At (x = 0.8, y = 0):  analytic fx = -2·0.8·exp(-0.64)/σ² ≈ -0.844.
+# Central difference at dx = 0.2 has O(h²) error → numerical ≈ -0.824 (~2%).
+print(fx(11, 15))                      # ≈ -0.824
+print(fy(11, 15))                      # ≈ 0
+
+# === Gradient arrows on contours of f ===
+figure();
+hold on;
+contour(X, Y, f, 10, "k");
+quiver(X, Y, fx, fy, "Gaussian f(x, y) with gradient arrows");
+hold off;
+savefig("gradient_field_quiver.svg");
+
+# === Magnitude |∇f| as a heatmap ===
+fmag = sqrt(fx .* fx + fy .* fy);
+figure();
+imagesc(fmag, "viridis");
+title("|∇f|  —  peaks at the inflection ring r = σ/√2");
+savefig("gradient_field_magnitude.svg");
+
+print(1)

@@ -1,0 +1,32 @@
+# Lesson 10: FDFD — Frequency-Domain Maxwell Solver
+
+> **Status:** Planned — outline only. See [`dev/plans.md`](../../dev/plans.md#lesson-10--fdfd--frequency-domain-maxwell-solver).
+
+## Learning Objectives
+
+- Derive the time-harmonic Maxwell curl-curl equation from $\partial/\partial t \to -i\omega$
+- Discretize the Yee curl operators on a grid and assemble a sparse complex system
+- Apply a stretched-coordinate PML (SC-PML) at the domain boundary
+- Inject sources: current density $\vec J$, total-field/scattered-field (TF/SF) plane wave
+- Solve for the field and extract transmission/reflection coefficients
+
+## Background
+
+Lessons 01–09. In particular Lesson 04 (material maps), Lesson 05 (sparse Poisson), and Lesson 09 (plane-wave framework).
+
+## Theory
+
+_To be written._ Key equations: $\nabla\times(\mu^{-1}\nabla\times\vec E) - \omega^2\varepsilon\vec E = i\omega\vec J$; sparse Yee form $(C^T M_\mu^{-1} C - \omega^2 M_\varepsilon)\vec e = i\omega\vec j$. Stretched-coordinate PML: $\partial/\partial\alpha \to (1/s_\alpha)\partial/\partial\alpha$ with $s_\alpha = \kappa_\alpha + \sigma_\alpha/(i\omega\varepsilon_0)$.
+
+## Simulations
+
+| Script | What it simulates |
+|---|---|
+| `fdfd_1d_layers.r` | 1D Helmholtz through air / quarter-wave / air; $|T|^2$ sweep; quarter-wave AR check |
+| `fdfd_2d_tmz.r` | TM$_z$ scattering from a dielectric cylinder; complex sparse solve; Mie-series check |
+| `fdfd_pml_demo.r` | Point source with stretched-coordinate PML vs hard-wall reflections |
+| `fdfd_resonator.r` | 2D cavity frequency sweep; identify resonant peaks via port response |
+
+## Exercises
+
+_To be written._

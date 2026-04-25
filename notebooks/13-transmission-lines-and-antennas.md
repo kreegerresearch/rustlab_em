@@ -1,0 +1,48 @@
+# Lesson 13: Transmission Lines, S-Parameters & Antennas
+
+> **Status:** Planned — outline only. See [`dev/plans.md`](../../dev/plans.md#lesson-13--transmission-lines-s-parameters--antennas) for the full specification.
+
+## Learning Objectives
+
+- Extract capacitance $C$ and inductance $L$ per unit length from 2D Laplace / magnetostatic solutions of a transmission-line cross-section
+- Derive the characteristic impedance $Z_0 = \sqrt{L'/C'}$ and wave velocity $v = 1/\sqrt{L'C'}$ from per-unit-length parameters
+- Derive the telegrapher's equations from lumped LC cascades and identify the reflection coefficient at a load
+- Extract multiport $S$-parameters from a full-wave simulation via waveport mode matching, time-gating, and FFT
+- Derive the standing-wave current distribution on a dipole antenna, $I(z) = I_0\sin[k(L/2-|z|)]$
+- Compute the radiation resistance of a half-wave dipole by integrating the Poynting flux over a far-field sphere and recover $R_{\rm rad}\approx 73.1\,\Omega$
+
+## Background
+
+Lessons 05 (Poisson / Laplace BVP), 06 (Magnetostatics & vector potential), 08 (Poynting vector), 09 (plane waves), 11 (FDTD), 12 (radiation & NF→FF). Reuses every numerical tool from prior lessons and closes the loop from 3D fields back to 1D circuit parameters and $S$-parameter measurements.
+
+## Theory
+
+_To be written — see `dev/plans.md` for the full derivation sequence._
+
+Key results:
+- Capacitance from geometry: $C = Q/V = \varepsilon_0\oint\vec E\cdot d\vec A/\int\vec E\cdot d\vec\ell = 2U_E/V^2$
+- Coaxial line: $C' = 2\pi\varepsilon_0/\ln(b/a)$, $L' = (\mu_0/2\pi)\ln(b/a)$, $Z_0 = (\eta_0/2\pi)\ln(b/a)$
+- Parallel-wire line: $Z_0 = (\eta_0/\pi)\cosh^{-1}(d/2a) \approx 120\ln(d/a)\,\Omega$
+- Telegrapher: $\partial_z V = -L'\partial_t I$, $\partial_z I = -C'\partial_t V$; $v = 1/\sqrt{L'C'} = c$ in air
+- Reflection: $\Gamma = (Z_L - Z_0)/(Z_L + Z_0)$; VSWR $= (1+|\Gamma|)/(1-|\Gamma|)$
+- Two-port $S$-matrix from incident/reflected power waves at each port, extracted by mode-filtering + time-gating + FFT
+- Dipole current: $I(z) = I_0\sin[k(L/2-|z|)]$; half-wave reduces to $I_0\cos(kz)$
+- Half-wave radiation resistance: $R_{\rm rad} = (\eta_0/2\pi)\int_0^\pi \bigl[\cos((\pi/2)\cos\theta)/\sin\theta\bigr]^2\sin\theta\,d\theta \approx 73.1\,\Omega$
+
+## Simulations
+
+Every simulation pairs a *derivation* with a *numerical proof on the actual geometry*:
+
+| Script | Derivation | Geometry used to prove it |
+|---|---|---|
+| `coax_impedance.r` | $Z_0 = (\eta_0/2\pi)\ln(b/a)$ | 2D Laplace on the annular cross-section; extract $C'$ from flux and from energy; sweep $b/a$ |
+| `twin_wire_impedance.r` | $Z_0 \approx 120\ln(d/a)\,\Omega$ | 2D Laplace with two disks at $\pm V$; numerical $C'$ via $2U_E/V^2$ |
+| `telegrapher_propagation.r` | Wave speed from LC cascade | 1D FDTD on telegrapher's equations; measure $v$ from pulse propagation |
+| `vswr_standing_wave.r` | $\|V(z)\| = \|V^+\|\,\|1+\Gamma e^{-2jkz}\|$ | Driven terminated line; sweep $Z_L \in \{Z_0, \text{open}, \text{short}, 2Z_0\}$; extract VSWR |
+| `s_parameters_tline.r` | $S_{ij}$ from time-gated FFT | 1D two-section line with impedance step; Gaussian pulse; recover $S_{11}$, $S_{21}$ |
+| `dipole_standing_wave.r` | $I(z) = I_0\sin[k(L/2-\|z\|)]$ | Dipole-as-TL simulation for $L = \lambda/4, \lambda/2, \lambda, 3\lambda/2$ |
+| `radiation_resistance.r` | $R_{\rm rad} = 73.1\,\Omega$ half-wave, $R_{\rm rad} = 20\pi^2(L/\lambda)^2$ short dipole | 3D Poynting integral over a far-field sphere; numeric vs analytic |
+
+## Exercises
+
+_To be written._
