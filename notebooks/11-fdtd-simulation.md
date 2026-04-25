@@ -15,11 +15,13 @@
 
 Lessons 01–10. In particular Lesson 04 (material maps), Lesson 09 (plane waves), and Lesson 10 (FDFD — shares the Yee grid and PML ideas).
 
-## Theory
+## Lesson Body
 
-_To be written._ Key equations: 1D Yee updates for $H_y$ and $E_z$ in a medium with $\varepsilon(x)$, $\mu(x)$; CFL $c\Delta t \le \Delta x/\sqrt d$; Drude dispersion $\varepsilon(\omega) = \varepsilon_\infty - \omega_p^2/(\omega^2 + i\gamma\omega)$ via auxiliary polarization current; Berenger split-field PML.
+_To be written. When drafted, the body uses one H2 per concept, each split into `### Theory` (prose + math) and one or more `### Example — <descriptor>` (rustlab block paralleling a script below). See [Lesson 01](01-vector-calculus-and-fields.md) for the pattern._
 
-## Simulations
+Key equations: 1D Yee updates for $H_y$ and $E_z$ in a medium with $\varepsilon(x)$, $\mu(x)$; CFL $c\Delta t \le \Delta x/\sqrt d$; Drude dispersion $\varepsilon(\omega) = \varepsilon_\infty - \omega_p^2/(\omega^2 + i\gamma\omega)$ via auxiliary polarization current; Berenger split-field PML.
+
+## Planned Scripts
 
 | Script | What it simulates |
 |---|---|

@@ -16,11 +16,13 @@
 
 Lessons 01–04. Linear algebra (sparse matrices, iterative solvers).
 
-## Theory
+## Lesson Body
 
-_To be written._ Key equations: 5-point stencil $\nabla^2 V_{i,j} \approx h^{-2}(V_{i+1,j}+V_{i-1,j}+V_{i,j+1}+V_{i,j-1}-4V_{i,j})$; flux-conservative variable-$\varepsilon$ form; Jacobi/Gauss-Seidel/SOR convergence.
+_To be written. When drafted, the body uses one H2 per concept, each split into `### Theory` (prose + math) and one or more `### Example — <descriptor>` (rustlab block paralleling a script below). See [Lesson 01](01-vector-calculus-and-fields.md) for the pattern._
 
-## Simulations
+Key equations: 5-point stencil $\nabla^2 V_{i,j} \approx h^{-2}(V_{i+1,j}+V_{i-1,j}+V_{i,j+1}+V_{i,j-1}-4V_{i,j})$; flux-conservative variable-$\varepsilon$ form; Jacobi/Gauss-Seidel/SOR convergence.
+
+## Planned Scripts
 
 | Script | What it simulates |
 |---|---|

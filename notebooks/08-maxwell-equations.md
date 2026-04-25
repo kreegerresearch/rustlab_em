@@ -13,11 +13,13 @@
 
 Lessons 01–07.
 
-## Theory
+## Lesson Body
 
-_To be written._ Key equations: the four Maxwell equations; $\partial u/\partial t + \nabla\cdot\vec S = -\vec J\cdot\vec E$.
+_To be written. When drafted, the body uses one H2 per concept, each split into `### Theory` (prose + math) and one or more `### Example — <descriptor>` (rustlab block paralleling a script below). See [Lesson 01](01-vector-calculus-and-fields.md) for the pattern._
 
-## Simulations
+Key equations: the four Maxwell equations; $\partial u/\partial t + \nabla\cdot\vec S = -\vec J\cdot\vec E$.
+
+## Planned Scripts
 
 | Script | What it simulates |
 |---|---|

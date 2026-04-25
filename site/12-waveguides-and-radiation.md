@@ -16,11 +16,13 @@
 
 Lessons 01–11.
 
-## Theory
+## Lesson Body
 
-_To be written._ Key equations: TE$_{mn}$ cutoff $\omega_c = c\pi\sqrt{(m/a)^2+(n/b)^2}$; waveguide eigenproblem $-\nabla_\perp^2\phi = k_c^2\phi$; Hertzian dipole far-field $E_\theta \propto \sin\theta\, e^{i(kr-\omega t)}/r$; Love's equivalence-principle NF→FF surface integral.
+_To be written. When drafted, the body uses one H2 per concept, each split into `### Theory` (prose + math) and one or more `### Example — <descriptor>` (rustlab block paralleling a script below). See [Lesson 01](01-vector-calculus-and-fields.md) for the pattern._
 
-## Simulations
+Key equations: TE$_{mn}$ cutoff $\omega_c = c\pi\sqrt{(m/a)^2+(n/b)^2}$; waveguide eigenproblem $-\nabla_\perp^2\phi = k_c^2\phi$; Hertzian dipole far-field $E_\theta \propto \sin\theta\, e^{i(kr-\omega t)}/r$; Love's equivalence-principle NF→FF surface integral.
+
+## Planned Scripts
 
 | Script | What it simulates |
 |---|---|

@@ -62,8 +62,8 @@ Use GitHub-flavored Markdown with LaTeX math: `$inline$` and `$$block$$`. Each `
 2. Brief motivation paragraph
 3. `## Learning Objectives` — 3–5 bullet points
 4. `## Background` — prerequisite knowledge assumed
-5. `## The Differential Operators` (or topic-specific formal definitions for reference)
-6. Theory + computation: prose interleaved with ```rustlab``` blocks demonstrating each concept
+5. `## The Differential Operators` (or topic-specific formal definitions for reference) — pure-theory reference H2, can stay flat
+6. One H2 per concept, each split into `### Theory` (prose + math, no code) and one or more `### Example — <descriptor>` (rustlab block plus a short setup paragraph). One H3 per logically distinct example — if a concept has both a quiver overlay and a magnitude heatmap, each gets its own `### Example — ...`. The H3 markers should always be present so readers can tell theory from examples at a glance; only genuinely all-reference sections (formal definitions, grid conventions) keep flat H2s
 7. `## Standalone Scripts` — short table referencing the parallel `.r` files
 8. `## Expected Numerical Outputs Summary` — Markdown table of every `print()` value students should see
 9. `## Exercises` — 3–5 follow-up questions or script modifications

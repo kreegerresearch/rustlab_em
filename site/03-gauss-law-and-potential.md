@@ -15,11 +15,13 @@
 
 Lessons 01–02.
 
-## Theory
+## Lesson Body
 
-_To be written._ Key equations: $\oint\vec E\cdot d\vec A = Q_{\rm enc}/\varepsilon_0$; $\nabla\cdot\vec E = \rho/\varepsilon_0$; $\vec E = -\nabla V$.
+_To be written. When drafted, the body uses one H2 per concept, each split into `### Theory` (prose + math) and one or more `### Example — <descriptor>` (rustlab block paralleling a script below). See [Lesson 01](01-vector-calculus-and-fields.md) for the pattern._
 
-## Simulations
+Key equations: $\oint\vec E\cdot d\vec A = Q_{\rm enc}/\varepsilon_0$; $\nabla\cdot\vec E = \rho/\varepsilon_0$; $\vec E = -\nabla V$.
+
+## Planned Scripts
 
 | Script | What it simulates |
 |---|---|

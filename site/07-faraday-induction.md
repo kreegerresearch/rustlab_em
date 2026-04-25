@@ -15,11 +15,13 @@
 
 Lessons 01–06.
 
-## Theory
+## Lesson Body
 
-_To be written._ Key equations: $\oint\vec E\cdot d\vec\ell = -d\Phi_B/dt$; $\nabla\times\vec E = -\partial\vec B/\partial t$; $L=\Phi_B/I$.
+_To be written. When drafted, the body uses one H2 per concept, each split into `### Theory` (prose + math) and one or more `### Example — <descriptor>` (rustlab block paralleling a script below). See [Lesson 01](01-vector-calculus-and-fields.md) for the pattern._
 
-## Simulations
+Key equations: $\oint\vec E\cdot d\vec\ell = -d\Phi_B/dt$; $\nabla\times\vec E = -\partial\vec B/\partial t$; $L=\Phi_B/I$.
+
+## Planned Scripts
 
 | Script | What it simulates |
 |---|---|

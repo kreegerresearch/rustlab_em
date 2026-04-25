@@ -14,11 +14,13 @@
 
 Lessons 01–03.
 
-## Theory
+## Lesson Body
 
-_To be written._ Key ideas: boolean mask composition $M_A \lor M_B$, $M_A \land M_B$, $M_A \land \lnot M_B$. Material-map reduction $\varepsilon_r(i,j) = \sum_k M_k(i,j)\,\varepsilon_{r,k}$ over disjoint regions plus background. Area-weighted conformal correction for cells straddling interfaces.
+_To be written. When drafted, the body uses one H2 per concept, each split into `### Theory` (prose + math) and one or more `### Example — <descriptor>` (rustlab block paralleling a script below). See [Lesson 01](01-vector-calculus-and-fields.md) for the pattern._
 
-## Simulations
+Key ideas: boolean mask composition $M_A \lor M_B$, $M_A \land M_B$, $M_A \land \lnot M_B$. Material-map reduction $\varepsilon_r(i,j) = \sum_k M_k(i,j)\,\varepsilon_{r,k}$ over disjoint regions plus background. Area-weighted conformal correction for cells straddling interfaces.
+
+## Planned Scripts
 
 | Script | What it builds |
 |---|---|

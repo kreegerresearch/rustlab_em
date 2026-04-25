@@ -13,11 +13,13 @@
 
 Lessons 01–08.
 
-## Theory
+## Lesson Body
 
-_To be written._ Key equations: $\nabla^2\vec E - \mu_0\varepsilon_0\,\partial^2\vec E/\partial t^2 = 0$; $\vec E(\vec r,t)=\vec E_0 e^{i(\vec k\cdot\vec r-\omega t)}$; $\vec B = \hat k\times\vec E/c$.
+_To be written. When drafted, the body uses one H2 per concept, each split into `### Theory` (prose + math) and one or more `### Example — <descriptor>` (rustlab block paralleling a script below). See [Lesson 01](01-vector-calculus-and-fields.md) for the pattern._
 
-## Simulations
+Key equations: $\nabla^2\vec E - \mu_0\varepsilon_0\,\partial^2\vec E/\partial t^2 = 0$; $\vec E(\vec r,t)=\vec E_0 e^{i(\vec k\cdot\vec r-\omega t)}$; $\vec B = \hat k\times\vec E/c$.
+
+## Planned Scripts
 
 | Script | What it simulates |
 |---|---|

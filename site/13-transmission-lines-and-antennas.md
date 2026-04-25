@@ -17,11 +17,11 @@
 
 Lessons 05 (Poisson / Laplace BVP), 06 (Magnetostatics & vector potential), 08 (Poynting vector), 09 (plane waves), 11 (FDTD), 12 (radiation & NF→FF). Reuses every numerical tool from prior lessons and closes the loop from 3D fields back to 1D circuit parameters and $S$-parameter measurements.
 
-## Theory
+## Lesson Body
 
-_To be written — see `dev/plans.md` for the full derivation sequence._
+_To be written — see `dev/plans.md` for the full derivation sequence. When drafted, the body uses one H2 per concept, each split into `### Theory` (prose + math) and one or more `### Example — <descriptor>` (rustlab block paralleling a script below). See [Lesson 01](01-vector-calculus-and-fields.md) for the pattern._
 
-Key results:
+Key results to be derived and verified:
 - Capacitance from geometry: $C = Q/V = \varepsilon_0\oint\vec E\cdot d\vec A/\int\vec E\cdot d\vec\ell = 2U_E/V^2$
 - Coaxial line: $C' = 2\pi\varepsilon_0/\ln(b/a)$, $L' = (\mu_0/2\pi)\ln(b/a)$, $Z_0 = (\eta_0/2\pi)\ln(b/a)$
 - Parallel-wire line: $Z_0 = (\eta_0/\pi)\cosh^{-1}(d/2a) \approx 120\ln(d/a)\,\Omega$
@@ -31,9 +31,9 @@ Key results:
 - Dipole current: $I(z) = I_0\sin[k(L/2-|z|)]$; half-wave reduces to $I_0\cos(kz)$
 - Half-wave radiation resistance: $R_{\rm rad} = (\eta_0/2\pi)\int_0^\pi \bigl[\cos((\pi/2)\cos\theta)/\sin\theta\bigr]^2\sin\theta\,d\theta \approx 73.1\,\Omega$
 
-## Simulations
+## Planned Scripts
 
-Every simulation pairs a *derivation* with a *numerical proof on the actual geometry*:
+Every script pairs a *derivation* with a *numerical proof on the actual geometry*; in the drafted lesson, each pair becomes a `### Theory` / `### Example — ...` cluster under its concept's H2.
 
 | Script | Derivation | Geometry used to prove it |
 |---|---|---|

@@ -16,11 +16,13 @@
 
 Lessons 01–05. In particular, Lesson 04 (material maps) and Lesson 05 (Poisson solvers).
 
-## Theory
+## Lesson Body
 
-_To be written._ Key equations: $\vec B = (\mu_0 I/4\pi)\int d\vec\ell\times(\vec r-\vec r')/|\vec r-\vec r'|^3$; $\oint\vec B\cdot d\vec\ell = \mu_0 I_{\rm enc}$; $\nabla^2\vec A = -\mu_0\vec J$; $\vec B = \nabla\times\vec A$; variable-$\mu$ form for magnetic materials.
+_To be written. When drafted, the body uses one H2 per concept, each split into `### Theory` (prose + math) and one or more `### Example — <descriptor>` (rustlab block paralleling a script below). See [Lesson 01](01-vector-calculus-and-fields.md) for the pattern._
 
-## Simulations
+Key equations: $\vec B = (\mu_0 I/4\pi)\int d\vec\ell\times(\vec r-\vec r')/|\vec r-\vec r'|^3$; $\oint\vec B\cdot d\vec\ell = \mu_0 I_{\rm enc}$; $\nabla^2\vec A = -\mu_0\vec J$; $\vec B = \nabla\times\vec A$; variable-$\mu$ form for magnetic materials.
+
+## Planned Scripts
 
 | Script | What it simulates |
 |---|---|

@@ -16,11 +16,11 @@
 
 Every prior lesson. This is the capstone: it composes geometry + materials + FDTD + waveport + NF→FF into a single simulation pipeline — a working "mini Ansys" session.
 
-## Theory
+## Lesson Body
 
-_To be written._ The lesson does not introduce new theory; it is a pipeline integration exercise. The device under test is a rectangular microstrip patch antenna at 2.45 GHz on FR-4 substrate with an inset microstrip feed.
+_To be written. The lesson does not introduce new theory; it is a pipeline integration exercise. The device under test is a rectangular microstrip patch antenna at 2.45 GHz on FR-4 substrate with an inset microstrip feed. When drafted, each pipeline stage (geometry, gridding, source, solver run, $S_{11}$ extraction, NF→FF) becomes its own H2 with a `### Theory` (recap of the relevant prior-lesson result) and a `### Example — <stage>` (rustlab block from the single capstone script). See [Lesson 01](01-vector-calculus-and-fields.md) for the pattern._
 
-## Simulations
+## Planned Scripts
 
 | Script | What it simulates |
 |---|---|

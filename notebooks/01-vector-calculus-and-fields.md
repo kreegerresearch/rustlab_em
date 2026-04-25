@@ -15,7 +15,7 @@ Multivariable calculus: partial derivatives, line integrals, surface integrals. 
 
 ## The Differential Operators
 
-Three first-order differential operators generate all of vector calculus. Each takes a field on the left and returns a field on the right; the *domain* line records what kind.
+Three first-order differential operators generate all of vector calculus. Each takes a field on the left and returns a field on the right; the *domain* line records what kind. This section is pure reference — formal definitions, no computation. Every later section pairs `### Theory` (the math for one specific concept) with `### Example — <descriptor>` (a rustlab block computing it).
 
 ### 1. The Gradient Operator ($\nabla f$)
 
@@ -53,7 +53,11 @@ $$(\nabla\times\mathbf{A})_z = \frac{\partial A_y}{\partial x} - \frac{\partial 
 
 ## Setting Up the Grid
 
-Rustlab stores 2-D arrays in `[rows, cols]` = `[y, x]` order. `meshgrid(xs, ys)` returns matrices $X$ and $Y$ where $X(i, j) = xs(j)$ and $Y(i, j) = ys(i)$; every differential operator inherits this convention.
+### Theory
+
+Rustlab stores 2-D arrays in `[rows, cols]` = `[y, x]` order. `meshgrid(xs, ys)` returns matrices $X$ and $Y$ where $X(i, j) = xs(j)$ and $Y(i, j) = ys(i)$; every differential operator inherits this convention. Pick $\Delta x = \Delta y = 0.2$ on $[-2, 2]^2$ — a 21×21 grid that resolves a unit-width Gaussian comfortably without slowing the blocks below.
+
+### Example — Build a 21×21 mesh
 
 ```rustlab
 dx = 0.2;
@@ -66,13 +70,17 @@ print(size(X))           % → [21, 21]
 
 The center $(x, y) = (0, 0)$ is at index $(11, 11)$; the corner $(2, 2)$ is at $(21, 21)$.
 
-## Gradient: a Gaussian Bump
+## Gradient on a Grid
+
+### Theory
 
 Define $f(x, y) = \exp(-r^2/\sigma^2)$ with $\sigma = 1$. The analytic gradient is
 
 $$\nabla f = -\frac{2}{\sigma^2}(x, y)\,f(x, y),$$
 
-which vanishes at the peak ($r = 0$) and at large $r$, and peaks in magnitude on the inflection ring $r = \sigma/\sqrt{2} \approx 0.707$.
+which vanishes at the peak ($r = 0$) and at large $r$, and peaks in magnitude on the inflection ring $r = \sigma/\sqrt{2} \approx 0.707$. Below we compute it numerically on the 21×21 grid and compare to these analytic landmarks.
+
+### Example — Numerical gradient of a Gaussian bump
 
 ```rustlab
 sigma = 1.0;
@@ -84,7 +92,9 @@ print(fy(11, 11))        % ≈ 0
 print(fx(11, 15))        % ≈ -0.824 at (x=0.8, y=0)  (analytic: -0.844; ~2% stencil error at dx=0.2)
 ```
 
-Overlay the gradient arrows on contours of $f$. Because $\nabla f$ is perpendicular to level sets, the arrows cross contours at right angles and point *uphill* toward the peak.
+### Example — Gradient arrows on $f$ contours
+
+Because $\nabla f$ is perpendicular to level sets, the arrows cross contours at right angles and point *uphill* toward the peak.
 
 ```rustlab
 clf;
@@ -94,7 +104,9 @@ quiver(X, Y, fx, fy, "Gaussian f(x,y) with gradient arrows");
 hold off;
 ```
 
-The magnitude $|\nabla f|$ is largest at the inflection ring:
+### Example — Magnitude $|\nabla f|$ heatmap
+
+The magnitude is largest on the inflection ring at $r = \sigma/\sqrt{2}$.
 
 ```rustlab
 clf;
@@ -103,9 +115,13 @@ imagesc(fmag, "viridis");
 title("|∇f|  —  peaks at r = σ/√2")
 ```
 
-## Divergence: a Radial Outflow
+## Divergence on a Grid
+
+### Theory
 
 For $\vec F = (x, y)$, the analytic divergence is $\partial_x x + \partial_y y = 2$ — a uniform source density filling all space. Positive everywhere means field lines *begin* at every point. In Lesson 03 we identify $\nabla\cdot\vec E = \rho/\varepsilon_0$ and see that electric field lines begin and end only on charges.
+
+### Example — Radial field $\vec F = (x, y)$ and its divergence
 
 ```rustlab
 Ux = X;
@@ -127,11 +143,15 @@ imagesc(divU, "viridis");
 title("∇·F for F = (x, y)  —  uniformly = 2")
 ```
 
-## Curl: Solid-Body Rotation
+## Curl on a Grid
+
+### Theory
 
 For $\vec F = (-y, x)$, the 2-D scalar curl is $\partial_x x - \partial_y(-y) = 1 + 1 = 2$. Every infinitesimal paddle wheel spins counterclockwise with angular velocity 1.
 
 Drop a tiny paddle wheel at a point; the value of $\nabla\times\vec F$ there is twice the angular velocity the wheel picks up. Where $\nabla\times\vec F = 0$ the field is *irrotational* — the wheel translates without spinning. Later, $\nabla\times\vec E = -\partial\vec B/\partial t$ (Faraday) and $\nabla\times\vec B = \mu_0\vec J + \mu_0\varepsilon_0\,\partial\vec E/\partial t$ (Ampère–Maxwell) are the two most productive equations in all of physics.
+
+### Example — Rotational field $\vec F = (-y, x)$ and its curl
 
 ```rustlab
 Vx = -Y;
@@ -154,11 +174,15 @@ imagesc(curlV, "viridis");
 title("(∇×F)_z for F = (-y, x)  —  uniformly = 2")
 ```
 
-The two quivers look qualitatively similar (arrow length growing with distance), but the operators tell them apart immediately: radial is pure source, rotational is pure rotation.
+The two quivers (this one and the radial one above) look qualitatively similar — arrow length growing with distance — but the operators tell them apart immediately: radial is pure source, rotational is pure rotation.
 
 ## The Laplacian as a Composition
 
-Sanity check that the operators chain. For $V = x^2 + y^2$, $\nabla^2 V = \nabla\cdot(\nabla V) = 4$ everywhere.
+### Theory
+
+Sanity check that the operators chain. For $V = x^2 + y^2$, $\nabla^2 V = \nabla\cdot(\nabla V) = 4$ everywhere. This is exactly the Laplacian operator that shows up in Poisson's equation $\nabla^2 V = -\rho/\varepsilon_0$ (Lesson 05) and the wave equation $\nabla^2\vec E = \mu_0\varepsilon_0\,\partial^2\vec E/\partial t^2$ (Lesson 09).
+
+### Example — $\nabla^2(x^2 + y^2) = 4$
 
 ```rustlab
 V = X .^ 2 + Y .^ 2;
@@ -168,17 +192,19 @@ laplV = divergence(Vx2, Vy2, dx, dy);
 print(laplV(11, 11))     % ≈ 4
 ```
 
-This is exactly the Laplacian operator that shows up in Poisson's equation $\nabla^2 V = -\rho/\varepsilon_0$ (Lesson 05) and the wave equation $\nabla^2\vec E = \mu_0\varepsilon_0\,\partial^2\vec E/\partial t^2$ (Lesson 09).
-
 ## The Divergence Theorem
+
+### Theory
 
 For any nice region $V$ bounded by a closed surface $\partial V$,
 
 $$\boxed{\oint_{\partial V}\vec F\cdot d\vec A = \int_V \nabla\cdot\vec F\, dV.}$$
 
-*Total flux through the boundary equals the total source strength inside.* Coulomb's law, Gauss's law, and every charge-conservation statement in EM are instances of this.
+*Total flux through the boundary equals the total source strength inside.* Coulomb's law, Gauss's law, and every charge-conservation statement in EM are instances of this. We do not verify it numerically here — Lesson 03 will, on a physical $\vec E$ field — but Exercise 2 below is the natural warm-up.
 
-## Stokes' Theorem — Numerical Verification
+## Stokes' Theorem
+
+### Theory
 
 For any nice surface $S$ bounded by a closed curve $C$,
 
@@ -186,7 +212,11 @@ $$\boxed{\oint_C \vec F\cdot d\vec\ell = \int_S (\nabla\times\vec F)\cdot d\vec 
 
 *Circulation around the loop equals total rotation through the enclosed surface.* Ampère's law and Faraday's law both have this form.
 
-For $\vec F = (-y, x)$ we showed $(\nabla\times\vec F)_z = 2$. Pick the square $[-1, 1]^2$: enclosed area is $4$, so the right-hand side is $2 \cdot 4 = 8$. Compute the left-hand side edge by edge with `trapz`, counterclockwise.
+For $\vec F = (-y, x)$ we showed $(\nabla\times\vec F)_z = 2$. Pick the square $[-1, 1]^2$: enclosed area is $4$, so the right-hand side is $2 \cdot 4 = 8$. Below we compute both sides numerically and check they agree.
+
+### Example — Line integral around the unit square
+
+Compute the circulation edge by edge with `trapz`, counterclockwise.
 
 ```rustlab
 a = 1.0;
@@ -210,7 +240,9 @@ circulation = I_bot + I_rht + I_top + I_lft;
 print(circulation)       % ≈ 8
 ```
 
-Now the surface integral: compute curl on a 41×41 grid over the same square and integrate by 2-D trapezoidal.
+### Example — Surface integral of curl over the same square
+
+Compute curl on a 41×41 grid over the same square and integrate by 2-D trapezoidal.
 
 ```rustlab
 M = 41;

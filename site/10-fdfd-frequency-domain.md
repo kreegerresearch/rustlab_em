@@ -16,11 +16,13 @@
 
 Lessons 01–09. In particular Lesson 04 (material maps), Lesson 05 (sparse Poisson), and Lesson 09 (plane-wave framework).
 
-## Theory
+## Lesson Body
 
-_To be written._ Key equations: $\nabla\times(\mu^{-1}\nabla\times\vec E) - \omega^2\varepsilon\vec E = i\omega\vec J$; sparse Yee form $(C^T M_\mu^{-1} C - \omega^2 M_\varepsilon)\vec e = i\omega\vec j$. Stretched-coordinate PML: $\partial/\partial\alpha \to (1/s_\alpha)\partial/\partial\alpha$ with $s_\alpha = \kappa_\alpha + \sigma_\alpha/(i\omega\varepsilon_0)$.
+_To be written. When drafted, the body uses one H2 per concept, each split into `### Theory` (prose + math) and one or more `### Example — <descriptor>` (rustlab block paralleling a script below). See [Lesson 01](01-vector-calculus-and-fields.md) for the pattern._
 
-## Simulations
+Key equations: $\nabla\times(\mu^{-1}\nabla\times\vec E) - \omega^2\varepsilon\vec E = i\omega\vec J$; sparse Yee form $(C^T M_\mu^{-1} C - \omega^2 M_\varepsilon)\vec e = i\omega\vec j$. Stretched-coordinate PML: $\partial/\partial\alpha \to (1/s_\alpha)\partial/\partial\alpha$ with $s_\alpha = \kappa_\alpha + \sigma_\alpha/(i\omega\varepsilon_0)$.
+
+## Planned Scripts
 
 | Script | What it simulates |
 |---|---|
