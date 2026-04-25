@@ -31,12 +31,12 @@ The links below point at the **rendered** notebooks under [`site/`](site/) — w
 The mathematical foundation. Gradient, divergence, and curl on 2D/3D grids; line, surface, and volume integrals; the divergence theorem and Stokes' theorem as they actually apply to EM. Build intuition for scalar vs. vector fields, flux, and circulation by computing them numerically on meshes.
 
 ### 02 — Electrostatics & Coulomb's Law
-**Status: Planned** | [`site/02-electrostatics-coulomb.md`](site/02-electrostatics-coulomb.md)
+**Status: Drafted** | [`site/02-electrostatics-coulomb.md`](site/02-electrostatics-coulomb.md)
 
 Electric fields from discrete charges via superposition. Point charges, dipoles, line and ring distributions. Field lines and equipotential contours. Sets up the physical objects that the rest of the course manipulates.
 
 ### 03 — Gauss's Law & Electric Potential
-**Status: Planned** | [`site/03-gauss-law-and-potential.md`](site/03-gauss-law-and-potential.md)
+**Status: Drafted** | [`site/03-gauss-law-and-potential.md`](site/03-gauss-law-and-potential.md)
 
 Flux through closed surfaces; $\nabla\cdot\vec{E} = \rho/\varepsilon_0$. Symmetric analytic solutions (sphere, cylinder, infinite plane) and their numerical verification. Electric potential $V$, the relation $\vec{E} = -\nabla V$, and equipotential surfaces as contour plots.
 

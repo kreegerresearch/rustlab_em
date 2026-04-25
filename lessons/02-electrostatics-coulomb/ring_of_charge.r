@@ -1,0 +1,58 @@
+# ring_of_charge.r — Axial E-field of a uniformly charged ring.
+#
+# Physical system:  ring of radius R with total charge Q in the xy-plane,
+#                   centered at the origin.
+# Closed-form (on axis):
+#   E_z(z) = k_e Q z / (z² + R²)^{3/2},
+#   peak at z = R/√2  with  |E_z| = k_e Q / (R² · √2 · (3/2)^{3/2}).
+# Numerical:        Σ_{k=1..Nseg} k_e (Q/Nseg) z / (R² + z²)^{3/2},
+#   exact for a uniformly sampled ring as long as Nseg ≥ 1 (every segment
+#   sits at the same distance √(R² + z²) from any axial point — the test
+#   verifies that the loop produces the closed form, not a trapezoidal rule.)
+# Units:            SI (m, C, V/m).
+#
+# Lesson 02 — Electrostatics & Coulomb's Law.
+
+ke   = 8.9875e9;
+R    = 0.02;                       # ring radius (m)
+Q    = 1e-9;                       # total ring charge (C)
+Nseg = 360;                        # one segment per degree
+zs   = linspace(-0.05, 0.05, 201);
+
+# === Numerical Coulomb integral around the ring ===
+phi  = linspace(0, 2 * pi, Nseg + 1);
+phi  = phi(1 : Nseg);
+seg_charge = Q / Nseg;
+
+Ez_num = zeros(length(zs));
+for k = 1:Nseg
+  xk = R * cos(phi(k));
+  yk = R * sin(phi(k));
+  rseg3 = (xk * xk + yk * yk + zs .^ 2) .^ 1.5;
+  Ez_num += ke * seg_charge * zs ./ rseg3;
+end
+
+# === Closed-form for comparison ===
+Ez_ana = ke * Q * zs ./ ((R * R + zs .^ 2) .^ 1.5);
+
+err = max(abs(Ez_num - Ez_ana));
+print(err)                         # ~1e-10 V/m  —  machine-precision agreement
+
+# === Peak location: z = R/√2 ===
+idx_max = argmax(abs(Ez_num));
+print(zs(idx_max))                 # ≈ +R/√2 ≈ +0.01414 m
+print(Ez_num(idx_max))             # ≈ 8654 V/m for R=2 cm, Q=1 nC
+
+# === Plot ===
+figure();
+hold on;
+plot(zs * 100, Ez_num, "Numerical (Nseg=360)");
+plot(zs * 100, Ez_ana);
+hold off;
+xlabel("z  (cm)");
+ylabel("E_z  (V/m)");
+title("Ring on-axis E_z   (R = 2 cm,  Q = 1 nC)");
+legend("numerical", "analytic");
+savefig("ring_of_charge_axial.svg");
+
+print(1)

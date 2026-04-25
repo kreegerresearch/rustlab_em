@@ -1,0 +1,55 @@
+# dipole_field.r — Exact dipole superposition vs the far-field formula.
+#
+# Physical system:  ±q at (±d/2, 0) in vacuum.
+# Exact:            E = k_e q [(r - r_+)/|r - r_+|^3 - (r - r_-)/|r - r_-|^3]
+# Far-field:        E_dip = k_e [3(p·r̂)r̂ - p] / r^3,    p = q d x̂
+# Goal:             plot |E_far - E_exact| / |E_exact| vs y/d on the
+#                   perpendicular bisector;  expect O((d/r)^2) decay.
+# Units:            SI (m, C, V/m).
+#
+# Lesson 02 — Electrostatics & Coulomb's Law.
+
+ke = 8.9875e9;
+q  = 1e-9;
+d  = 0.02;
+p  = q * d;                         # dipole moment magnitude (C·m)
+
+# === Walk along the perpendicular bisector (x = 0) ===
+ys = linspace(0.005, 0.20, 400);    # y from d/4 (very near) to 10 d (far)
+
+# Exact superposition:  on x=0, both charges are at distance r = √(y² + (d/2)²).
+# The y-components cancel; E_x = -2 k_e q (d/2) / r^3.
+r2_pm = ys .^ 2 + (d / 2) ^ 2;
+Ex_exact = -2 * ke * q * (d / 2) ./ (r2_pm .^ 1.5);
+
+# Far-field on x=0:  E_x = -k_e p / y^3.
+Ex_far = -ke * p ./ (ys .^ 3);
+
+rel_err = abs(Ex_far - Ex_exact) ./ abs(Ex_exact);
+
+# Spot-check a few rows.
+print(Ex_exact(40))                 # ≈ exact value at y ≈ 0.01345 m
+print(Ex_far(40))                   # far-field at the same y
+print(rel_err(40))                  # ≈ moderate error in the near zone
+print(rel_err(end))                 # at y = 0.05 m, well below 1 %
+
+# === Plot rel-err vs y/d ===
+figure();
+plot(ys / d, rel_err, "Far-field rel. error  vs  y/d  (perpendicular bisector)");
+xlabel("y / d");
+ylabel("|E_far - E_exact| / |E_exact|");
+savefig("dipole_field_rel_error.svg");
+
+# === Plot the two curves side by side ===
+figure();
+hold on;
+plot(ys * 100, abs(Ex_exact), "Exact superposition (V/m)");
+plot(ys * 100, abs(Ex_far));
+hold off;
+xlabel("y (cm)");
+ylabel("|E_x|  (V/m)");
+legend("exact", "far-field");
+title("Dipole E_x on the perpendicular bisector");
+savefig("dipole_field_compare.svg");
+
+print(1)
