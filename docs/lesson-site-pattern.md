@@ -209,8 +209,14 @@ course-style notebooks:
 2. Brief motivation paragraph.
 3. `## Learning Objectives` — 3–5 bullets.
 4. `## Background` — prerequisite knowledge assumed.
-5. Theory sections: prose interleaved with ` ```rustlab ` blocks. One
-   concept per block; long blocks become unreadable when rendered.
+5. One H2 per concept, each split into `### Theory` (prose + math, no
+   code) and one or more `### Example — <descriptor>` (one ` ```rustlab `
+   block plus a short setup paragraph). One H3 per logically distinct
+   example — if a concept has both a quiver overlay and a magnitude
+   heatmap, give each its own `### Example — ...`. The H3 markers should
+   be present even when a section is all theory or all example, so
+   readers can tell the two modes apart at a glance. Pure-reference H2s
+   (formal definitions, grid conventions) stay flat without H3 markers.
 6. `## Standalone Scripts` — short table referencing the parallel `.r`
    files under `lessons/<slug>/`.
 7. `## Expected Numerical Outputs Summary` — Markdown table of every

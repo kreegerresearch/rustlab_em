@@ -24,5 +24,16 @@ for that convention.
 - Use `clf;` at the start of each plot block to clear before drawing.
 - Comments in notebook code blocks: `%`. Comments in `.r` files: `#`.
 
+## Section structure
+
+Within each conceptual `## <Concept>`, split prose theory from rustlab
+code with explicit H3 subsections: `### Theory` (math, derivations,
+intuition — no code) and `### Example — <descriptor>` (one ` ```rustlab `
+block plus a short setup paragraph). One H3 per logically distinct
+example. Pure-reference H2s (formal definitions, grid conventions) can
+stay flat. See [`01-vector-calculus-and-fields.md`](01-vector-calculus-and-fields.md)
+for the worked pattern, and [`../AGENTS.md`](../AGENTS.md) §"Lesson
+Notebook Format" for the full template.
+
 This file (named `README.md`) is skipped by the renderer, so it never
 shows up under `site/`.

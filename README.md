@@ -26,7 +26,7 @@ The curriculum targets a "mini Ansys" endpoint: given arbitrary geometry and mat
 The links below point at the **rendered** notebooks under [`site/`](site/) — what GitHub displays inline with executed code, captured `print()` output, and inline SVG plots. Sources live at [`notebooks/<slug>.md`](notebooks/) and are regenerated to the site by `make notebooks`.
 
 ### 01 — Vector Calculus & Fields
-**Status: Planned** | [`site/01-vector-calculus-and-fields.md`](site/01-vector-calculus-and-fields.md)
+**Status: Drafted** | [`site/01-vector-calculus-and-fields.md`](site/01-vector-calculus-and-fields.md)
 
 The mathematical foundation. Gradient, divergence, and curl on 2D/3D grids; line, surface, and volume integrals; the divergence theorem and Stokes' theorem as they actually apply to EM. Build intuition for scalar vs. vector fields, flux, and circulation by computing them numerically on meshes.
 

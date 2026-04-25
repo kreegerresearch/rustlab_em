@@ -114,7 +114,7 @@ The curriculum targets a "mini Ansys" endpoint: starting from vector calculus, s
 
 | # | Title | Focus | Status |
 |---|-------|-------|--------|
-| 01 | Vector Calculus & Fields | Grad, div, curl, Stokes', divergence theorem on grids | In progress |
+| 01 | Vector Calculus & Fields | Grad, div, curl, Stokes', divergence theorem on grids | Drafted |
 | 02 | Electrostatics & Coulomb's Law | Point/dipole/ring fields, superposition, field lines | Planned |
 | 03 | Gauss's Law & Electric Potential | Flux, $\nabla\cdot\vec{E}=\rho/\varepsilon_0$, equipotentials | Planned |
 | 04 | Geometry & Material Maps | Rasterizing shapes into $\varepsilon(x,y)$, $\mu(x,y)$, $\sigma(x,y)$ arrays; region masks; boolean ops | Planned |
