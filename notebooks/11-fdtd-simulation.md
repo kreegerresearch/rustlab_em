@@ -31,6 +31,8 @@ Key equations: 1D Yee updates for $H_y$ and $E_z$ in a medium with $\varepsilon(
 | `fdtd_tfsf_validation.r` | TF/SF box with empty interior; verify exact injection, zero scatter outside |
 | `fdtd_pml_depth.r` | Point source in a 2D box; measure residual reflection vs PML depth |
 
+> **Time-domain visualization.** When the body is drafted, the FDTD scripts use rustlab's `frame()` / `saveanim()` builtins to emit a Plotly HTML animation of the time-stepping field (play/pause + per-frame slider). See [animation-export.md](../dev/rustlab/requests/animation-export.md) and rustlab `examples/notebooks/animation.md`.
+
 ## Exercises
 
 _To be written._
