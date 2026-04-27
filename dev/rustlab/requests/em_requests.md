@@ -1,31 +1,57 @@
-## Plan Filed
+## Status: ✅ COMPLETE (closed 2026-04-26)
 
-**Implementation plan:** `../../../../rustlab/dev/plans/em_requests_plan.md` (filed 2026-04-26).
-**Action queue:** `../../../../rustlab/dev/plans/em_requests_queue.md` — execution-oriented companion with per-item commit references.
+All numbered items in this request file have shipped or been formally
+filed as standalone specs. The em_requests sweep is **closed**.
 
-## Status (last updated 2026-04-26)
+**Implementation plan:** `../../../../rustlab/dev/plans/em_requests_plan.md`.
+**Action queue:** `../../../../rustlab/dev/plans/em_requests_queue.md`.
+
+## Final status
 
 | § | Item | Status | Commit / Notes |
 |---|---|---|---|
-| §2.5 | rasterization masks (`rect_mask`, `disk_mask`, `polygon_mask`) | **shipped** | `5791ec0`. See `gallery/masks.md`. |
-| §2.3 | sparse `spsolve` (Cholesky + LU + AMD ordering, hand-rolled pure Rust) | **shipped** | `6623496`, `e9283b7`, `5feef19`. See `gallery/sparse_solve.md`, `gallery/sparse_scaling.md`, `gallery/electrostatics.md`, `gallery/sparse_complex.md`. Per-phase plan in `dev/plans/sparse_solve_handroll.md`; perf in `perf/sparse_solve_phase1to4.md`. |
-| §2.1 + §2.2 | Laplacian boundary conditions, 1-D / 3-D variants, `laplacian_eps_2d` | **shipped** | `26954a3`. See `gallery/laplacian_bc.md`, `gallery/dielectric.md`. |
-| §2.4 | sparse `eigs(A, n)` and `eigs(A, B, n)` | **next** | Hand-rolled Lanczos + Arnoldi on top of the rustlab-core `SparseChol` / `SparseLU` from §2.3. |
-| §4 | real-typed elem-ops (Option A pragmatic fix) | pending | |
-| §2.7 | polar / log-axis plots | pending | |
-| §2.6 Phase 1 | Yee + SC-PML scripted library | pending | curriculum-side, no upstream rustlab change |
-| §2.6 Phase 2 | Yee + SC-PML native crate | blocked on graduation trigger | 3-D Yee / >5s assembly / second physics curriculum / language wall |
+| §2.5 | rasterization masks (`rect_mask`, `disk_mask`, `polygon_mask`) | ✅ **shipped** | `5791ec0` → `gallery/masks.md` |
+| §2.3 | sparse `spsolve` (Cholesky + LU + AMD ordering, hand-rolled pure Rust) | ✅ **shipped** | `6623496` + `e9283b7` + `5feef19` → `gallery/sparse_solve.md`, `gallery/sparse_scaling.md`, `gallery/electrostatics.md`, `gallery/sparse_complex.md`. Per-phase plan: `dev/plans/sparse_solve_handroll.md` (closed). Perf: `perf/sparse_solve_phase1to4.md`. |
+| §2.1 + §2.2 | Laplacian boundary conditions, 1-D / 3-D variants, `laplacian_eps_2d` | ✅ **shipped** | `26954a3` → `gallery/laplacian_bc.md`, `gallery/dielectric.md`. Same commit also closed several pre-existing doc-coverage gaps via an audit pass. |
+| §2.4 | sparse `eigs(A, n)` and `eigs(A, B, n)` | ✅ **shipped** | `7eb5672` → `gallery/eigs.md`. Hand-rolled Lanczos + Arnoldi on top of rustlab-core `SparseChol` / `SparseLU`. |
+| §4 | real-typed elem-ops (Option A pragmatic fix) | ✅ **shipped** | `6d7ff20` |
+| §2.7 | polar / log-axis plots (`loglog`, `semilogx`, `semilogy`, `polar`) | ✅ **shipped** | `6d7ff20` → `gallery/log_polar.md`. Implemented as pre-transform shims; proper LogCoord-style axes deferred. |
+| §2.6 Phase 1 | Yee + SC-PML scripted library | 📋 **spec filed** | [`yee-and-pml-builders.md`](yee-and-pml-builders.md) (Status: Discussion). Phase 1 implementation lands in `rustlab_em/lessons/_shared/em.r` when Lessons 10/11/13 begin drafting. |
+| §2.6 Phase 2 | Yee + SC-PML native crate | 🚧 blocked on graduation trigger | Triggers: 3-D Yee, >5s assembly, second physics curriculum, language-feature wall. Not currently scheduled. |
 
-## Decisions, as actually applied
+## Outcome summary
 
-1. **§2.3 sparse solver:** **hand-rolled, pure Rust, in `rustlab-core`**, NOT `faer`. The original plan adopted `faer` (MIT-or-Apache-2.0); the user vetoed it post-plan as too large a library. `AGENTS.md` Rule 9 codifies the broader policy. The hand-rolled implementation hits all acceptance criteria — see `perf/sparse_solve_phase1to4.md`.
-2. **§2.4 eigensolver:** hand-rolled Lanczos / Arnoldi on top of the rustlab-core `SparseChol` / `SparseLU` from §2.3 (not `faer` LU). Pure Rust only. Implicit restart and shift-invert deferred to a follow-up if curriculum problems hit convergence walls.
-3. **§2.6 Yee + SC-PML:** two-phase as planned. Phase 1 = scripted library in `rustlab_em/lessons/_shared/em.r` (no upstream rustlab change). Phase 2 = upstream `rustlab-em` workspace crate, only if graduation triggers fire.
-4. **§4 real-typed elem-ops:** Option A (4-line guard zeroing imag when both inputs were essentially real, ~50 LoC). Options B/C deferred to a separate plan.
+**14 new builtins shipped upstream:**
+- Geometry: `rect_mask`, `disk_mask`, `polygon_mask`
+- Sparse Laplacians: `laplacian_1d`, `laplacian_3d`, `laplacian_eps_2d`, plus the `bc` selector on `laplacian_2d`
+- Index sugar: `ijk2k`, `k2ijk`
+- Sparse partial eigensolver: `eigs(A, n)` and `eigs(A, B, n)`
+- Plotting: `loglog`, `semilogx`, `semilogy`, `polar`
+
+**Plus core infrastructure:**
+- `crates/rustlab-core/src/sparse_solve/` — hand-rolled CSC, sparse Cholesky, sparse LU, AMD ordering. Replaces the dense fallback that was a hard scaling cliff at ~75×75 grids.
+- `crates/rustlab-core/src/sparse_eig/` — hand-rolled Lanczos, Arnoldi, dense subproblem solvers.
+- `is_hermitian` / `is_spd_estimate` helpers on `SparseMat`.
+- Real-typed result preservation in element-wise ops.
+
+**8 new gallery notebooks** demonstrating the new functionality, all rendered to `gallery/`.
+
+**Key decisions, as actually applied:**
+
+1. **§2.3 sparse solver:** **hand-rolled, pure Rust, in `rustlab-core`**, NOT `faer`. The original plan adopted `faer` (MIT-or-Apache-2.0); the user vetoed it post-plan as too large a library. `AGENTS.md` Rule 9 codifies the broader policy. The hand-rolled implementation hits all acceptance criteria — 200×200 SPD in 0.42 s with Identity ordering / 2.3 s with AMD; complex 100×100 in 0.58 s.
+2. **§2.4 eigensolver:** hand-rolled Lanczos / Arnoldi on top of rustlab-core's own `SparseChol` / `SparseLU` (not `faer` LU). Pure Rust only. Implicit restart and shift-invert deferred to a follow-up if curriculum problems hit convergence walls.
+3. **§2.6 Yee + SC-PML:** two-phase. Phase 1 = scripted library in `rustlab_em/lessons/_shared/em.r` (curriculum-side, no upstream rustlab change). Phase 2 = upstream `rustlab-em` workspace crate, only if graduation triggers fire.
+4. **§4 real-typed elem-ops:** Option A (guard zeroing imag when both inputs were essentially real). Options B/C (type-tagged value variant; full real storage) deferred to a separate plan.
 
 **General policy:** no GPL/LGPL/AGPL/copyleft, no Fortran/C++ FFI, no large libraries for core algorithms. Pure-Rust MIT/Apache-2.0 hand-rolls are the default for core work. Codified as `AGENTS.md` Rule 9.
 
-**Estimate vs actuals:** the original 6-8 week estimate assumed standard senior pace and a `faer`-based §2.3 wrapper. Actual ship pace was substantially faster — Items 1, 2, 3 fit into roughly one calendar day of focused work — because the hand-rolling was algorithmic-port work (Davis chapters 4, 6, 7) rather than greenfield design, and because `is_hermitian` / `is_spd_estimate` helpers from Item 2 served Item 3 directly. Item 4 (eigs) is expected to take similar time.
+**Optional follow-on enhancements** (not blocking; will be picked up if a curriculum problem makes them necessary):
+- Full Davis AMD with external degree + supervariables (beyond basic minimum-degree)
+- IRAM restart for `eigs` (closely-spaced spectra)
+- Shift-invert mode for `eigs` (acceleration via `SparseLU::factor`)
+- Type-tagged real `Value` variant (Options B/C from §4)
+- Proper LogCoord backend axes + polar coordinate system in the renderer (replace pre-transform shims)
+- Yee + SC-PML upstream native crate (Phase 2 of §2.6)
 
 ---
 
