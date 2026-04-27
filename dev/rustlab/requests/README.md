@@ -6,12 +6,16 @@ These are **requests**, not implementations — `rustlab_em` scripts work around
 
 ## Priority Order (from `rustlab_em`'s perspective)
 
-| # | File | Blocks | Priority |
-|---|------|--------|----------|
-| 1 | [`vector-calculus-operators.md`](vector-calculus-operators.md) | Lessons 01, 02, 03, 07, 08 | **High** — every lesson |
-| 2 | [`quiver-and-streamplot.md`](quiver-and-streamplot.md) | Lessons 01, 02, 03, 04, 05 | **High** — how physicists look at fields |
-| 3 | [`contour-plots.md`](contour-plots.md) | Lessons 03, 04, 08 | **High** — equipotentials |
-| 4 | [`laplacian-stencil-builder.md`](laplacian-stencil-builder.md) | Lesson 04 (pivot lesson) | **Medium** — `spdiags` workaround exists |
-| 5 | [`animation-export.md`](animation-export.md) | Lessons 08, 09 | **Low** — per-frame SVG loop workaround exists |
+| # | File | Blocks | Status |
+|---|------|--------|--------|
+| 1 | [`vector-calculus-operators.md`](vector-calculus-operators.md) | Lessons 01, 02, 03, 07, 08 | **Landed** |
+| 2 | [`quiver-and-streamplot.md`](quiver-and-streamplot.md) | Lessons 01, 02, 03, 04, 05 | **Landed** |
+| 3 | [`contour-plots.md`](contour-plots.md) | Lessons 03, 04, 08 | **Landed** |
+| 4 | [`laplacian-stencil-builder.md`](laplacian-stencil-builder.md) | Lesson 04 (pivot lesson) | **Landed and extended** (BC selector + 1-D / 3-D / eps variants in `26954a3`) |
+| 5 | [`animation-export.md`](animation-export.md) | Lessons 08, 09 | **Proposed** (per-frame SVG loop workaround exists) |
 
-Lessons 01–03 are blocked on items 1–3 being at least usable. Lesson 04 unlocks everything downstream and is blocked on items 1 and 3 (item 4 is sugar). Lessons 05–10 reuse the same infrastructure.
+The original five requests have all shipped. The follow-on sweep — additional rustlab features identified during the curriculum draft — lives in [`em_requests.md`](em_requests.md), which has its own per-§ status table.
+
+For the upstream rustlab implementation perspective, see:
+- [`../../../../rustlab/dev/plans/em_requests_plan.md`](../../../../rustlab/dev/plans/em_requests_plan.md) — the reference plan
+- [`../../../../rustlab/dev/plans/em_requests_queue.md`](../../../../rustlab/dev/plans/em_requests_queue.md) — the action queue with per-item commit references

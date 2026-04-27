@@ -1,6 +1,6 @@
 # Request: `laplacian_2d` Sparse Stencil Builder
 
-**Status**: Proposed
+**Status**: Landed and extended. Phase 1: `laplacian_2d` shipped early-2026-04. Phase 2 (em_requests.md §2.1+§2.2): `laplacian_2d` extended with `bc` selector (`"dirichlet"|"neumann"|"periodic"`), plus new `laplacian_1d`, `laplacian_3d`, and `laplacian_eps_2d` — shipped in commit `26954a3` (2026-04-26). See `gallery/laplacian_bc.md` and `gallery/dielectric.md` for notebooks.
 **Date**: 2026-04-22
 **Origin**: `rustlab_em` Lessons 04, 06, 10
 

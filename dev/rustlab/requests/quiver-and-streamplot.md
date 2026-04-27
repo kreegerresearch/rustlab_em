@@ -1,6 +1,6 @@
 # Request: `quiver` and `streamplot` for 2D Vector Fields
 
-**Status**: Proposed
+**Status**: Landed (`quiver` and `streamplot` shipped — verified in `rustlab/docs/quickref.md`, used by Lessons 01-03)
 **Date**: 2026-04-22
 **Origin**: `rustlab_em` Lessons 01, 02, 03, 04, 05
 

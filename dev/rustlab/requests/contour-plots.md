@@ -1,6 +1,6 @@
 # Request: `contour` and `contourf` for Scalar Fields
 
-**Status**: Proposed
+**Status**: Landed (`contour` and `contourf` shipped — verified in `rustlab/docs/quickref.md`)
 **Date**: 2026-04-22
 **Origin**: `rustlab_em` Lessons 03, 04, 08
 
