@@ -1,0 +1,56 @@
+# conformal_disk.r — Staircase vs area-weighted conformal coverage.
+#
+# A binary mask resolves a curved boundary as a staircase: every cell is
+# fully inside or fully outside. Subgrid sampling builds a fractional
+# coverage map α ∈ [0, 1] that captures partial coverage and converges
+# to the true geometry as O(h²) instead of O(h).
+#
+# Reference: ../../notebooks/04-geometry-and-material-maps.md.
+
+# === Grid ===
+N      = 200;
+[X, Y] = meshgrid(linspace(-1.5, 1.5, N), linspace(-1.5, 1.5, N));
+dx     = 3.0 / (N - 1);
+dy     = dx;
+
+# === Staircase mask ===
+D = disk_mask(X, Y, 0.0, 0.0, 1.0);
+
+# === Conformal α via K×K subgrid sampling ===
+K     = 8;
+alpha = zeros(N, N);
+for di = 1:K
+  for dj = 1:K
+    # Sub-sample offset within each cell, in (-0.5, 0.5) cell units.
+    ox = (dj - 0.5) / K - 0.5;
+    oy = (di - 0.5) / K - 0.5;
+    Xs = X + ox * dx;
+    Ys = Y + oy * dy;
+    alpha = alpha + disk_mask(Xs, Ys, 0.0, 0.0, 1.0);
+  end
+end
+alpha = alpha / (K * K);
+
+# === Plot α (smooth interior, gradient on the rim) ===
+figure();
+imagesc(alpha, "viridis");
+title("Conformal alpha(x, y) for unit disk (K = 8 subsamples)");
+savefig("conformal_alpha.svg");
+
+# === Plot α - M (nonzero only on the rim) ===
+delta = alpha - D;
+figure();
+imagesc(delta, "viridis");
+title("alpha - mask: nonzero only where the boundary passes through cells");
+savefig("conformal_delta.svg");
+
+# === Quantitative comparison: area should be pi ===
+A_stair = sum(sum(D))     * dx * dy;
+A_conf  = sum(sum(alpha)) * dx * dy;
+A_true  = pi;
+
+print(A_stair)                              # ≈ 3.135
+print(A_conf)                               # ≈ 3.1414
+print(A_true)                               # 3.14159...
+print(abs(A_stair - A_true) / A_true)       # staircase relative error ≈ 2e-3
+print(abs(A_conf  - A_true) / A_true)       # conformal relative error ≈ 1e-5

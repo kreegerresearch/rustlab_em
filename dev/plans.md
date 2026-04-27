@@ -10,10 +10,10 @@ The curriculum targets a "mini Ansys" endpoint: given arbitrary geometry plus ma
 
 | # | Title | Status |
 |---|-------|--------|
-| 01 | Vector Calculus & Fields | Planned |
-| 02 | Electrostatics & Coulomb's Law | Planned |
-| 03 | Gauss's Law & Electric Potential | Planned |
-| 04 | Geometry & Material Maps | Planned |
+| 01 | Vector Calculus & Fields | Drafted |
+| 02 | Electrostatics & Coulomb's Law | Drafted |
+| 03 | Gauss's Law & Electric Potential | Drafted |
+| 04 | Geometry & Material Maps | Drafted |
 | 05 | Poisson & Laplace BVP — Dielectrics & Conductors | Planned |
 | 06 | Magnetostatics & Vector Potential | Planned |
 | 07 | Faraday's Law & Induction | Planned |

@@ -1,0 +1,56 @@
+# boolean_regions.r — Compose primitives via boolean set operations.
+#
+# Mask algebra (see ../../notebooks/04-geometry-and-material-maps.md):
+#   intersection:   M1 .* M2
+#   complement:     1 - M
+#   union:          M1 + M2 - M1 .* M2     # NOT max() — max is scalar in rustlab
+#   difference:     M1 .* (1 - M2)
+
+# === Grid ===
+N      = 200;
+[X, Y] = meshgrid(linspace(-1.5, 1.5, N), linspace(-1.5, 1.5, N));
+dx     = 3.0 / (N - 1);
+dy     = dx;
+
+# === Annulus by difference: D_outer \ D_inner ===
+D_outer = disk_mask(X, Y, 0.0, 0.0, 1.0);
+D_inner = disk_mask(X, Y, 0.0, 0.0, 0.5);
+A_ring  = D_outer .* (1 - D_inner);
+figure();
+imagesc(A_ring, "viridis");
+title("Annulus: D_outer .* (1 - D_inner)");
+savefig("annulus.svg");
+
+# Area should be pi*(R^2 - r^2) = pi*(1 - 0.25) ≈ 2.356 m².
+print(sum(sum(A_ring)) * dx * dy)       # ≈ 2.351 (staircase undershoot)
+print(pi * (1 - 0.25))                  # 2.35619...
+
+# === C-shape: rectangle minus a smaller bite ===
+R_block = rect_mask(X, Y, -0.8, -0.6, 1.6, 1.2);
+R_bite  = rect_mask(X, Y, -0.4, -0.3, 1.2, 0.6);
+C_shape = R_block .* (1 - R_bite);
+figure();
+imagesc(C_shape, "viridis");
+title("C-shape: R_block .* (1 - R_bite)");
+savefig("c_shape.svg");
+
+# Area = 1.6*1.2 - 1.2*0.6 = 1.92 - 0.72 = 1.20 m².
+print(sum(sum(C_shape)) * dx * dy)      # ≈ 1.20
+
+# === Two overlapping shapes as integer-coded regions ===
+# Rect contains the disk's lower half; the disk's upper half sticks above the
+# rect's top edge. Both regions have substantial "only-here" area.
+R       = rect_mask(X, Y, -0.6, -0.6, 1.2, 0.8);
+D       = disk_mask(X, Y, 0.0, 0.0, 0.5);
+both    = R .* D;
+r_only  = R .* (1 - D);
+d_only  = D .* (1 - R);
+regions = 1 * r_only + 2 * d_only + 3 * both;       # 0 outside, 1/2/3 by region
+figure();
+imagesc(regions, "viridis");
+title("Region IDs: 0 outside, 1 = R only, 2 = D only, 3 = R & D");
+savefig("two_shape_regions.svg");
+
+print(sum(sum(r_only)) * dx * dy)       # rect minus disk overlap
+print(sum(sum(d_only)) * dx * dy)       # disk minus rect overlap
+print(sum(sum(both))   * dx * dy)       # lens-shaped intersection

@@ -1,0 +1,46 @@
+# shape_rasterization.r — Rasterize one of each primitive: rect, disk, polygon.
+#
+# Physical role: every later solver consumes ny×nx arrays describing what
+# material is at each grid cell. This script demonstrates the three rustlab
+# primitives that turn shape descriptions into 0/1 indicator masks.
+# Reference: ../../notebooks/04-geometry-and-material-maps.md.
+
+# === Grid (rows = y, cols = x) ===
+N      = 200;
+[X, Y] = meshgrid(linspace(-1.5, 1.5, N), linspace(-1.5, 1.5, N));
+dx     = 3.0 / (N - 1);
+dy     = dx;
+
+# === Rectangle ===
+R = rect_mask(X, Y, -0.5, -0.4, 1.0, 0.6);
+figure();
+imagesc(R, "viridis");
+title("rect_mask: lower-left (-0.5, -0.4), 1.0 x 0.6");
+savefig("rect_mask.svg");
+
+# Area should be w*h = 0.60 m².
+print(sum(sum(R)) * dx * dy)        # ≈ 0.60
+
+# === Disk ===
+D = disk_mask(X, Y, 0.0, 0.0, 1.0);
+figure();
+imagesc(D, "viridis");
+title("disk_mask: centre (0, 0), radius 1.0");
+savefig("disk_mask.svg");
+
+# Area should be ~ pi (closed mask overshoots slightly: ~3.135 vs pi).
+print(sum(sum(D)) * dx * dy)        # ≈ 3.135
+print(pi)                           # 3.14159...
+
+# === Polygon (equilateral-ish triangle) ===
+verts = [-1.0, -0.7;
+          1.0, -0.7;
+          0.0,  1.0];
+T = polygon_mask(X, Y, verts);
+figure();
+imagesc(T, "viridis");
+title("polygon_mask: triangle (-1,-0.7)-(1,-0.7)-(0,1)");
+savefig("polygon_mask.svg");
+
+# Triangle area = 0.5 * base * height = 0.5 * 2.0 * 1.7 = 1.70 m².
+print(sum(sum(T)) * dx * dy)        # ≈ 1.70
