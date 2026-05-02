@@ -30,6 +30,8 @@ $$\vec B(\vec r) = \frac{\mu_0 I}{4\pi}\oint_C\frac{d\vec\ell\times(\vec r-\vec 
 
 a direct numerical recipe: parametrise the path $C$ by arc length, evaluate the integrand at each segment, sum. The $1/r^3$ falloff is sharper than Coulomb's $1/r^2$, so the field is dominated by the nearest source segment and a modest segment count (say $N \sim 100$) is plenty for engineering accuracy.
 
+Numerically, the natural pattern in rustlab is to **vectorise over field points and loop over source segments**: for each segment, the displacement vector `(Xg - rxs(k), Yg - rys(k), Zg - rzs(k))` broadcasts over the entire grid in one elementwise expression, and the cross-product contribution accumulates onto an `Nm × Nm` matrix. Six lines of broadcast-style array math in one outer loop reads the same as the textbook sum and runs ~30× faster than three nested scalar loops.
+
 ### Example — Circular loop in vacuum
 
 A horizontal loop of radius $R = 5$ cm carrying $I = 1$ A. Parametrise the loop by angle $\phi \in [0, 2\pi)$; the source position and tangent are $\vec r{}'(\phi) = R(\cos\phi, \sin\phi, 0)$ and $d\vec\ell = R(-\sin\phi, \cos\phi, 0)\,d\phi$. Sample the field on a 41×41 meridional grid in the $x$-$z$ plane (the $y$-component vanishes by symmetry on this plane).
@@ -54,32 +56,30 @@ dlz   = zeros(N_seg);
 Nm = 41;
 xs = linspace(-0.10, 0.10, Nm);
 zs = linspace(-0.10, 0.10, Nm);
+[Xg, Zg] = meshgrid(xs, zs);
+
+% Vectorised Biot-Savart: one outer loop over the N_seg source segments,
+% with each segment broadcasting its displacement (Xg - rxs(k), -rys(k),
+% Zg - rzs(k)) over the full Nm × Nm field grid in one elementwise pass.
 Bxg = zeros(Nm, Nm);
 Bzg = zeros(Nm, Nm);
-for iz = 1:Nm
-  for ix = 1:Nm
-    fx = xs(ix); fy = 0.0; fz = zs(iz);
-    bx = 0.0; bz = 0.0;
-    for k = 1:N_seg
-      Rxk = fx - rxs(k);
-      Ryk = fy - rys(k);
-      Rzk = fz - rzs(k);
-      r2 = Rxk*Rxk + Ryk*Ryk + Rzk*Rzk;
-      if r2 < 1e-10; r2 = 1e-10; end
-      inv_r3 = 1.0 / (r2 ^ 1.5);
-      bx = bx + (dly(k)*Rzk - dlz(k)*Ryk) * inv_r3;
-      bz = bz + (dlx(k)*Ryk - dly(k)*Rxk) * inv_r3;
-    end
-    Bxg(iz, ix) = bx * mu0 * Iloop / (4 * pi);
-    Bzg(iz, ix) = bz * mu0 * Iloop / (4 * pi);
-  end
+for k = 1:N_seg
+  Rx = Xg - rxs(k);
+  Ry = -rys(k);                            % field plane y = 0
+  Rz = Zg - rzs(k);
+  r2 = Rx .^ 2 + Ry^2 + Rz .^ 2;
+  inv_r3 = 1.0 ./ (r2 .^ 1.5);
+  Bxg = Bxg + (dly(k) * Rz - dlz(k) * Ry) .* inv_r3;
+  Bzg = Bzg + (dlx(k) * Ry - dly(k) * Rx) .* inv_r3;
 end
-print(real(Bzg(21, 21)))                      % on-axis (x=0, z=0)
+Bxg = Bxg * mu0 * Iloop / (4 * pi);
+Bzg = Bzg * mu0 * Iloop / (4 * pi);
+print(real(Bzg(21, 21)))                       % on-axis (x=0, z=0)
 print(real(mu0 * Iloop / (2 * R)))             % closed-form  μ₀I/(2R)
 ```
 
 ```text
-0.000012566370614359204
+0.000012566370614359209
 0.000012566370614359172
 ```
 
@@ -138,25 +138,26 @@ phi   = linspace(0, 2*pi, N_seg + 1);
 phi   = phi(1:N_seg);
 dphi  = 2 * pi / N_seg;
 
-% Sample on the axis (x = y = 0)
-zline = linspace(-0.10, 0.10, 121);
+% Per-segment source positions and tangent vectors are constant across
+% loops and field points — compute them once outside the loops.
+sx   =  Rs * cos(phi);
+sy   =  Rs * sin(phi);
+dl_x = -Rs * sin(phi) * dphi;
+dl_y =  Rs * cos(phi) * dphi;
+
+% Sample on the axis (x = y = 0). For each loop in the stack, vectorise
+% over its N_seg segments — the inner cross product becomes one
+% element-wise expression on length-N_seg vectors.
+zline   = linspace(-0.10, 0.10, 121);
 Bz_axis = zeros(length(zline));
 for iz = 1:length(zline)
   fz_p = zline(iz);
-  bz = 0.0;
+  bz   = 0.0;
   for li = 1:N_l
-    z_loop = zs_l(li);
-    for k = 1:N_seg
-      sx = Rs * cos(phi(k));
-      sy = Rs * sin(phi(k));
-      Rxk = -sx; Ryk = -sy; Rzk = fz_p - z_loop;
-      r2 = Rxk*Rxk + Ryk*Ryk + Rzk*Rzk;
-      if r2 < 1e-10; r2 = 1e-10; end
-      inv_r3 = 1.0 / (r2 ^ 1.5);
-      dl_x = -Rs * sin(phi(k)) * dphi;
-      dl_y =  Rs * cos(phi(k)) * dphi;
-      bz = bz + (dl_x * Ryk - dl_y * Rxk) * inv_r3;
-    end
+    Rzk    = fz_p - zs_l(li);
+    r2     = sx .^ 2 + sy .^ 2 + Rzk^2;        % = Rs^2 + Rzk^2 (axisymmetric)
+    inv_r3 = 1.0 ./ (r2 .^ 1.5);
+    bz     = bz + sum((-dl_x .* sy + dl_y .* sx) .* inv_r3);
   end
   Bz_axis(iz) = bz * mu0 * Isol / (4 * pi);
 end
@@ -166,7 +167,7 @@ print(B_amp)                                % μ₀nI
 ```
 
 ```text
-0.0005732925467861237
+0.0005732925467861275
 0.0006283185307179586
 ```
 

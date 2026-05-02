@@ -28,26 +28,26 @@ dlz   = zeros(N_seg);
 Nm = 41;
 xs = linspace(-0.10, 0.10, Nm);
 zs = linspace(-0.10, 0.10, Nm);
+[Xg, Zg] = meshgrid(xs, zs);
+
+# Vectorised Biot-Savart: for each segment k, the displacement
+# (Xg - rxs(k), -rys(k), Zg) broadcasts over the entire (x, z) grid.
+# One outer loop over segments instead of three nested loops over
+# (segments, field-row, field-col); the inside reads like the textbook
+# formula B(r) = (μ₀I/4π) Σ dl × (r - r') / |r - r'|³.
 Bxg = zeros(Nm, Nm);
 Bzg = zeros(Nm, Nm);
-for iz = 1:Nm
-  for ix = 1:Nm
-    fx = xs(ix); fy = 0.0; fz = zs(iz);
-    bx = 0.0; bz = 0.0;
-    for k = 1:N_seg
-      Rxk = fx - rxs(k);
-      Ryk = fy - rys(k);
-      Rzk = fz - rzs(k);
-      r2 = Rxk*Rxk + Ryk*Ryk + Rzk*Rzk;
-      if r2 < 1e-10; r2 = 1e-10; end
-      inv_r3 = 1.0 / (r2 ^ 1.5);
-      bx = bx + (dly(k)*Rzk - dlz(k)*Ryk) * inv_r3;
-      bz = bz + (dlx(k)*Ryk - dly(k)*Rxk) * inv_r3;
-    end
-    Bxg(iz, ix) = bx * mu0 * Iloop / (4 * pi);
-    Bzg(iz, ix) = bz * mu0 * Iloop / (4 * pi);
-  end
+for k = 1:N_seg
+  Rx = Xg - rxs(k);
+  Ry = -rys(k);                           # field plane y = 0
+  Rz = Zg - rzs(k);
+  r2 = Rx .^ 2 + Ry^2 + Rz .^ 2;
+  inv_r3 = 1.0 ./ (r2 .^ 1.5);
+  Bxg = Bxg + (dly(k) * Rz - dlz(k) * Ry) .* inv_r3;
+  Bzg = Bzg + (dlx(k) * Ry - dly(k) * Rx) .* inv_r3;
 end
+Bxg = Bxg * mu0 * Iloop / (4 * pi);
+Bzg = Bzg * mu0 * Iloop / (4 * pi);
 
 # === On-axis check at (x = 0, z = 0) ===
 print(real(Bzg(21, 21)))                        # ≈ 1.257e-5 T

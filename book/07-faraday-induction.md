@@ -119,23 +119,19 @@ ys2 = linspace(-1.5 * a_i, 1.5 * a_i, Ng);
 dxg = xs2(2) - xs2(1);
 dyg = ys2(2) - ys2(1);
 
+% Vectorised Biot-Savart: one outer loop over the N_seg outer-loop
+% segments, with each segment broadcasting (Xg - rxs(k), Yg - rys(k))
+% across the entire (Ng × Ng) field grid. Both source and field sit
+% in the z = 0 plane so the Rz term drops.
 Bz_grid = zeros(Ng, Ng);
-for iy = 1:Ng
-  for ix = 1:Ng
-    fx = xs2(ix); fy = ys2(iy); fz = 0.0;
-    bz = 0.0;
-    for k = 1:N_seg
-      Rxk = fx - rxs(k);
-      Ryk = fy - rys(k);
-      Rzk = fz - rzs(k);
-      r2 = Rxk*Rxk + Ryk*Ryk + Rzk*Rzk;
-      if r2 < 1e-10; r2 = 1e-10; end
-      inv_r3 = 1.0 / (r2 ^ 1.5);
-      bz = bz + (dlx(k)*Ryk - dly(k)*Rxk) * inv_r3;
-    end
-    Bz_grid(iy, ix) = bz * mu0 * I1 / (4 * pi);
-  end
+for k = 1:N_seg
+  Rx = Xg - rxs(k);
+  Ry = Yg - rys(k);
+  r2 = Rx .^ 2 + Ry .^ 2;
+  inv_r3 = 1.0 ./ (r2 .^ 1.5);
+  Bz_grid = Bz_grid + (dlx(k) * Ry - dly(k) * Rx) .* inv_r3;
 end
+Bz_grid = Bz_grid * mu0 * I1 / (4 * pi);
 ```
 
 ```rustlab
@@ -147,16 +143,12 @@ title("B_z from the outer loop sampled on the inner disk's plane")
 ![plot 2](plots/07-faraday-induction/plot-2.svg)
 
 ```rustlab
-% Integrate Bz over the inner-disk area: cells with x²+y² ≤ a_i²
-Phi_inner = 0.0;
-for iy = 1:Ng
-  for ix = 1:Ng
-    if Xg(iy, ix)^2 + Yg(iy, ix)^2 <= a_i^2
-      Phi_inner = Phi_inner + Bz_grid(iy, ix) * dxg * dyg;
-    end
-  end
-end
-M_num = real(Phi_inner / I1);
+% Φ = ∫∫_{disk_a} Bz dA, picked out by Lesson-04's disk_mask. The
+% mask × heatmap product is the same toolkit a device-level capacitance
+% integral would use — the L04 primitives keep paying off downstream.
+inner_disk = disk_mask(Xg, Yg, 0.0, 0.0, a_i);
+Phi_inner  = sum(sum(real(Bz_grid) .* inner_disk)) * dxg * dyg;
+M_num = Phi_inner / I1;
 
 M_an  = mu0 * pi * a_i^2 / (2 * b_o);     % a ≪ b limit
 print(M_num)                              % ≈ 7.94e-9 H

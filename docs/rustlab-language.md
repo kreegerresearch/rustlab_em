@@ -48,7 +48,7 @@ A user who edits `.rlab` files in MATLAB-syntax mode and reaches for MATLAB inst
 - **No toolboxes, no `pkg`.** rustlab's standard library is built in; there's no per-installation extension surface.
 - **`max(M1, M2)` is not element-wise on matrices.** The MATLAB form takes two matrices and returns the element-wise maximum; rustlab's `max` takes a vector or two scalars. Lesson 04 documents the inclusion-exclusion idiom for boolean-mask unions because of this.
 - **No `polyfit`, `regress`, or other stat-toolbox staples.** Hand-roll the normal-equations slope fit when needed (Lesson 05's corner-singularity script does exactly this).
-- **Single-arg indexing on `zeros(1, N)` matrices.** Indexing a `[1×N]` *matrix* with one index treats it as a row index; indexing the same shape produced by `zeros(N)` (a *vector*) treats the index as element position. This bit Lesson 06's first Biot-Savart prototype.
+- **Single-arg matrix indexing is column-major linear** (matlab convention; landed in rustlab 0.3.0). `M(k)` returns the k-th col-major element of the matrix, *not* the k-th row. Use `M(k, :)` for rows. This is a v0.3 breaking change from earlier rustlab releases — Lesson 06's first Biot-Savart prototype hit the old "k-th row" form before the flip; current code uses the modern semantics.
 - **Sparse semantics are explicit.** Mixed sparse/dense pairs auto-promote to dense in some operations; the `sparse(...)`, `sparsevec(...)`, `speye(...)`, `spdiags(...)` constructors are first-class.
 - **The plotting model is rustlab's, not MATLAB's.** `quiver`/`streamplot`/`contour`/`imagesc`/`surf` exist with similar names but their backends and per-format behaviour are rustlab-specific (terminal, SVG, HTML, viewer all from the same call).
 
