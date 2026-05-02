@@ -29,6 +29,8 @@ Key equations: $\nabla^2\vec E - \mu_0\varepsilon_0\,\partial^2\vec E/\partial t
 | `polarization.r` | Jones-vector sweep; $\vec E$ tip traced in $y$-$z$ plane |
 | `standing_wave.r` | Plane wave + perfect reflector; spatial node/antinode pattern |
 
+> **Time-domain visualization.** When the body is drafted, the propagating-wave and standing-wave demos use rustlab's `frame()` / `saveanim()` builtins to emit a Plotly HTML animation (play/pause + per-frame slider). See [animation-export.md](../dev/rustlab/requests/animation-export.md) and rustlab `examples/notebooks/animation.md`.
+
 ## Exercises
 
 _To be written._
