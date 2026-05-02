@@ -1,4 +1,4 @@
-# point_charges.r — Electric field of point-charge configurations.
+# point_charges.rlab — Electric field of point-charge configurations.
 #
 # Physical system:  point charges in vacuum on a 2-D slice; superposition.
 # Configurations:   dipole  (±q at  ±d/2 along x)

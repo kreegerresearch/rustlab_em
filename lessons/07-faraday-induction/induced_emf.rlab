@@ -1,4 +1,4 @@
-# induced_emf.r — Loop in a sinusoidal Bz(t); flux and EMF traces.
+# induced_emf.rlab — Loop in a sinusoidal Bz(t); flux and EMF traces.
 #
 # Geometry:   single loop of radius R = 5 cm, axis along ẑ,
 #             external Bz(t) = B0 sin(ω t) at f = 60 Hz, B0 = 0.1 T.

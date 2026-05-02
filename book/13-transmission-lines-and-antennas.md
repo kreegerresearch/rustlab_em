@@ -37,13 +37,13 @@ Every script pairs a *derivation* with a *numerical proof on the actual geometry
 
 | Script | Derivation | Geometry used to prove it |
 |---|---|---|
-| `coax_impedance.r` | $Z_0 = (\eta_0/2\pi)\ln(b/a)$ | 2D Laplace on the annular cross-section; extract $C'$ from flux and from energy; sweep $b/a$ |
-| `twin_wire_impedance.r` | $Z_0 \approx 120\ln(d/a)\,\Omega$ | 2D Laplace with two disks at $\pm V$; numerical $C'$ via $2U_E/V^2$ |
-| `telegrapher_propagation.r` | Wave speed from LC cascade | 1D FDTD on telegrapher's equations; measure $v$ from pulse propagation |
-| `vswr_standing_wave.r` | $\|V(z)\| = \|V^+\|\,\|1+\Gamma e^{-2jkz}\|$ | Driven terminated line; sweep $Z_L \in \{Z_0, \text{open}, \text{short}, 2Z_0\}$; extract VSWR |
-| `s_parameters_tline.r` | $S_{ij}$ from time-gated FFT | 1D two-section line with impedance step; Gaussian pulse; recover $S_{11}$, $S_{21}$ |
-| `dipole_standing_wave.r` | $I(z) = I_0\sin[k(L/2-\|z\|)]$ | Dipole-as-TL simulation for $L = \lambda/4, \lambda/2, \lambda, 3\lambda/2$ |
-| `radiation_resistance.r` | $R_{\rm rad} = 73.1\,\Omega$ half-wave, $R_{\rm rad} = 20\pi^2(L/\lambda)^2$ short dipole | 3D Poynting integral over a far-field sphere; numeric vs analytic |
+| `coax_impedance.rlab` | $Z_0 = (\eta_0/2\pi)\ln(b/a)$ | 2D Laplace on the annular cross-section; extract $C'$ from flux and from energy; sweep $b/a$ |
+| `twin_wire_impedance.rlab` | $Z_0 \approx 120\ln(d/a)\,\Omega$ | 2D Laplace with two disks at $\pm V$; numerical $C'$ via $2U_E/V^2$ |
+| `telegrapher_propagation.rlab` | Wave speed from LC cascade | 1D FDTD on telegrapher's equations; measure $v$ from pulse propagation |
+| `vswr_standing_wave.rlab` | $\|V(z)\| = \|V^+\|\,\|1+\Gamma e^{-2jkz}\|$ | Driven terminated line; sweep $Z_L \in \{Z_0, \text{open}, \text{short}, 2Z_0\}$; extract VSWR |
+| `s_parameters_tline.rlab` | $S_{ij}$ from time-gated FFT | 1D two-section line with impedance step; Gaussian pulse; recover $S_{11}$, $S_{21}$ |
+| `dipole_standing_wave.rlab` | $I(z) = I_0\sin[k(L/2-\|z\|)]$ | Dipole-as-TL simulation for $L = \lambda/4, \lambda/2, \lambda, 3\lambda/2$ |
+| `radiation_resistance.rlab` | $R_{\rm rad} = 73.1\,\Omega$ half-wave, $R_{\rm rad} = 20\pi^2(L/\lambda)^2$ short dipole | 3D Poynting integral over a far-field sphere; numeric vs analytic |
 
 ## Exercises
 

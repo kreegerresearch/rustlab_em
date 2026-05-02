@@ -16,10 +16,47 @@ A self-contained course for learning classical electromagnetics and Maxwell's eq
 Simulations run in [rustlab](../rustlab), a scientific computing CLI with a matrix-oriented scripting language. Run any script from the repo root:
 
 ```bash
-rustlab run lessons/05-poisson-laplace-bvp/parallel_plate.r
+rustlab run lessons/05-poisson-laplace-bvp/parallel_plate.rlab
 ```
 
 Generated plots (SVG/HTML) appear next to the script and are gitignored — the canonical rendered output lives under `book/`. Open the per-lesson SVGs in any browser, or run `make html` to build the interactive Plotly view at `book/index.html`.
+
+## Syntax Highlighting & IDE Support
+
+### Syntax Highlighting for `.rlab`
+
+Since `.rlab` is a custom extension for rustlab, you must manually associate it with MATLAB/Octave syntax in your editor.
+
+#### Visual Studio Code
+
+1. Open Settings (`Cmd+,`).
+2. Search for **Files: Associations**.
+3. Add a new item:
+   - **Item:** `*.rlab`
+   - **Value:** `matlab`
+
+#### Neovim / Vim
+
+Add the following to your `init.lua` or `.vimrc` to detect the filetype automatically:
+
+```lua
+-- Neovim (init.lua)
+vim.filetype.add({
+  extension = {
+    rlab = 'matlab',
+  },
+})
+```
+
+For legacy `.vimrc`:
+
+```vim
+autocmd BufRead,BufNewFile *.rlab set filetype=matlab
+```
+
+#### GitHub
+
+Syntax highlighting is managed via the [`.gitattributes`](.gitattributes) file in the root of this repo. No user action is required for web viewing.
 
 ## Lessons
 
@@ -103,10 +140,10 @@ Put everything together. Build a microstrip-fed rectangular patch antenna from s
 notebooks/                # editable source notebooks (committed)
   <slug>.md               # one per lesson; ```rustlab``` blocks + prose
   README.md               # editor-facing notes (skipped by the renderer)
-lessons/                  # standalone .r scripts (per-lesson subdirs)
+lessons/                  # standalone .rlab scripts (per-lesson subdirs)
   <slug>/
-    *.r                   # parallel to notebook code blocks
-    *.svg|html|png        # .r script artefacts (gitignored)
+    *.rlab                # parallel to notebook code blocks
+    *.svg|html|png        # .rlab script artefacts (gitignored)
 book/                     # rendered notebooks for GitHub display (committed)
   README.md               # hand-written index (GitHub landing)
   <slug>.md               # rendered notebook with inline plots
@@ -125,5 +162,5 @@ Each lesson notebook follows a consistent structure: Learning Objectives → Bac
 
 This repository uses a split licence:
 
-- **Code** (`.r` scripts, `Makefile`) is licensed under the [MIT License](LICENSE-MIT).
+- **Code** (`.rlab` scripts, `Makefile`) is licensed under the [MIT License](LICENSE-MIT).
 - **Documentation** (notebook sources and other prose) is licensed under [CC BY 4.0](LICENSE-CC-BY-4.0).

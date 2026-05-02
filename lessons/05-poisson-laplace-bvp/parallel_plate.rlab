@@ -1,4 +1,4 @@
-# parallel_plate.r — Two finite plates inside a grounded box; pinned-cell solve.
+# parallel_plate.rlab — Two finite plates inside a grounded box; pinned-cell solve.
 #
 # Geometry:   0.10 m × 0.10 m grounded box;
 #             top plate (V = +0.5) and bottom plate (V = -0.5),

@@ -1,4 +1,4 @@
-# material_map_2d.r — Air + FR-4 substrate + copper disk.
+# material_map_2d.rlab — Air + FR-4 substrate + copper disk.
 #
 # Builds three synchronized ny×nx arrays — eps_r, mu_r, sigma — using the
 # layered-overwrite idiom:

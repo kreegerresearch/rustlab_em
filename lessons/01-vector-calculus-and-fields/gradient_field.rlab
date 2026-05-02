@@ -1,4 +1,4 @@
-# gradient_field.r — Gradient of a 2-D Gaussian bump.
+# gradient_field.rlab — Gradient of a 2-D Gaussian bump.
 #
 # Physical system: scalar field f(x, y) = exp(-(x² + y²)/σ²) on [-2, 2]².
 # Key equations:   ∇f = -(2/σ²)·(x, y)·f(x, y)

@@ -1,4 +1,4 @@
-# conformal_disk.r — Staircase vs area-weighted conformal coverage.
+# conformal_disk.rlab — Staircase vs area-weighted conformal coverage.
 #
 # A binary mask resolves a curved boundary as a staircase: every cell is
 # fully inside or fully outside. Subgrid sampling builds a fractional

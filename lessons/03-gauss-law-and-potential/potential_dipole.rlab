@@ -1,4 +1,4 @@
-# potential_dipole.r — Dipole scalar potential and E = -∇V.
+# potential_dipole.rlab — Dipole scalar potential and E = -∇V.
 #
 # Physical system:  ±q at (±d/2, 0) in vacuum.
 # Potential:        V(x, y) = k_e p x / (x² + y²)^{3/2}  with  p = q d.

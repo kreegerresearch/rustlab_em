@@ -1,4 +1,4 @@
-# eddy_current_plate.r — Eddy currents in a thin conducting disk.
+# eddy_current_plate.rlab — Eddy currents in a thin conducting disk.
 #
 # Geometry:   copper disk of radius R = 6 cm in a 0.20 × 0.20 m grounded
 #             box, σ = 5.8e7 S/m, axial Ḃz = 1 T/s applied uniformly.

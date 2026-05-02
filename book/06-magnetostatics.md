@@ -459,13 +459,13 @@ The iron ring carries roughly three orders of magnitude more $|\vec B|$ than the
 
 | Script | What it computes |
 |---|---|
-| `biot_savart_loop.r` | Single circular loop; meridional quiver + on-axis closed-form check |
-| `solenoid_field.r` | 50-turn finite solenoid; axial $B_z(z)$ vs the $\mu_0 n I$ Ampère limit |
-| `helmholtz_pair.r` | $d/R$ sweep showing the Helmholtz uniformity sweet spot |
-| `vector_potential_2d.r` | Two parallel opposing wires via $A_z$-Poisson; recovered $\vec B$ vs analytic |
-| `iron_core_shielding.r` | Wire inside an iron annulus ($\mu_r = 1000$); flux concentration + exterior shielding |
+| `biot_savart_loop.rlab` | Single circular loop; meridional quiver + on-axis closed-form check |
+| `solenoid_field.rlab` | 50-turn finite solenoid; axial $B_z(z)$ vs the $\mu_0 n I$ Ampère limit |
+| `helmholtz_pair.rlab` | $d/R$ sweep showing the Helmholtz uniformity sweet spot |
+| `vector_potential_2d.rlab` | Two parallel opposing wires via $A_z$-Poisson; recovered $\vec B$ vs analytic |
+| `iron_core_shielding.rlab` | Wire inside an iron annulus ($\mu_r = 1000$); flux concentration + exterior shielding |
 
-Run all five with `make lesson-06`, or individually via `rustlab run lessons/06-magnetostatics/<name>.r`.
+Run all five with `make lesson-06`, or individually via `rustlab run lessons/06-magnetostatics/<name>.rlab`.
 
 ## Expected Numerical Outputs Summary
 

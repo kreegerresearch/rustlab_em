@@ -25,7 +25,7 @@ If you want to skip the rationale and just copy files, jump to
   files — reviewers see only what changed in prose or code.
 - **CI drift guard.** A single `make notebooks-check` ensures the
   committed rendered output matches the sources it was generated from.
-- **Standalone scripts on the side.** `.r` files exist parallel to
+- **Standalone scripts on the side.** `.rlab` files exist parallel to
   notebook code blocks for shell-based tinkering, separate from the
   rendered pipeline.
 
@@ -39,12 +39,12 @@ your-course/
 │   ├── ...
 │   └── README.md                # editor-facing notes (skipped by the renderer)
 │
-├── lessons/                     # standalone .r scripts (per-lesson, optional)
+├── lessons/                     # standalone .rlab scripts (per-lesson, optional)
 │   ├── 01-topic-slug/
-│   │   ├── some_script.r
-│   │   ├── another_script.r
+│   │   ├── some_script.rlab
+│   │   ├── another_script.rlab
 │   │   └── *.svg|html|png       # script artefacts (gitignored)
-│   └── README.md                # explains the .r-script convention
+│   └── README.md                # explains the .rlab-script convention
 │
 ├── book/                        # rendered output for GitHub display (committed)
 │   ├── README.md                # hand-written index — GitHub landing
@@ -66,7 +66,7 @@ your-course/
 
 - **`notebooks/`** — what humans edit. Flat, one source `.md` per
   lesson. The filename is the slug; that's what propagates downstream.
-- **`lessons/`** — where standalone `.r` scripts live, organized by
+- **`lessons/`** — where standalone `.rlab` scripts live, organized by
   slug. Optional; skip the dir entirely if a lesson has no side
   scripts. Created on demand as scripts are authored.
 - **`book/`** — what GitHub displays and what `make notebooks`
@@ -84,8 +84,8 @@ your-course/
 - Source notebook: `notebooks/<slug>.md`. The filename stem becomes the
   slug at every later stage (`book/<slug>.md`, `book/plots/<slug>/`,
   `book/<slug>.html`).
-- Standalone scripts: `lessons/<slug>/<descriptive-name>.r`. Comments
-  inside `.r` files use `#`.
+- Standalone scripts: `lessons/<slug>/<descriptive-name>.rlab`. Comments
+  inside `.rlab` files use `#`.
 
 ## Editing workflow
 
@@ -118,7 +118,7 @@ BOOK := book
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*##' $(MAKEFILE_LIST) | \
 		awk 'BEGIN {FS = ":.*## "}; {printf "  \033[36m%-18s\033[0m %s\n", $$1, $$2}'
-	@echo "  lesson-NN          Run .r scripts for one lesson (e.g. make lesson-01)"
+	@echo "  lesson-NN          Run .rlab scripts for one lesson (e.g. make lesson-01)"
 
 all: notebooks html ## Regenerate the rendered book/ and the interactive HTML build
 
@@ -136,11 +136,11 @@ notebooks-check: notebooks
 		git status --short -- $(BOOK)/ >&2; exit 1; \
 	fi
 
-# Per-lesson script runner: `make lesson-01` runs lessons/01-*/*.r.
+# Per-lesson script runner: `make lesson-01` runs lessons/01-*/*.rlab.
 lesson-%:
-	@for f in lessons/$*-*/*.r; do echo "=== $$f ==="; rustlab run "$$f" || true; done
+	@for f in lessons/$*-*/*.rlab; do echo "=== $$f ==="; rustlab run "$$f" || true; done
 
-clean: ## Delete the interactive HTML build and .r script artefacts
+clean: ## Delete the interactive HTML build and .rlab script artefacts
 	rm -f $(BOOK)/*.html
 	rm -f lessons/*/*.svg lessons/*/*.html lessons/*/*.png
 ```
@@ -175,7 +175,7 @@ lose the hand-written-README behaviour and the auto-generated
 ## .gitignore
 
 ```
-# Standalone .r script artefacts. Scripts call savefig("foo.svg")
+# Standalone .rlab script artefacts. Scripts call savefig("foo.svg")
 # relative to their own dir (no subdirectory), and the canonical
 # rendered plots live under book/, so we ignore the artefacts in
 # place rather than committing them.
@@ -190,8 +190,8 @@ book/*.html
 
 There is deliberately no `outputs/` subdirectory per lesson. Scripts
 call `savefig("foo.svg")` (no path prefix); the file lands next to the
-`.r` and is gitignored. The committed book is the single canonical
-location for rendered plots — `.r` artefacts are throwaway tinkering
+`.rlab` and is gitignored. The committed book is the single canonical
+location for rendered plots — `.rlab` artefacts are throwaway tinkering
 output.
 
 ## CI drift guard
@@ -221,7 +221,7 @@ course-style notebooks:
    be present even when a section is all theory or all example, so
    readers can tell the two modes apart at a glance. Pure-reference H2s
    (formal definitions, grid conventions) stay flat without H3 markers.
-6. `## Standalone Scripts` — short table referencing the parallel `.r`
+6. `## Standalone Scripts` — short table referencing the parallel `.rlab`
    files under `lessons/<slug>/`.
 7. `## Expected Numerical Outputs Summary` — Markdown table of every
    `print()` value students should see.
@@ -234,9 +234,9 @@ Notebook authoring constraints (renderer-specific):
   Define `[X, Y]`, `dx`, `dy` etc. once, reuse below.
 - The renderer captures the active figure automatically. **Don't** call
   `figure()` or `savefig()` inside notebook code blocks — those belong
-  in standalone `.r` scripts.
+  in standalone `.rlab` scripts.
 - Use `clf;` at the start of each plot block to clear before drawing.
-- Comments in notebook code blocks: `%`. Comments in `.r` files: `#`.
+- Comments in notebook code blocks: `%`. Comments in `.rlab` files: `#`.
 
 ## Bootstrap a new project
 
@@ -299,7 +299,7 @@ scripts, and updating the table in `book/README.md`.
 
 ### From `lessons/<slug>/lesson.md` (per-lesson source dir)
 
-If your project has source notebooks colocated with `.r` scripts under
+If your project has source notebooks colocated with `.rlab` scripts under
 each `lessons/<slug>/`, hoist them to a flat `notebooks/`:
 
 ```sh
@@ -308,7 +308,7 @@ for d in lessons/*/; do
     slug=$(basename "$d")
     if [ -f "$d/lesson.md" ]; then
         mv "$d/lesson.md" "notebooks/$slug.md"
-        # If the dir is now empty (no .r scripts), drop it.
+        # If the dir is now empty (no .rlab scripts), drop it.
         rmdir "$d" 2>/dev/null
     fi
 done

@@ -1,4 +1,4 @@
-# gauss_sphere.r — Uniformly charged sphere via Gauss's law.
+# gauss_sphere.rlab — Uniformly charged sphere via Gauss's law.
 #
 # Physical system:  ball of radius R with total charge Q in vacuum.
 # Inside  (r ≤ R):  E_r = k_e Q r / R³,    V = k_e Q (3R² - r²) / (2R³)

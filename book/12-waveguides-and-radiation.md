@@ -26,11 +26,11 @@ Key equations: TE$_{mn}$ cutoff $\omega_c = c\pi\sqrt{(m/a)^2+(n/b)^2}$; wavegui
 
 | Script | What it simulates |
 |---|---|
-| `waveguide_modes.r` | Rectangular guide (and L-shape) as sparse generalized eigenvalue problem; lowest 4 modes |
-| `cavity_resonances.r` | 2D rectangular cavity eigenmodes; perturbation-theory shift from a small $\varepsilon$ insert |
-| `hertzian_dipole.r` | Polar far-field pattern; total radiated power |
-| `half_wave_dipole.r` | Integrated sinusoidal current; narrower pattern vs Hertzian |
-| `nf2ff_transform.r` | Wrap a dipole FDTD run in a closed surface; integrate to the far-field; match analytic $\sin\theta$ |
+| `waveguide_modes.rlab` | Rectangular guide (and L-shape) as sparse generalized eigenvalue problem; lowest 4 modes |
+| `cavity_resonances.rlab` | 2D rectangular cavity eigenmodes; perturbation-theory shift from a small $\varepsilon$ insert |
+| `hertzian_dipole.rlab` | Polar far-field pattern; total radiated power |
+| `half_wave_dipole.rlab` | Integrated sinusoidal current; narrower pattern vs Hertzian |
+| `nf2ff_transform.rlab` | Wrap a dipole FDTD run in a closed surface; integrate to the far-field; match analytic $\sin\theta$ |
 
 ## Exercises
 

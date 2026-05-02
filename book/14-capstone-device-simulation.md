@@ -24,7 +24,7 @@ _To be written. The lesson does not introduce new theory; it is a pipeline integ
 
 | Script | What it simulates |
 |---|---|
-| `patch_antenna.r` | Single long script, clearly sectioned. (1) Build the geometry + material map as `Tensor3` arrays. (2) Choose $\Delta = \lambda_{\rm min}/20$ and CFL-limited $\Delta t$. (3) TF/SF-driven Gaussian pulse at the waveport plane, covering 1–5 GHz. (4) Run FDTD to steady-state decay. (5) Extract $S_{11}$ via waveport incident/reflected FFT. (6) Record tangential $\vec E$, $\vec H$ on a closed surface above the patch; NF→FF integrate for the 3D gain pattern. (7) Compare resonant frequency, $S_{11}$ depth, bandwidth, and gain pattern to a published design. |
+| `patch_antenna.rlab` | Single long script, clearly sectioned. (1) Build the geometry + material map as `Tensor3` arrays. (2) Choose $\Delta = \lambda_{\rm min}/20$ and CFL-limited $\Delta t$. (3) TF/SF-driven Gaussian pulse at the waveport plane, covering 1–5 GHz. (4) Run FDTD to steady-state decay. (5) Extract $S_{11}$ via waveport incident/reflected FFT. (6) Record tangential $\vec E$, $\vec H$ on a closed surface above the patch; NF→FF integrate for the 3D gain pattern. (7) Compare resonant frequency, $S_{11}$ depth, bandwidth, and gain pattern to a published design. |
 
 ## Exercises
 

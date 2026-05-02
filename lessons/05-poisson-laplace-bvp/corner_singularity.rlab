@@ -1,4 +1,4 @@
-# corner_singularity.r — Re-entrant corner field divergence on an L-shape.
+# corner_singularity.rlab — Re-entrant corner field divergence on an L-shape.
 #
 # Geometry:   0.10 m × 0.10 m grounded box; 0.04 m × 0.04 m conductor at
 #             V = 1 in the upper-right quadrant. The L-shaped Laplace

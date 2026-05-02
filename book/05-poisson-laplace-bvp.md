@@ -540,13 +540,13 @@ The fitted slope sits in the neighbourhood of $-1/3$ — the asymptotic singular
 
 | Script | What it solves |
 |---|---|
-| `laplace_2d.r` | Unit-square Laplace with $V_{\rm top} = \sin(\pi x)$; spsolve vs analytic |
-| `iterative_solvers.r` | Jacobi / Gauss–Seidel / SOR convergence side by side on the same problem |
-| `parallel_plate.r` | Two finite plates in a grounded box; pinned cells, fringing field |
-| `dielectric_slab.r` | 1-D capacitor with $\varepsilon_r = 4$ slab; series-capacitor formula |
-| `corner_singularity.r` | L-shape conductor; log-log fit recovers the $r^{-1/3}$ exponent |
+| `laplace_2d.rlab` | Unit-square Laplace with $V_{\rm top} = \sin(\pi x)$; spsolve vs analytic |
+| `iterative_solvers.rlab` | Jacobi / Gauss–Seidel / SOR convergence side by side on the same problem |
+| `parallel_plate.rlab` | Two finite plates in a grounded box; pinned cells, fringing field |
+| `dielectric_slab.rlab` | 1-D capacitor with $\varepsilon_r = 4$ slab; series-capacitor formula |
+| `corner_singularity.rlab` | L-shape conductor; log-log fit recovers the $r^{-1/3}$ exponent |
 
-Run all five with `make lesson-05`, or one at a time via `rustlab run lessons/05-poisson-laplace-bvp/<name>.r`. Each writes SVGs next to itself; artefacts are gitignored.
+Run all five with `make lesson-05`, or one at a time via `rustlab run lessons/05-poisson-laplace-bvp/<name>.rlab`. Each writes SVGs next to itself; artefacts are gitignored.
 
 ## Expected Numerical Outputs Summary
 

@@ -1,4 +1,4 @@
-# solenoid_field.r — Finite solenoid: stack of loops, on-axis Bz.
+# solenoid_field.rlab — Finite solenoid: stack of loops, on-axis Bz.
 #
 # Geometry:   N_l = 50 loops of radius R = 2 cm spread uniformly over
 #             length L = 10 cm. Current I = 1 A per turn.

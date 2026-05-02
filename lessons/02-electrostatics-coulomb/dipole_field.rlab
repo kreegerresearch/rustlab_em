@@ -1,4 +1,4 @@
-# dipole_field.r — Exact dipole superposition vs the far-field formula.
+# dipole_field.rlab — Exact dipole superposition vs the far-field formula.
 #
 # Physical system:  ±q at (±d/2, 0) in vacuum.
 # Exact:            E = k_e q [(r - r_+)/|r - r_+|^3 - (r - r_-)/|r - r_-|^3]

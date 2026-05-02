@@ -1,4 +1,4 @@
-# laplace_2d.r — Laplace equation on a unit square via direct sparse solve.
+# laplace_2d.rlab — Laplace equation on a unit square via direct sparse solve.
 #
 # PDE:        ∇²V = 0  on (0,1)²
 # Boundary:   V(x, 0) = V(0, y) = V(1, y) = 0;   V(x, 1) = sin(π x)

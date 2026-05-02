@@ -1,4 +1,4 @@
-# iron_core_shielding.r — Wire inside an iron annulus; flux concentration.
+# iron_core_shielding.rlab — Wire inside an iron annulus; flux concentration.
 #
 # Geometry:   1-A wire at the centre of a 0.20 × 0.20 m grounded box,
 #             surrounded by an iron annulus (μ_r = 1000) with inner radius

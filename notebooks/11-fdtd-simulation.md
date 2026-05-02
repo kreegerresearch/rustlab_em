@@ -25,11 +25,11 @@ Key equations: 1D Yee updates for $H_y$ and $E_z$ in a medium with $\varepsilon(
 
 | Script | What it simulates |
 |---|---|
-| `fdtd_1d.r` | Gaussian pulse in vacuum + dielectric slab; Fresnel reflection-coefficient check |
-| `fdtd_2d_scattering.r` | TF/SF plane wave off a PEC cylinder; incident/scattered/total fields |
-| `fdtd_dispersive.r` | 1D pulse through a thin Drude gold film; plasma transmission peak above $\omega_p$ |
-| `fdtd_tfsf_validation.r` | TF/SF box with empty interior; verify exact injection, zero scatter outside |
-| `fdtd_pml_depth.r` | Point source in a 2D box; measure residual reflection vs PML depth |
+| `fdtd_1d.rlab` | Gaussian pulse in vacuum + dielectric slab; Fresnel reflection-coefficient check |
+| `fdtd_2d_scattering.rlab` | TF/SF plane wave off a PEC cylinder; incident/scattered/total fields |
+| `fdtd_dispersive.rlab` | 1D pulse through a thin Drude gold film; plasma transmission peak above $\omega_p$ |
+| `fdtd_tfsf_validation.rlab` | TF/SF box with empty interior; verify exact injection, zero scatter outside |
+| `fdtd_pml_depth.rlab` | Point source in a 2D box; measure residual reflection vs PML depth |
 
 > **Time-domain visualization.** When the body is drafted, the FDTD scripts use rustlab's `frame()` / `saveanim()` builtins to emit a Plotly HTML animation of the time-stepping field (play/pause + per-frame slider). See [animation-export.md](../dev/rustlab/requests/animation-export.md) and rustlab `examples/notebooks/animation.md`.
 

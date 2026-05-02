@@ -1,4 +1,4 @@
-# shape_rasterization.r — Rasterize one of each primitive: rect, disk, polygon.
+# shape_rasterization.rlab — Rasterize one of each primitive: rect, disk, polygon.
 #
 # Physical role: every later solver consumes ny×nx arrays describing what
 # material is at each grid cell. This script demonstrates the three rustlab

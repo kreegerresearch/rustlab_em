@@ -297,11 +297,11 @@ The numerical $|J|$ at $r = 0.7\,R$ matches the analytic $\sigma\dot B_z r/2$ wi
 
 | Script | What it computes |
 |---|---|
-| `induced_emf.r` | Loop in $B_z(t) = B_0\sin(\omega t)$; flux and EMF traces over two periods |
-| `mutual_inductance.r` | $M$ for concentric coplanar loops via Biot–Savart + flux integral |
-| `eddy_current_plate.r` | Stream-function Poisson on a conducting disk; recovered $\vec J$ pattern |
+| `induced_emf.rlab` | Loop in $B_z(t) = B_0\sin(\omega t)$; flux and EMF traces over two periods |
+| `mutual_inductance.rlab` | $M$ for concentric coplanar loops via Biot–Savart + flux integral |
+| `eddy_current_plate.rlab` | Stream-function Poisson on a conducting disk; recovered $\vec J$ pattern |
 
-Run all three with `make lesson-07`, or one at a time via `rustlab run lessons/07-faraday-induction/<name>.r`.
+Run all three with `make lesson-07`, or one at a time via `rustlab run lessons/07-faraday-induction/<name>.rlab`.
 
 ## Expected Numerical Outputs Summary
 

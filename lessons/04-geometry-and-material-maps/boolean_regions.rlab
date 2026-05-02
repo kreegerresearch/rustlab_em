@@ -1,4 +1,4 @@
-# boolean_regions.r — Compose primitives via boolean set operations.
+# boolean_regions.rlab — Compose primitives via boolean set operations.
 #
 # Mask algebra (see ../../notebooks/04-geometry-and-material-maps.md):
 #   intersection:   M1 .* M2

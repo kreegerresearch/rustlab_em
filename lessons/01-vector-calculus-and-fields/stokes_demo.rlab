@@ -1,4 +1,4 @@
-# stokes_demo.r — Numerical verification of Stokes' theorem.
+# stokes_demo.rlab — Numerical verification of Stokes' theorem.
 #
 # Field: F = (-y, x)       →  (∇×F)_z = 2 everywhere.
 # Loop:  square [-a, a]²   →  enclosed area = (2a)² = 4,   expected ∮ = 8.

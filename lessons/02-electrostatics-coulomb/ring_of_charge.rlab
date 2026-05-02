@@ -1,4 +1,4 @@
-# ring_of_charge.r — Axial E-field of a uniformly charged ring.
+# ring_of_charge.rlab — Axial E-field of a uniformly charged ring.
 #
 # Physical system:  ring of radius R with total charge Q in the xy-plane,
 #                   centered at the origin.

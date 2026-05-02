@@ -1,4 +1,4 @@
-# biot_savart_loop.r — Magnetic field of a single circular current loop.
+# biot_savart_loop.rlab — Magnetic field of a single circular current loop.
 #
 # Geometry:   horizontal loop, radius R = 5 cm, current I = 1 A, in xy-plane.
 # Method:     numerical Biot-Savart over N_seg loop segments, sampled on

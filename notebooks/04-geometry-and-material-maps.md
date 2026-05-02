@@ -310,12 +310,12 @@ For a shape with no curved boundaries (a rectangle aligned to the axes, say), $\
 
 | Script | What it builds |
 |---|---|
-| `shape_rasterization.r` | One mask of each kind (rect, disk, polygon); area sanity checks |
-| `boolean_regions.r` | Annulus by difference, C-shape, integer-coded two-shape regions |
-| `material_map_2d.r` | Air + FR-4 block + copper disk → synchronized $\varepsilon_r$, $\mu_r$, $\sigma$ |
-| `conformal_disk.r` | Subgrid $\alpha$ map for a unit disk; staircase vs conformal area error |
+| `shape_rasterization.rlab` | One mask of each kind (rect, disk, polygon); area sanity checks |
+| `boolean_regions.rlab` | Annulus by difference, C-shape, integer-coded two-shape regions |
+| `material_map_2d.rlab` | Air + FR-4 block + copper disk → synchronized $\varepsilon_r$, $\mu_r$, $\sigma$ |
+| `conformal_disk.rlab` | Subgrid $\alpha$ map for a unit disk; staircase vs conformal area error |
 
-Run all four with `make lesson-04`, or one at a time via `rustlab run lessons/04-geometry-and-material-maps/<name>.r`. Each writes SVGs next to itself; artefacts are gitignored.
+Run all four with `make lesson-04`, or one at a time via `rustlab run lessons/04-geometry-and-material-maps/<name>.rlab`. Each writes SVGs next to itself; artefacts are gitignored.
 
 ## Expected Numerical Outputs Summary
 

@@ -275,11 +275,11 @@ For shell-based experimentation, three rustlab scripts in this directory reprodu
 
 | Script | What it computes |
 |---|---|
-| `gradient_field.r` | Gaussian bump gradient with quiver overlay; checks numerical vs analytic |
-| `divergence_curl.r` | Radial and rotational fields side by side |
-| `stokes_demo.r` | Square-loop circulation vs surface-integrated curl |
+| `gradient_field.rlab` | Gaussian bump gradient with quiver overlay; checks numerical vs analytic |
+| `divergence_curl.rlab` | Radial and rotational fields side by side |
+| `stokes_demo.rlab` | Square-loop circulation vs surface-integrated curl |
 
-Run all three with `make lesson-01` from the repo root (or `rustlab run lessons/01-vector-calculus-and-fields/<name>.r` for one). Each writes SVGs to `outputs/` (gitignored).
+Run all three with `make lesson-01` from the repo root (or `rustlab run lessons/01-vector-calculus-and-fields/<name>.rlab` for one). Each writes SVGs to `outputs/` (gitignored).
 
 ## Expected Numerical Outputs Summary
 
@@ -299,10 +299,10 @@ Run all three with `make lesson-01` from the repo root (or `rustlab run lessons/
 
 ## Exercises
 
-1. **Analytic gradient check.** In `gradient_field.r`, compute the analytic $\nabla f = -(2/\sigma^2)(x, y)\,f$ at every grid point and plot the pointwise error $|\nabla f_{\rm num} - \nabla f_{\rm ana}|$ as a heatmap. Where is the error largest? Why?
+1. **Analytic gradient check.** In `gradient_field.rlab`, compute the analytic $\nabla f = -(2/\sigma^2)(x, y)\,f$ at every grid point and plot the pointwise error $|\nabla f_{\rm num} - \nabla f_{\rm ana}|$ as a heatmap. Where is the error largest? Why?
 2. **Divergence theorem on the Gaussian.** Integrate $\nabla\cdot(\nabla f) = \nabla^2 f$ over the $[-2, 2]^2$ domain (2-D trapezoidal) and compare to the boundary flux $\oint_{\partial\Omega}\nabla f\cdot d\vec A$ via line integrals along the four edges.
-3. **Saddle field.** Replace the rotational field in `divergence_curl.r` with $\vec F = (x, -y)$. Predict the divergence and curl analytically, then verify numerically.
-4. **Loop shape independence.** In `stokes_demo.r`, swap the square for a circular loop of the same enclosed area and re-run. The circulation should match.
+3. **Saddle field.** Replace the rotational field in `divergence_curl.rlab` with $\vec F = (x, -y)$. Predict the divergence and curl analytically, then verify numerically.
+4. **Loop shape independence.** In `stokes_demo.rlab`, swap the square for a circular loop of the same enclosed area and re-run. The circulation should match.
 5. **3D warm-up.** Using `gradient3`, `divergence3`, and `curl3`, verify $\nabla^2 V = 6$ for $V = x^2 + y^2 + z^2$ on a 5×5×5 grid.
 
 ## What's next

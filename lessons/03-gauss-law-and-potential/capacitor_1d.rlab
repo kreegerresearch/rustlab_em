@@ -1,4 +1,4 @@
-# capacitor_1d.r — Parallel-plate capacitor in 1-D from Gauss's law.
+# capacitor_1d.rlab — Parallel-plate capacitor in 1-D from Gauss's law.
 #
 # Physical system:  two infinite parallel plates with surface charge ±σ,
 #                   separated by gap d, vacuum between.

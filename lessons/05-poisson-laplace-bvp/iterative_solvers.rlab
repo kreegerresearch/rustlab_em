@@ -1,4 +1,4 @@
-# iterative_solvers.r — Jacobi vs Gauss-Seidel vs SOR on the unit-square Laplace.
+# iterative_solvers.rlab — Jacobi vs Gauss-Seidel vs SOR on the unit-square Laplace.
 #
 # PDE:        ∇²V = 0  on (0,1)²,  V_top = sin(π x), other edges 0.
 # Methods:    Jacobi, Gauss-Seidel, SOR (with optimal ω).

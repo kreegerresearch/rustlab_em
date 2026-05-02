@@ -1,4 +1,4 @@
-# vector_potential_2d.r — 2D Az-Poisson for two opposing parallel wires.
+# vector_potential_2d.rlab — 2D Az-Poisson for two opposing parallel wires.
 #
 # Geometry:   two infinite wires along ẑ at x = ±d/2 with currents ±I.
 #             0.30 × 0.30 m grounded outer box on a 150 × 150 grid.

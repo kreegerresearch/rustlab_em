@@ -1,0 +1,5 @@
+# Tell GitHub's Linguist library to highlight .rlab files using MATLAB
+# rules and to count them as MATLAB code in the repo language stats.
+# .rlab is rustlab's custom extension; rustlab's own grammar isn't
+# upstreamed in Linguist, so MATLAB/Octave is the closest match.
+*.rlab linguist-language=MATLAB

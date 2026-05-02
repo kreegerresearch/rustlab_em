@@ -1,4 +1,4 @@
-# helmholtz_pair.r — Coaxial coil pair, on-axis Bz uniformity sweep.
+# helmholtz_pair.rlab — Coaxial coil pair, on-axis Bz uniformity sweep.
 #
 # Geometry:   two coaxial loops, radius R = 5 cm, current I = 1 A each,
 #             separation d swept across {0.5R, 1.0R, 1.5R}.

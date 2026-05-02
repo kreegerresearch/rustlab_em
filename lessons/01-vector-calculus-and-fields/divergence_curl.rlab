@@ -1,4 +1,4 @@
-# divergence_curl.r — Divergence and curl of the two canonical 2-D fields.
+# divergence_curl.rlab — Divergence and curl of the two canonical 2-D fields.
 #
 # Radial field:     F = (x, y)    →  ∇·F = 2,  ∇×F = 0   (pure source)
 # Rotational field: F = (-y, x)   →  ∇·F = 0,  ∇×F = 2   (pure rotation)

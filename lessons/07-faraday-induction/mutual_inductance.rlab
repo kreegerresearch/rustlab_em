@@ -1,4 +1,4 @@
-# mutual_inductance.r — M for concentric coplanar loops.
+# mutual_inductance.rlab — M for concentric coplanar loops.
 #
 # Geometry:   outer loop radius b = 0.10 m (current I1 = 1 A, in xy-plane),
 #             inner loop radius a = 0.02 m (also in xy-plane, concentric).

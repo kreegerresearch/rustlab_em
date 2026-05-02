@@ -1,4 +1,4 @@
-# dielectric_slab.r — Capacitor with εr = 4 slab filling half the gap.
+# dielectric_slab.rlab — Capacitor with εr = 4 slab filling half the gap.
 #
 # Geometry:   5 mm × 10 mm grid, Neumann sides for a 1-D-like solution.
 #             Bottom plate (y = 0) at V = 0; top plate (y = 10 mm) at V = 1.
