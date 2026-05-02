@@ -1,8 +1,24 @@
 # Request: rustlab CLI announces itself as the `.rlab` handler
 
-**Status**: Proposed
+**Status**: **Landed**
 **Date opened**: 2026-05-02
+**Date landed**: 2026-05-02 (same-day turnaround)
+**Upstream commit**: `ef460bc` ("Rename .r → .rlab; bump to 0.2.0; add Environment & Tooling docs")
 **Origin**: `rustlab_em` repo-wide migration of script extension `.r` → `.rlab` (commit `c00237c`).
+
+## What shipped
+
+`commands/run::execute` now emits a single always-on stderr banner at the top of every `rustlab run` invocation. Observed format (rustlab 0.2.0):
+
+```
+rustlab 0.2.0 — interpreting <abs-path-to-script> (.rlab)
+```
+
+Locked in by an integration test in the upstream repo. Same-day turnaround on the request: filed in commit `a340c6e` here, shipped in upstream `ef460bc`.
+
+Compared to the proposal below: stderr-not-stdout was honoured, single-line was honoured, version-in-banner was honoured. The `--quiet` / `RUSTLAB_QUIET=1` suppression switch and the optional non-`.rlab` extension lint were not added; not blocking, can be follow-on requests if a use-case for silence emerges (e.g. golden-output diff testing of stderr).
+
+## Original proposal (kept for context)
 
 ## Motivation
 

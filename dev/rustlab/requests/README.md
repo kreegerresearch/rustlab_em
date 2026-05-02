@@ -20,7 +20,7 @@ Recent post-`em_requests` additions:
 
 | File | Topic | Status |
 |------|-------|--------|
-| [`rlab-extension-handler-log.md`](rlab-extension-handler-log.md) | rustlab CLI announces itself as the `.rlab` handler at script start (post `.r` → `.rlab` migration) | **Proposed** |
+| [`rlab-extension-handler-log.md`](rlab-extension-handler-log.md) | rustlab CLI announces itself as the `.rlab` handler at script start (post `.r` → `.rlab` migration) | **Landed** (`ef460bc`, same-day turnaround) |
 
 For the upstream rustlab implementation perspective, see:
 - [`../../../../rustlab/dev/plans/em_requests_plan.md`](../../../../rustlab/dev/plans/em_requests_plan.md) — the reference plan

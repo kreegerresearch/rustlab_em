@@ -68,11 +68,11 @@ None of those map to a runtime claim: every `.rlab` script in this repo is parse
 
 ## What "rustlab as its own language" buys us long-term
 
-Three concrete payoffs once the language identity is taken seriously:
+Three concrete payoffs once the language identity is taken seriously. The third already shipped:
 
 - **A native Linguist definition.** Submitting a TextMate grammar + Linguist entry will let GitHub display the curriculum as rustlab — accurate language stats, accurate syntax classes (so a future `frame()` builtin gets coloured as a builtin call rather than a generic MATLAB function name).
 - **A language server.** A rustlab LSP server backed by the existing parser would unlock go-to-definition, hover-docs over builtins, and inline diagnostic surfacing — none of which MATLAB's tooling provides for `.rlab` files.
-- **A clear self-identification on every run.** [`dev/rustlab/requests/rlab-extension-handler-log.md`](../dev/rustlab/requests/rlab-extension-handler-log.md) proposes a one-line stderr banner — `rustlab vX.Y.Z — handling .rlab file: <path>` — at script startup. Cheap, immediate, and reinforces the language identity in every CI log and every developer terminal.
+- **A clear self-identification on every run.** ✅ **Shipped in rustlab 0.2.0** (upstream commit `ef460bc`). Every `rustlab run <script>.rlab` invocation now prints `rustlab 0.2.0 — interpreting <path> (.rlab)` to stderr at startup. The line is always-on, single-line, and locked in by an upstream integration test. Filed at [`../dev/rustlab/requests/rlab-extension-handler-log.md`](../dev/rustlab/requests/rlab-extension-handler-log.md), shipped same-day.
 
 ## See also
 
