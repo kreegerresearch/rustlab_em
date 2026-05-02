@@ -21,23 +21,27 @@ rustlab run lessons/05-poisson-laplace-bvp/parallel_plate.rlab
 
 Generated plots (SVG/HTML) appear next to the script and are gitignored — the canonical rendered output lives under `book/`. Open the per-lesson SVGs in any browser, or run `make html` to build the interactive Plotly view at `book/index.html`.
 
-## Syntax Highlighting & IDE Support
+## Environment & Tooling
 
-### Syntax Highlighting for `.rlab`
+### The `.rlab` Language Extension
 
-Since `.rlab` is a custom extension for rustlab, you must manually associate it with MATLAB/Octave syntax in your editor.
+rustlab utilizes the `.rlab` extension for its DSP modeling files. While rustlab is a distinct language, we currently leverage MATLAB/Octave syntax highlighting definitions as a temporary measure for visual clarity in development environments.
+
+### Syntax Highlighting Setup
 
 #### Visual Studio Code
 
-1. Open Settings (`Cmd+,`).
-2. Search for **Files: Associations**.
-3. Add a new item:
-   - **Item:** `*.rlab`
-   - **Value:** `matlab`
+Associate the extension by adding this to your `settings.json`:
+
+```json
+"files.associations": {
+    "*.rlab": "matlab"
+}
+```
 
 #### Neovim / Vim
 
-Add the following to your `init.lua` or `.vimrc` to detect the filetype automatically:
+Add the following to your configuration to ensure `.rlab` files are treated with mathematical syntax highlighting:
 
 ```lua
 -- Neovim (init.lua)
@@ -56,7 +60,7 @@ autocmd BufRead,BufNewFile *.rlab set filetype=matlab
 
 #### GitHub
 
-Syntax highlighting is managed via the [`.gitattributes`](.gitattributes) file in the root of this repo. No user action is required for web viewing.
+Repository highlighting is managed via [`.gitattributes`](.gitattributes). Note that while GitHub may label this code as "MATLAB" in the language statistics bar, this is a temporary mapping until the rustlab Linguist definition is finalized.
 
 ## Lessons
 

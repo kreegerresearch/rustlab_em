@@ -16,6 +16,12 @@ These are **requests**, not implementations — `rustlab_em` scripts work around
 
 All five original requests have landed. The follow-on sweep — additional rustlab features identified during the curriculum draft — lives in [`em_requests.md`](em_requests.md), which has its own per-§ status table.
 
+Recent post-`em_requests` additions:
+
+| File | Topic | Status |
+|------|-------|--------|
+| [`rlab-extension-handler-log.md`](rlab-extension-handler-log.md) | rustlab CLI announces itself as the `.rlab` handler at script start (post `.r` → `.rlab` migration) | **Proposed** |
+
 For the upstream rustlab implementation perspective, see:
 - [`../../../../rustlab/dev/plans/em_requests_plan.md`](../../../../rustlab/dev/plans/em_requests_plan.md) — the reference plan
 - [`../../../../rustlab/dev/plans/em_requests_queue.md`](../../../../rustlab/dev/plans/em_requests_queue.md) — the action queue with per-item commit references
