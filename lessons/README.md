@@ -26,13 +26,13 @@ make lesson-01     # run every .r in lesson 01
 ```
 
 Scripts call `savefig("foo.svg")` next to themselves; the canonical
-rendered plots live in [`../site/`](../site/), so `.r` artefacts
+rendered plots live in [`../book/`](../book/), so `.r` artefacts
 (`*.svg`, `*.html`, `*.png` under each lesson dir) are gitignored.
 
 ## Why have both notebooks and scripts?
 
 The notebook is the lesson — prose, math, and code interleaved, executed
-by the renderer into the published site. The `.r` scripts are *parallel*
+by the renderer into the published book. The `.r` scripts are *parallel*
 to the notebook's code blocks: each script maps to one or two
 ` ```rustlab ` blocks in the notebook source. Tinker with a script
 without touching the notebook to explore one concept in isolation.
