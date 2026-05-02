@@ -1,0 +1,75 @@
+# iterative_solvers.r — Jacobi vs Gauss-Seidel vs SOR on the unit-square Laplace.
+#
+# PDE:        ∇²V = 0  on (0,1)²,  V_top = sin(π x), other edges 0.
+# Methods:    Jacobi, Gauss-Seidel, SOR (with optimal ω).
+# Spectral radii (theory, N×N grid):
+#   Jacobi:   ρ_J  = cos(π/N)
+#   GS:       ρ_GS = cos²(π/N)
+#   SOR:      ρ_w  = (1 - sin(π/N)) / (1 + sin(π/N))   at ω_opt = 2 / (1 + sin(π/N))
+#
+# Reference: ../../notebooks/05-poisson-laplace-bvp.md (§ Iteration vs Direct).
+
+M  = 20;                          # interior cells per side
+hM = 1.0 / (M + 1);
+xs = hM * (1:M);
+ys = hM * (1:M);
+[X, Y] = meshgrid(xs, ys);
+V_an = sin(pi * X) .* sinh(pi * Y) / sinh(pi);
+
+# Padded grid: row 1 / col 1 / col M+2 are 0, row M+2 carries V_top.
+function Vp = init_grid(M_in, h_in)
+  Vp = zeros(M_in + 2, M_in + 2);
+  for j = 1:M_in + 2
+    Vp(M_in + 2, j) = sin(pi * (j - 1) * h_in);
+  end
+end
+
+function err = max_err(V_int, V_an_in)
+  err = abs(V_int - V_an_in);
+  err = real(max(err(:)));
+end
+
+# === Jacobi ===
+target = 1000;
+Vp = init_grid(M, hM);
+Vp_new = Vp;
+for k = 1:target
+  for i = 2:M+1
+    for j = 2:M+1
+      Vp_new(i, j) = 0.25 * (Vp(i+1, j) + Vp(i-1, j) + Vp(i, j+1) + Vp(i, j-1));
+    end
+  end
+  # Sync boundaries unchanged; copy interior
+  for i = 2:M+1
+    for j = 2:M+1
+      Vp(i, j) = Vp_new(i, j);
+    end
+  end
+end
+print(max_err(Vp(2:M+1, 2:M+1), V_an))     # Jacobi @ 1000 iters
+
+# === Gauss-Seidel ===
+Vp = init_grid(M, hM);
+for k = 1:target
+  for i = 2:M+1
+    for j = 2:M+1
+      Vp(i, j) = 0.25 * (Vp(i+1, j) + Vp(i-1, j) + Vp(i, j+1) + Vp(i, j-1));
+    end
+  end
+end
+print(max_err(Vp(2:M+1, 2:M+1), V_an))     # GS @ 1000 iters
+
+# === SOR with optimal ω ===
+omega_opt = 2.0 / (1.0 + sin(pi / M));
+target_sor = 100;
+Vp = init_grid(M, hM);
+for k = 1:target_sor
+  for i = 2:M+1
+    for j = 2:M+1
+      V_gs = 0.25 * (Vp(i+1, j) + Vp(i-1, j) + Vp(i, j+1) + Vp(i, j-1));
+      Vp(i, j) = (1 - omega_opt) * Vp(i, j) + omega_opt * V_gs;
+    end
+  end
+end
+print(omega_opt)                           # ≈ 1.729
+print(max_err(Vp(2:M+1, 2:M+1), V_an))     # SOR @ 100 iters — already ≪ GS@1000

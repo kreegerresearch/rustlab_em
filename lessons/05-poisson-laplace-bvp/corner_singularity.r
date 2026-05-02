@@ -1,0 +1,93 @@
+# corner_singularity.r — Re-entrant corner field divergence on an L-shape.
+#
+# Geometry:   0.10 m × 0.10 m grounded box; 0.04 m × 0.04 m conductor at
+#             V = 1 in the upper-right quadrant. The L-shaped Laplace
+#             domain wraps around the conductor; the inner corner of
+#             the L is the re-entrant 270° corner.
+# Theory:     V ~ r^{2/3}   |E| ~ r^{-1/3}  as r → 0  (β = 3π/2 wedge)
+# Method:     laplacian_2d + spsolve with conductor cells pinned;
+#             |E| sampled along the diagonal pointing into the dielectric;
+#             least-squares slope fit on the small-r window.
+#
+# Reference: ../../notebooks/05-poisson-laplace-bvp.md.
+
+# === Grid ===
+nx = 100; ny = 100;
+Lx = 0.10; Ly = 0.10;
+dx = Lx / (nx + 1);
+dy = Ly / (ny + 1);
+xs = dx * (1:nx);
+ys = dy * (1:ny);
+[X, Y] = meshgrid(xs, ys);
+
+# === Conductor mask ===
+x0 = 0.06; y0 = 0.06;
+conductor = rect_mask(X, Y, x0, y0, 0.04, 0.04);
+
+# === Sparse system ===
+L = laplacian_2d(nx, ny, dx, dy);
+A = -1 * L;
+b = zeros(1, nx * ny);
+V_cond = 1.0;
+
+for i = 1:ny
+  for j = 1:nx
+    if conductor(i, j) > 0.5
+      k = ij2k(i, j, ny);
+      A(k, k) = 1.0;
+      if i > 1;  A(k, ij2k(i-1, j, ny)) = 0.0; end
+      if i < ny; A(k, ij2k(i+1, j, ny)) = 0.0; end
+      if j > 1;  A(k, ij2k(i, j-1, ny)) = 0.0; end
+      if j < nx; A(k, ij2k(i, j+1, ny)) = 0.0; end
+      b(1, k) = V_cond;
+    end
+  end
+end
+
+V_flat = spsolve(A, b);
+V = real(reshape(V_flat, ny, nx));
+
+figure();
+hold on;
+imagesc(V, "viridis");
+contour(X, Y, V, 14, "k");
+title("L-shape Laplace: V around a pinned upper-right conductor");
+hold off;
+savefig("corner_V.svg");
+
+# === Field ===
+[Vx, Vy] = gradient(V, dx, dy);
+Emag = sqrt(Vx .^ 2 + Vy .^ 2);
+
+figure();
+imagesc(log10(Emag + 1e-12), "viridis");
+title("log10 |E|: bright spot at the re-entrant corner");
+savefig("corner_logE.svg");
+
+# === Sample along the 225° ray into the dielectric ===
+i0 = 60; j0 = 60;
+M_r = 30;
+rs = zeros(1, M_r);
+Es = zeros(1, M_r);
+for k = 1:M_r
+  ic = i0 - k;
+  jc = j0 - k;
+  rs(k) = k * dx * sqrt(2.0);
+  Es(k) = Emag(ic, jc);
+end
+
+# Log-log plot
+figure();
+loglog(rs, Es, "|E| vs r along the diagonal ray");
+xlabel("r (m)");
+ylabel("|E| (V/m)");
+savefig("corner_loglog.svg");
+
+# Least-squares slope on the small-r window
+log_r = log10(rs(2:8));
+log_E = log10(real(Es(2:8)));
+nfit  = length(log_r);
+sx = sum(log_r);  sy = sum(log_E);
+sxy = sum(log_r .* log_E);  sxx = sum(log_r .^ 2);
+slope = (nfit * sxy - sx * sy) / (nfit * sxx - sx * sx);
+print(real(slope))                 # ≈ -0.38 (theory: -1/3 ≈ -0.333)

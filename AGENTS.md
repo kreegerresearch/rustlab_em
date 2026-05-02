@@ -118,7 +118,7 @@ The curriculum targets a "mini Ansys" endpoint: starting from vector calculus, s
 | 02 | Electrostatics & Coulomb's Law | Point/dipole/ring fields, superposition, field lines | Drafted |
 | 03 | Gauss's Law & Electric Potential | Flux, $\nabla\cdot\vec{E}=\rho/\varepsilon_0$, equipotentials | Drafted |
 | 04 | Geometry & Material Maps | Rasterizing shapes into $\varepsilon(x,y)$, $\mu(x,y)$, $\sigma(x,y)$ arrays; region masks; boolean ops | Drafted |
-| 05 | Poisson & Laplace BVP — Dielectrics & Conductors | $\nabla\!\cdot\!(\varepsilon\nabla V) = -\rho$, FD relaxation, sparse solve, capacitor + dielectric-slab geometries | Planned |
+| 05 | Poisson & Laplace BVP — Dielectrics & Conductors | $\nabla\!\cdot\!(\varepsilon\nabla V) = -\rho$, FD relaxation, sparse solve, capacitor + dielectric-slab geometries | Drafted |
 | 06 | Magnetostatics & Vector Potential | Biot-Savart, Ampère, $\nabla^2\vec A = -\mu_0\vec J$ BVP with material $\mu_r$, solenoid, Helmholtz | Planned |
 | 07 | Faraday's Law & Induction | Induced EMF, inductance, eddy currents | Planned |
 | 08 | Maxwell's Equations | Displacement current, Poynting vector, energy flow | Planned |
