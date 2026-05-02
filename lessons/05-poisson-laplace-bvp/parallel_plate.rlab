@@ -1,0 +1,82 @@
+# parallel_plate.rlab — Two finite plates inside a grounded box; pinned-cell solve.
+#
+# Geometry:   0.10 m × 0.10 m grounded box;
+#             top plate (V = +0.5) and bottom plate (V = -0.5),
+#             width w = 0.06 m, gap d = 0.02 m, centred at the box centre.
+# PDE:        ∇²V = 0 outside the conductors;  V pinned inside conductors.
+# Method:     laplacian_2d + spsolve, with conductor cells pinned by
+#             zeroing their off-diagonal entries and writing V_plate to b.
+#
+# Reference: ../../notebooks/05-poisson-laplace-bvp.md.
+
+# === Grid ===
+nx = 100; ny = 100;
+Lx = 0.10; Ly = 0.10;
+dx = Lx / (nx + 1);
+dy = Ly / (ny + 1);
+xs = dx * (1:nx) - Lx/2;
+ys = dy * (1:ny) - Ly/2;
+[X, Y] = meshgrid(xs, ys);
+
+# === Conductor masks (Lesson 04 idiom) ===
+w = 0.06; d = 0.02;
+top_plate = rect_mask(X, Y, -w/2,  d/2 - dy/2, w, dy);
+bot_plate = rect_mask(X, Y, -w/2, -d/2 - dy/2, w, dy);
+
+# === Sparse system ===
+L = laplacian_2d(nx, ny, dx, dy);
+A = -1 * L;
+n = nx * ny;
+b = zeros(1, n);
+V_top_val =  0.5;
+V_bot_val = -0.5;
+
+for i = 1:ny
+  for j = 1:nx
+    is_top = top_plate(i, j) > 0.5;
+    is_bot = bot_plate(i, j) > 0.5;
+    if is_top || is_bot
+      k = ij2k(i, j, ny);
+      A(k, k) = 1.0;
+      if i > 1;  A(k, ij2k(i-1, j, ny)) = 0.0; end
+      if i < ny; A(k, ij2k(i+1, j, ny)) = 0.0; end
+      if j > 1;  A(k, ij2k(i, j-1, ny)) = 0.0; end
+      if j < nx; A(k, ij2k(i, j+1, ny)) = 0.0; end
+      if is_top
+        b(1, k) = V_top_val;
+      else
+        b(1, k) = V_bot_val;
+      end
+    end
+  end
+end
+
+V_flat = spsolve(A, b);
+V = real(reshape(V_flat, ny, nx));
+
+# === Plots ===
+figure();
+hold on;
+imagesc(V, "viridis");
+contour(X, Y, V, 16, "k");
+title("Parallel plates with fringing: V(x, y), V0 = 1 V");
+hold off;
+savefig("parallel_plate_V.svg");
+
+# === Field via -∇V ===
+[Vx, Vy] = gradient(V, dx, dy);
+Ex = -Vx; Ey = -Vy;
+
+figure();
+quiver(X, Y, Ex, Ey, "Field E = -grad V (fringing visible at plate edges)");
+savefig("parallel_plate_E.svg");
+
+# === Numerics ===
+i_mid = ny / 2;
+j_mid = nx / 2;
+print(abs(real(Ey(i_mid, j_mid))))            # ≈ 48 V/m  (1-D estimate is V0/d = 50)
+
+# 1-D capacitance estimate
+eps0 = 8.8541878128e-12;
+C_1d = eps0 * w / d;                          # F/m depth
+print(C_1d)                                   # ≈ 2.66e-11 F/m

@@ -23,9 +23,9 @@ Key equations: the four Maxwell equations; $\partial u/\partial t + \nabla\cdot\
 
 | Script | What it simulates |
 |---|---|
-| `maxwell_consistency.r` | Known plane-wave solution; all four equations verified numerically |
-| `charge_conservation.r` | Capacitor current; displacement current closes the Ampère-loop |
-| `poynting_flow.r` | Coaxial cable carrying DC; $\vec S$ in the dielectric; $\int\vec S\cdot d\vec A=IV$ |
+| `maxwell_consistency.rlab` | Known plane-wave solution; all four equations verified numerically |
+| `charge_conservation.rlab` | Capacitor current; displacement current closes the Ampère-loop |
+| `poynting_flow.rlab` | Coaxial cable carrying DC; $\vec S$ in the dielectric; $\int\vec S\cdot d\vec A=IV$ |
 
 ## Exercises
 

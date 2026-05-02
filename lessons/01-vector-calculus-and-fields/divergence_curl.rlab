@@ -1,0 +1,53 @@
+# divergence_curl.rlab — Divergence and curl of the two canonical 2-D fields.
+#
+# Radial field:     F = (x, y)    →  ∇·F = 2,  ∇×F = 0   (pure source)
+# Rotational field: F = (-y, x)   →  ∇·F = 0,  ∇×F = 2   (pure rotation)
+# Units:            dimensionless.
+#
+# Lesson 01 — Vector Calculus & Fields.
+
+# === Grid ===
+dx = 0.2;
+dy = 0.2;
+xs = -2:dx:2;
+ys = -2:dy:2;
+[X, Y] = meshgrid(xs, ys);
+
+# === 1. Radial field  F = (x, y) ===
+Ux = X;
+Uy = Y;
+divU  = divergence(Ux, Uy, dx, dy);
+curlU = curl(Ux, Uy, dx, dy);
+
+print(divU(11, 11))                    # ≈ 2  (interior)
+print(divU(1, 1))                      # ≈ 2  (boundary — one-sided stencil is exact for linear fields)
+print(curlU(11, 11))                   # ≈ 0
+
+figure();
+quiver(X, Y, Ux, Uy, "Radial field F = (x, y)");
+savefig("divcurl_radial_quiver.svg");
+
+figure();
+imagesc(divU, "viridis");
+title("∇·F for F = (x, y)  —  uniformly = 2");
+savefig("divcurl_radial_divergence.svg");
+
+# === 2. Rotational field  F = (-y, x) ===
+Vx = -Y;
+Vy = X;
+divV  = divergence(Vx, Vy, dx, dy);
+curlV = curl(Vx, Vy, dx, dy);
+
+print(divV(11, 11))                    # ≈ 0
+print(curlV(11, 11))                   # ≈ 2
+
+figure();
+quiver(X, Y, Vx, Vy, "Rotational field F = (-y, x)");
+savefig("divcurl_rotational_quiver.svg");
+
+figure();
+imagesc(curlV, "viridis");
+title("(∇×F)_z for F = (-y, x)  —  uniformly = 2");
+savefig("divcurl_rotational_curl.svg");
+
+print(1)

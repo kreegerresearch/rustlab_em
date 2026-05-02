@@ -273,11 +273,11 @@ Three rustlab scripts in this directory reproduce the above as standalone progra
 
 | Script | What it computes |
 |---|---|
-| `point_charges.r` | Dipole and quadrupole quiver + log-magnitude heatmaps |
-| `dipole_field.r` | Exact superposition vs the far-field formula; relative error vs $r/d$ |
-| `ring_of_charge.r` | Numerical Coulomb integral around a charged ring; closed-form check |
+| `point_charges.rlab` | Dipole and quadrupole quiver + log-magnitude heatmaps |
+| `dipole_field.rlab` | Exact superposition vs the far-field formula; relative error vs $r/d$ |
+| `ring_of_charge.rlab` | Numerical Coulomb integral around a charged ring; closed-form check |
 
-Run all three with `make lesson-02` from the repo root, or one at a time via `rustlab run lessons/02-electrostatics-coulomb/<name>.r`. SVGs land next to each script and are gitignored.
+Run all three with `make lesson-02` from the repo root, or one at a time via `rustlab run lessons/02-electrostatics-coulomb/<name>.rlab`. SVGs land next to each script and are gitignored.
 
 ## Expected Numerical Outputs Summary
 

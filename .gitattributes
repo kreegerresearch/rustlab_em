@@ -1,0 +1,6 @@
+# Use MATLAB highlighting as a temporary proxy for the rustlab language.
+# rustlab is a distinct domain-specific language for DSP modeling, but
+# its grammar isn't yet upstreamed in GitHub Linguist. Until then,
+# MATLAB/Octave is the closest visual match for both the language stats
+# bar and per-file syntax highlighting on github.com.
+*.rlab linguist-language=MATLAB

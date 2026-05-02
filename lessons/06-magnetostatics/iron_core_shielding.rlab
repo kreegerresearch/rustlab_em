@@ -1,0 +1,85 @@
+# iron_core_shielding.rlab — Wire inside an iron annulus; flux concentration.
+#
+# Geometry:   1-A wire at the centre of a 0.20 × 0.20 m grounded box,
+#             surrounded by an iron annulus (μ_r = 1000) with inner radius
+#             4 cm and outer radius 6 cm.
+# Method:     ∇·((1/μ_r) ∇ Az) = -μ₀ Jz, solved with laplacian_eps_2d on
+#             the reluctivity map 1/μ_r and a single-cell current source.
+# Observe:    |B| in the iron is ~ μ_r × the surrounding-vacuum value,
+#             concentrating flux through the iron. Exterior |B| matches
+#             the bare-wire μ₀ I/(2π r) — Ampère pins H regardless of μ_r
+#             in this cylindrically symmetric geometry. (See lesson notes
+#             and Exercise 5 for true exterior shielding via an external
+#             applied field.)
+#
+# Reference: ../../notebooks/06-magnetostatics.md.
+
+mu0 = 4 * pi * 1e-7;
+nx2 = 120; ny2 = 120;
+Lx2 = 0.20; Ly2 = 0.20;
+dxi = Lx2 / (nx2 + 1);
+dyi = Ly2 / (ny2 + 1);
+xsi = dxi * (1:nx2) - Lx2/2;
+ysi = dyi * (1:ny2) - Ly2/2;
+[Xi, Yi] = meshgrid(xsi, ysi);
+
+# === Iron annulus mask (Lesson 04 idiom) ===
+disk_outer = disk_mask(Xi, Yi, 0.0, 0.0, 0.06);
+disk_inner = disk_mask(Xi, Yi, 0.0, 0.0, 0.04);
+iron       = disk_outer .* (1 - disk_inner);
+
+figure();
+imagesc(iron, "viridis");
+title("Iron annulus mask (mu_r = 1000 in the ring, 1 elsewhere)");
+savefig("iron_mask.svg");
+
+# === Permeability and reluctivity maps ===
+mu_r = ones(ny2, nx2);
+for i = 1:ny2
+  for j = 1:nx2
+    if iron(i, j) > 0.5
+      mu_r(i, j) = 1000.0;
+    end
+  end
+end
+inv_mu = 1.0 ./ mu_r;
+
+# === Source: single-cell wire at the centre ===
+J = zeros(ny2, nx2);
+i_c = round(ny2 / 2);
+j_c = round(nx2 / 2);
+J(i_c, j_c) = 1.0 / (dxi * dyi);
+
+# === Variable-permeability sparse solve ===
+L_inv = laplacian_eps_2d(inv_mu, dxi, dyi);
+A_inv = -1 * L_inv;
+b_inv = mu0 * J(:)';
+Az_inv = real(reshape(spsolve(A_inv, b_inv), ny2, nx2));
+
+figure();
+hold on;
+imagesc(Az_inv, "viridis");
+contour(Xi, Yi, Az_inv, 16, "k");
+title("Az(x, y) — wire inside an iron shell");
+hold off;
+savefig("iron_Az.svg");
+
+# === Recover B and sample along +x axis ===
+[Az_x_i, Az_y_i] = gradient(Az_inv, dxi, dyi);
+Bx_i = Az_y_i;
+By_i = -Az_x_i;
+Bmag = sqrt(Bx_i .^ 2 + By_i .^ 2);
+
+figure();
+imagesc(real(Bmag), "viridis");
+title("|B|(x, y): bright ring is the iron, exterior is bare-wire-like");
+savefig("iron_Bmag.svg");
+
+j_iron  = round((0.05 + Lx2/2) / dxi);
+j_outer = round((0.07 + Lx2/2) / dxi);
+j_far   = round((0.09 + Lx2/2) / dxi);
+print(real(Bmag(i_c, j_iron)))      # iron interior — large
+print(real(Bmag(i_c, j_outer)))     # just outside — close to bare-wire value
+print(real(Bmag(i_c, j_far)))       # further out
+print(mu0 * 1.0 / (2 * pi * 0.07))  # bare-wire reference at r = 7 cm
+print(mu0 * 1.0 / (2 * pi * 0.09))  # bare-wire reference at r = 9 cm

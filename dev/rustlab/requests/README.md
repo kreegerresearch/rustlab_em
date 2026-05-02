@@ -12,9 +12,15 @@ These are **requests**, not implementations — `rustlab_em` scripts work around
 | 2 | [`quiver-and-streamplot.md`](quiver-and-streamplot.md) | Lessons 01, 02, 03, 04, 05 | **Landed** |
 | 3 | [`contour-plots.md`](contour-plots.md) | Lessons 03, 04, 08 | **Landed** |
 | 4 | [`laplacian-stencil-builder.md`](laplacian-stencil-builder.md) | Lesson 04 (pivot lesson) | **Landed and extended** (BC selector + 1-D / 3-D / eps variants in `26954a3`) |
-| 5 | [`animation-export.md`](animation-export.md) | Lessons 08, 09 | **Proposed** (per-frame SVG loop workaround exists) |
+| 5 | [`animation-export.md`](animation-export.md) | Lessons 08, 09, 11 | **Landed** (Option A Plotly HTML; Option B GIF deferred) |
 
-The original five requests have all shipped. The follow-on sweep — additional rustlab features identified during the curriculum draft — lives in [`em_requests.md`](em_requests.md), which has its own per-§ status table.
+All five original requests have landed. The follow-on sweep — additional rustlab features identified during the curriculum draft — lives in [`em_requests.md`](em_requests.md), which has its own per-§ status table.
+
+Recent post-`em_requests` additions:
+
+| File | Topic | Status |
+|------|-------|--------|
+| [`rlab-extension-handler-log.md`](rlab-extension-handler-log.md) | rustlab CLI announces itself as the `.rlab` handler at script start (post `.r` → `.rlab` migration) | **Proposed** |
 
 For the upstream rustlab implementation perspective, see:
 - [`../../../../rustlab/dev/plans/em_requests_plan.md`](../../../../rustlab/dev/plans/em_requests_plan.md) — the reference plan

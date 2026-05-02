@@ -1,0 +1,64 @@
+# stokes_demo.rlab — Numerical verification of Stokes' theorem.
+#
+# Field: F = (-y, x)       →  (∇×F)_z = 2 everywhere.
+# Loop:  square [-a, a]²   →  enclosed area = (2a)² = 4,   expected ∮ = 8.
+#
+# Traverse the loop counterclockwise (bottom → right → top → left) and
+# integrate F·dℓ edge by edge with `trapz`. Compare against the surface
+# integral ∫∫(∇×F)_z dA computed over the same square.
+#
+# Lesson 01 — Vector Calculus & Fields.
+
+a = 1.0;
+N = 201;                                    # samples per edge (line integral)
+xs_edge = linspace(-a, a, N);
+unit    = ones(N);
+
+# === Line integral — each edge in CCW order ===
+# Bottom (y = -a):   dℓ = (dx, 0),  F_x = -y = +a.
+I_bot = trapz(xs_edge, a * unit);
+
+# Right  (x = +a):   dℓ = (0, dy),  F_y = x = +a.
+I_rht = trapz(xs_edge, a * unit);
+
+# Top    (y = +a):   traversed right→left; F_x = -a. Flip sign for orientation.
+I_top = -trapz(xs_edge, -a * unit);
+
+# Left   (x = -a):   traversed top→bottom; F_y = -a. Flip sign for orientation.
+I_lft = -trapz(xs_edge, -a * unit);
+
+circulation = I_bot + I_rht + I_top + I_lft;
+
+print(I_bot)                                # ≈ 2
+print(I_rht)                                # ≈ 2
+print(I_top)                                # ≈ 2
+print(I_lft)                                # ≈ 2
+print(circulation)                          # ≈ 8
+
+# === Surface integral of curl over the enclosed square ===
+M = 41;
+xs_grid = linspace(-a, a, M);
+ys_grid = linspace(-a, a, M);
+[Xs, Ys] = meshgrid(xs_grid, ys_grid);
+curlF   = curl(-Ys, Xs, 2 * a / (M - 1), 2 * a / (M - 1));
+
+# 2-D trapezoidal rule: integrate along rows, then along the resulting column.
+row_int = zeros(M);
+for i = 1:M
+  row_int(i) = trapz(xs_grid, curlF(i, :));
+end
+surface_integral = trapz(ys_grid, row_int);
+
+print(surface_integral)                     # ≈ 8
+print(circulation / surface_integral)       # ≈ 1.0
+
+# === Plot: field quiver with the loop drawn on top ===
+[Xq, Yq] = meshgrid(linspace(-1.5, 1.5, 16), linspace(-1.5, 1.5, 16));
+figure();
+hold on;
+quiver(Xq, Yq, -Yq, Xq, "F = (-y, x) with Stokes loop");
+plot([-a, a, a, -a, -a], [-a, -a, a, a, -a], "color", "r");
+hold off;
+savefig("stokes_loop.svg");
+
+print(1)

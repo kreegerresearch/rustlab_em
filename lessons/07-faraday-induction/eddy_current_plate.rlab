@@ -1,0 +1,86 @@
+# eddy_current_plate.rlab — Eddy currents in a thin conducting disk.
+#
+# Geometry:   copper disk of radius R = 6 cm in a 0.20 × 0.20 m grounded
+#             box, σ = 5.8e7 S/m, axial Ḃz = 1 T/s applied uniformly.
+# Method:     stream function ψ with J = ẑ × ∇ψ. Charge conservation is
+#             automatic; Faraday's law gives ∇²ψ = -σ Ḃz (constant source
+#             inside the plate, ψ = 0 outside).
+# Verifies:   |J|(r) = σ Ḃz r / 2 inside the disk, circulating in the
+#             sense that opposes Ḃz (Lenz's law).
+#
+# Reference: ../../notebooks/07-faraday-induction.md.
+
+sigma_cu = 5.8e7;
+Bdot     = 1.0;
+
+nx3 = 100; ny3 = 100;
+Lx3 = 0.20; Ly3 = 0.20;
+dx3 = Lx3 / (nx3 + 1);
+dy3 = Ly3 / (ny3 + 1);
+xs3 = dx3 * (1:nx3) - Lx3/2;
+ys3 = dy3 * (1:ny3) - Ly3/2;
+[Xp, Yp] = meshgrid(xs3, ys3);
+
+R_plate    = 0.06;
+plate_mask = disk_mask(Xp, Yp, 0.0, 0.0, R_plate);
+
+figure();
+imagesc(plate_mask, "viridis");
+title("Conducting plate mask (1 inside the disk, 0 outside)");
+savefig("plate_mask.svg");
+
+# === Stream-function Poisson, ψ = 0 outside the plate ===
+L_p = laplacian_2d(nx3, ny3, dx3, dy3);
+A_p = -1 * L_p;
+n_p = nx3 * ny3;
+b_p = zeros(1, n_p);
+src = sigma_cu * Bdot;
+
+for i = 1:ny3
+  for j = 1:nx3
+    k = ij2k(i, j, ny3);
+    if plate_mask(i, j) > 0.5
+      b_p(1, k) = src;                  # interior of plate
+    else
+      A_p(k, k) = 1.0;                  # pin ψ = 0 outside
+      if i > 1;   A_p(k, ij2k(i-1, j, ny3)) = 0.0; end
+      if i < ny3; A_p(k, ij2k(i+1, j, ny3)) = 0.0; end
+      if j > 1;   A_p(k, ij2k(i, j-1, ny3)) = 0.0; end
+      if j < nx3; A_p(k, ij2k(i, j+1, ny3)) = 0.0; end
+      b_p(1, k) = 0.0;
+    end
+  end
+end
+
+psi = real(reshape(spsolve(A_p, b_p), ny3, nx3));
+
+figure();
+hold on;
+imagesc(psi, "viridis");
+contour(Xp, Yp, psi, 14, "k");
+title("Stream function psi(x, y) for the eddy-current pattern");
+hold off;
+savefig("eddy_psi.svg");
+
+# === Recover J = ẑ × ∇ψ ===
+[psi_x, psi_y] = gradient(psi, dx3, dy3);
+Jx = psi_y;
+Jy = -psi_x;
+Jmag = sqrt(Jx .^ 2 + Jy .^ 2);
+
+figure();
+quiver(Xp, Yp, Jx, Jy, "Eddy-current density J = z-hat x grad(psi)");
+xlabel("x (m)");
+ylabel("y (m)");
+savefig("eddy_J.svg");
+
+figure();
+imagesc(real(Jmag), "viridis");
+title("|J|(x, y): linear ramp inside the disk, zero outside");
+savefig("eddy_Jmag.svg");
+
+# === Numerical vs analytic at r ≈ 0.7 R ===
+i_c = round(ny3 / 2);
+print(real(Jmag(i_c, round(0.7 * R_plate / dx3) + nx3 / 2)))
+print(sigma_cu * Bdot * 0.7 * R_plate / 2.0)
+print(real(Jmag(i_c, nx3 / 2 + 1)))    # near r = 0

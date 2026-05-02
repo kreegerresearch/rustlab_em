@@ -1,8 +1,22 @@
 # Request: Multi-Frame Animation Export
 
-**Status**: Proposed (nice-to-have)
-**Date**: 2026-04-22
-**Origin**: `rustlab_em` Lessons 08, 09
+**Status**: **Landed** (Option A — Plotly HTML; Option B GIF deferred)
+**Date opened**: 2026-04-22
+**Date landed**: 2026-04-27
+**Upstream commit**: `feat/animation-export` branch on rustlab (Phases 1–3)
+**Upstream plan**: `../../../../rustlab/dev/plans/animation_export.md`
+**Origin**: `rustlab_em` Lessons 08, 09, 11
+
+## What shipped
+
+Option A landed verbatim — `frame()` snapshots the figure into a per-thread buffer; `saveanim(path[, fps])` flushes it to a self-contained Plotly HTML animation with play/pause + slider. Inside notebooks, `saveanim` captures into the notebook's animation queue and the renderer embeds the animation inline; outside notebooks, the path is honoured.
+
+Option B (GIF) is deferred — the documented per-frame SVG + ffmpeg workaround is still the path for standalone GIF/MP4 artefacts.
+
+See the full design and limitations in [`docs/functions.md`](../../../../rustlab/docs/functions.md) (`frame()` and `saveanim()` entries) and the upstream plan at [`dev/plans/animation_export.md`](../../../../rustlab/dev/plans/animation_export.md).
+
+## Original proposal (kept for context)
+
 
 ## Motivation
 

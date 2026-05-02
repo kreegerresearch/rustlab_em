@@ -288,11 +288,11 @@ The numerical value is *not* particularly small in absolute units (V/m² values 
 
 | Script | What it computes |
 |---|---|
-| `gauss_sphere.r` | $E_r(r)$ and $V(r)$ for a uniformly charged ball; piecewise plot across the surface |
-| `potential_dipole.r` | Dipole $V$ heatmap with equipotential contours and the $-\nabla V$ quiver overlay |
-| `capacitor_1d.r` | 1-D parallel-plate field and potential profile; capacitance $C = \varepsilon_0 A/d$ |
+| `gauss_sphere.rlab` | $E_r(r)$ and $V(r)$ for a uniformly charged ball; piecewise plot across the surface |
+| `potential_dipole.rlab` | Dipole $V$ heatmap with equipotential contours and the $-\nabla V$ quiver overlay |
+| `capacitor_1d.rlab` | 1-D parallel-plate field and potential profile; capacitance $C = \varepsilon_0 A/d$ |
 
-Run all three with `make lesson-03`, or one at a time via `rustlab run lessons/03-gauss-law-and-potential/<name>.r`. Each writes SVGs next to itself; artefacts are gitignored.
+Run all three with `make lesson-03`, or one at a time via `rustlab run lessons/03-gauss-law-and-potential/<name>.rlab`. Each writes SVGs next to itself; artefacts are gitignored.
 
 ## Expected Numerical Outputs Summary
 
