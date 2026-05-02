@@ -10,13 +10,15 @@ This repo is **independent from rustlab** — never modify `../rustlab` from her
 
 ## Tool: Rustlab
 
-Rustlab is a scientific computing CLI (`../rustlab`) with a scripting language optimized for matrix and signal processing work. Run scripts with:
+Rustlab is a domain-specific scripting language and CLI (`../rustlab`) for matrix and signal processing work, implemented in pure Rust. Scripts use the `.rlab` extension; run them with:
 
 ```bash
 rustlab run lessons/01-vector-calculus-and-fields/gradient_field.rlab
 ```
 
 Run `rustlab` (no args) for an interactive REPL.
+
+**rustlab is its own language.** Editor configs and GitHub's `linguist-language=MATLAB` rule (in `.gitattributes`) only set syntax highlighting; nothing about MATLAB or Octave runs `.rlab` files. The temporary MATLAB mapping exists because no native rustlab grammar is upstreamed in Linguist or the major editors yet. See [`docs/rustlab-language.md`](docs/rustlab-language.md) for the distinction (overlaps, where the proxy breaks down, and the long-term roadmap).
 
 **Language and function reference:** `../rustlab/docs/quickref.md`
 **Full function signatures:** `../rustlab/docs/functions.md`

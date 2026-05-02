@@ -44,3 +44,4 @@ Every `make lesson-NN` invocation in CI eventually flows into a docs-generated a
 
 - `rustlab_em` commit `c00237c` ("Migrate rustlab script extension from .r to .rlab")
 - Curriculum-side `.gitattributes` and README updates that frame MATLAB highlighting as a *temporary proxy* for the rustlab language
+- [`../../../docs/rustlab-language.md`](../../../docs/rustlab-language.md) — full curriculum-side write-up of rustlab as its own language (overlaps with MATLAB, where the proxy breaks down, long-term roadmap)

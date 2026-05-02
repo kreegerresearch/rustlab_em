@@ -25,7 +25,7 @@ Generated plots (SVG/HTML) appear next to the script and are gitignored — the 
 
 ### The `.rlab` Language Extension
 
-rustlab utilizes the `.rlab` extension for its DSP modeling files. While rustlab is a distinct language, we currently leverage MATLAB/Octave syntax highlighting definitions as a temporary measure for visual clarity in development environments.
+rustlab utilizes the `.rlab` extension for its DSP modeling files. **rustlab is a distinct language** — it has its own runtime, its own builtins (sparse PDE stencil builders, hand-rolled sparse solvers, geometry rasterisation, notebook capture, etc.), and its own roadmap, all implemented in pure Rust. We currently leverage MATLAB/Octave syntax highlighting definitions as a temporary proxy for visual clarity in development environments — but the proxy stops at the highlighter; every `.rlab` file is parsed and run by rustlab. See [`docs/rustlab-language.md`](docs/rustlab-language.md) for the full distinction.
 
 ### Syntax Highlighting Setup
 
