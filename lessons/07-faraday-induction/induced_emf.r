@@ -1,0 +1,33 @@
+# induced_emf.r — Loop in a sinusoidal Bz(t); flux and EMF traces.
+#
+# Geometry:   single loop of radius R = 5 cm, axis along ẑ,
+#             external Bz(t) = B0 sin(ω t) at f = 60 Hz, B0 = 0.1 T.
+# Theory:     Φ(t) = π R² B0 sin(ω t)
+#             ε(t) = -dΦ/dt = -π R² B0 ω cos(ω t)
+#
+# Reference: ../../notebooks/07-faraday-induction.md.
+
+R    = 0.05;
+B0   = 0.10;
+freq = 60.0;
+omega = 2 * pi * freq;
+ts = linspace(0, 2/freq, 401);
+
+Phi_t = pi * R^2 * B0 * sin(omega * ts);
+Eps_t = -pi * R^2 * B0 * omega * cos(omega * ts);
+
+# Peak quantities
+Phi_peak = pi * R^2 * B0;
+Eps_peak = pi * R^2 * B0 * omega;
+print(Phi_peak)        # ≈ 7.85e-4 Wb
+print(Eps_peak)        # ≈ 0.296 V
+
+figure();
+hold on;
+plot(ts * 1000, Phi_t,  "Phi(t)");
+plot(ts * 1000, Eps_t / 100);
+hold off;
+xlabel("t (ms)");
+title("Loop in sinusoidal B(t): flux and EMF (EMF / 100)");
+legend("Phi(t) (Wb)", "eps(t) / 100 (V)");
+savefig("induced_emf.svg");

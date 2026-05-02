@@ -15,8 +15,8 @@ The curriculum targets a "mini Ansys" endpoint: given arbitrary geometry plus ma
 | 03 | Gauss's Law & Electric Potential | Drafted |
 | 04 | Geometry & Material Maps | Drafted |
 | 05 | Poisson & Laplace BVP — Dielectrics & Conductors | Drafted |
-| 06 | Magnetostatics & Vector Potential | Planned |
-| 07 | Faraday's Law & Induction | Planned |
+| 06 | Magnetostatics & Vector Potential | Drafted |
+| 07 | Faraday's Law & Induction | Drafted |
 | 08 | Maxwell's Equations | Planned |
 | 09 | EM Wave Equation & Plane Waves | Planned |
 | 10 | FDFD — Frequency-Domain Maxwell Solver | Planned |
