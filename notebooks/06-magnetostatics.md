@@ -427,8 +427,8 @@ Run all five with `make lesson-06`, or individually via `rustlab run lessons/06-
 | Solenoid centre $B_z$ | just under $\mu_0 n I = 50\mu_0 \approx 6.28\times10^{-5}$ T |
 | Helmholtz $B_{\rm off}/B_0$ ratio at $d/R = 1$ | closest to 1 across the three cases |
 | Two-wire $B_x$ above midpoint | analytic / numerical agree within a few percent |
-| $|B|$ in iron shell | $\sim 100\times$ larger than just outside |
-| $|B|$ outside iron at $r = 7$ cm | well below $\mu_0 I/(2\pi r)$ reference |
+| $\lvert B\rvert$ in iron shell | $\sim 100\times$ larger than just outside |
+| $\lvert B\rvert$ outside iron at $r = 7$ cm | well below $\mu_0 I/(2\pi r)$ reference |
 
 ## Exercises
 

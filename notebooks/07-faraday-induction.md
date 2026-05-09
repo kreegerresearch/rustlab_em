@@ -275,8 +275,8 @@ Run all three with `make lesson-07`, or one at a time via `rustlab run lessons/0
 | Peak EMF $\varepsilon_{\rm peak}$ at 60 Hz | $\pi R^2 B_0\omega \approx 0.296$ V |
 | Numerical $M$ (concentric loops, $a/b = 0.2$) | $\approx 7.94\times10^{-9}$ H |
 | Analytic small-$a/b$ $M$ | $\mu_0\pi a^2/(2b) \approx 7.90\times10^{-9}$ H |
-| Eddy $|J|$ at $r = 0.7R$ on Cu plate | $\approx \sigma\dot B_z R\cdot 0.35 \approx 1.2\times10^{6}$ A/m² |
-| Eddy $|J|$ near $r = 0$ | $\approx 0$ |
+| Eddy $\lvert J\rvert$ at $r = 0.7R$ on Cu plate | $\approx \sigma\dot B_z R\cdot 0.35 \approx 1.2\times10^{6}$ A/m² |
+| Eddy $\lvert J\rvert$ near $r = 0$ | $\approx 0$ |
 
 ## Exercises
 

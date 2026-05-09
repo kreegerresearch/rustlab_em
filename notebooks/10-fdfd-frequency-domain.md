@@ -24,7 +24,7 @@ Key equations: $\nabla\times(\mu^{-1}\nabla\times\vec E) - \omega^2\varepsilon\v
 
 | Script | What it simulates |
 |---|---|
-| `fdfd_1d_layers.rlab` | 1D Helmholtz through air / quarter-wave / air; $|T|^2$ sweep; quarter-wave AR check |
+| `fdfd_1d_layers.rlab` | 1D Helmholtz through air / quarter-wave / air; $\lvert T\rvert^2$ sweep; quarter-wave AR check |
 | `fdfd_2d_tmz.rlab` | TM$_z$ scattering from a dielectric cylinder; complex sparse solve; Mie-series check |
 | `fdfd_pml_demo.rlab` | Point source with stretched-coordinate PML vs hard-wall reflections |
 | `fdfd_resonator.rlab` | 2D cavity frequency sweep; identify resonant peaks via port response |
