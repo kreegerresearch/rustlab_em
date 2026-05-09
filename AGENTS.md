@@ -79,6 +79,22 @@ Use GitHub-flavored Markdown with LaTeX math: `$inline$` and `$$block$$`. Each `
 - Keep code blocks short — one concept each. Long blocks become unreadable in the rendered page.
 - Comments inside code blocks: `%` (rustlab notebook idiom). Comments in standalone `.rlab` files: `#`.
 
+**Math escaping for GitHub + Obsidian compatibility** (full reference in `../rustlab/docs/notebooks.md`):
+
+- `${expr}$` in plain text auto-wraps as `$<value>$` (math-wrap shorthand). Inside an open `$...$` span, write `$X = ${expr}$` — the value emits bare and the trailing `$` closes the span.
+- **In tables, use `\lvert ... \rvert`** (not raw `|...|`) for cardinality / absolute value. Raw `|` inside `$...$` splits the table cell on GitHub. Same for `\lVert ... \rVert` for norms.
+- `\$` is the literal-`$` escape (currency). It does not toggle the math tracker, so `\$5 plus ${tax}$` works.
+- `$$display$$` math should sit on its own paragraph line.
+
+**Obsidian-aligned markdown features** (render natively on GitHub *and* Obsidian — full reference in `../rustlab/docs/notebooks.md`):
+
+- **Callouts** — prefer `> [!NOTE]` / `[!TIP]` / `[!IMPORTANT]` / `[!WARNING]` / `[!CAUTION]` blockquote syntax. Optional inline title: `> [!TIP] Heads up`. The legacy `<!-- note -->` form still parses; on the next `make notebooks` it auto-migrates to GFM-native syntax in the rendered output.
+- **Footnotes** — `[^id]` inline reference, `[^id]: text` definition.
+- **Task lists** — `- [ ]` and `- [x]` render as checkboxes.
+- **Explicit heading IDs** — `## Section {#stable-anchor}` pins a cross-notebook anchor.
+- **Wikilinks** — `[[06-magnetostatics]]`, `[[06-magnetostatics|the magnetics lesson]]`, `[[06-magnetostatics#Solenoid]]`. The renderer transforms them to ordinary markdown links (target gets `.md` appended for notebook refs); GitHub and Obsidian both render the result natively.
+- **Embeds** — `![[diagram.svg]]`, `![[chart.png|alt text]]` for inline images. Path passes through as-is.
+
 **Style:** Derive equations step-by-step. Name every variable. State units explicitly (SI throughout). Connect math to physical intuition ("the divergence of $\vec{E}$ being zero in free space means field lines do not begin or end except on charges").
 
 ## Script Conventions (`.rlab` files)
