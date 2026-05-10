@@ -19,11 +19,11 @@ Lesson 01 (gradient, divergence, curl, meshgrid). Coordinates and superposition 
 
 A point charge $q$ at position $\vec r_0$ produces the field
 
-$$\vec E(\vec r) = \frac{1}{4\pi\varepsilon_0}\,\frac{q\,(\vec r - \vec r_0)}{\,|\vec r - \vec r_0|^3\,},\qquad k_e \equiv \frac{1}{4\pi\varepsilon_0} \approx 8.9875\times10^{9}\,\text{N}\cdot\text{m}^2/\text{C}^2.$$
+$$\vec E(\vec r) = \frac{1}{4\pi\varepsilon_0}\\,\frac{q\\,(\vec r - \vec r_0)}{\\,|\vec r - \vec r_0|^3\\,},\qquad k_e \equiv \frac{1}{4\pi\varepsilon_0} \approx 8.9875\times10^{9}\\,\text{N}\cdot\text{m}^2/\text{C}^2.$$
 
 The field of $N$ charges is the sum of $N$ such terms — there is no nonlinear interaction:
 
-$$\vec E(\vec r) = k_e\sum_{i=1}^{N}\frac{q_i\,(\vec r - \vec r_i)}{\,|\vec r - \vec r_i|^3\,}.$$
+$$\vec E(\vec r) = k_e\sum_{i=1}^{N}\frac{q_i\\,(\vec r - \vec r_i)}{\\,|\vec r - \vec r_i|^3\\,}.$$
 
 This is *the* defining computation of electrostatics. Every analytic result (Gauss's law, the potential, multipole expansions) and every numerical solver (FDFD, FDTD) is a smarter way of evaluating an integral that is, fundamentally, this sum.
 
@@ -33,7 +33,7 @@ This is *the* defining computation of electrostatics. Every analytic result (Gau
 
 ### Theory
 
-A 51×51 grid spanning $[-5\,\text{cm},\,5\,\text{cm}]^2$ at spacing $\Delta = 2$ mm comfortably resolves the field around a $\pm q$ pair separated by $d = 2$ cm. Charges sitting on grid lines produce a singular cell each — we replace tiny $r^3$ by a small floor so divisions stay finite, and the singular cell ends up with a huge but finite value that quiver and `imagesc` simply clip visually.
+A 51×51 grid spanning $[-5\\,\text{cm},\\,5\\,\text{cm}]^2$ at spacing $\Delta = 2$ mm comfortably resolves the field around a $\pm q$ pair separated by $d = 2$ cm. Charges sitting on grid lines produce a singular cell each — we replace tiny $r^3$ by a small floor so divisions stay finite, and the singular cell ends up with a huge but finite value that quiver and `imagesc` simply clip visually.
 
 ### Example — A 51×51 grid spanning ±5 cm
 
@@ -62,7 +62,7 @@ The origin is at index $(26, 26)$; the points $(\pm d/2, 0)$ are at columns $21$
 
 ### Theory
 
-Place $q$ at the origin and evaluate $\vec E = k_e q\,\vec r/|\vec r|^3$ on every grid cell. The field points radially outward with magnitude $|\vec E| = k_e q/r^2$. At $r = 1$ cm — index $(26, 31)$ on our grid — the analytic value is $k_e q/r^2 = 8.9875\times10^{9}\cdot 10^{-9}/(0.01)^2 = 89{,}875$ V/m.
+Place $q$ at the origin and evaluate $\vec E = k_e q\\,\vec r/|\vec r|^3$ on every grid cell. The field points radially outward with magnitude $|\vec E| = k_e q/r^2$. At $r = 1$ cm — index $(26, 31)$ on our grid — the analytic value is $k_e q/r^2 = 8.9875\times10^{9}\cdot 10^{-9}/(0.01)^2 = 89{,}875$ V/m.
 
 ### Example — Numerical $\vec E$ at sample points
 
@@ -120,12 +120,12 @@ title("log_{10} |E|  for a single +q at the origin")
 
 ### Theory
 
-Place $+q$ at $(+d/2, 0)$ and $-q$ at $(-d/2, 0)$. The dipole moment $\vec p = q\,d\,\hat x$ has magnitude $p = qd = 10^{-9} \cdot 0.02 = 2\times10^{-11}$ C·m. Add the two single-charge fields cell-by-cell. Two symmetries follow immediately:
+Place $+q$ at $(+d/2, 0)$ and $-q$ at $(-d/2, 0)$. The dipole moment $\vec p = q\\,d\\,\hat x$ has magnitude $p = qd = 10^{-9} \cdot 0.02 = 2\times10^{-11}$ C·m. Add the two single-charge fields cell-by-cell. Two symmetries follow immediately:
 
 - On the $y$-axis (the perpendicular bisector), $E_y = 0$ — vertical components from the two charges cancel.
 - On the $x$-axis between the charges, $E_y = 0$ — both charges sit on this axis.
 
-At the midpoint $(0, 0)$ both charges push $+x$-test-charge force the *same* way along $-\hat x$; the field is $\vec E(0,0) = -8 k_e q / d^2\,\hat x \approx -179{,}750$ V/m for our numbers.
+At the midpoint $(0, 0)$ both charges push $+x$-test-charge force the *same* way along $-\hat x$; the field is $\vec E(0,0) = -8 k_e q / d^2\\,\hat x \approx -179{,}750$ V/m for our numbers.
 
 ### Example — Build $E_x$, $E_y$ from a charges table
 
@@ -192,11 +192,11 @@ hold off;
 
 For $r \gg d$ the two single-charge $1/r^2$ fields cancel to leading order; what survives is a $1/r^3$ tail with a specific angular shape. Expanding $\vec E$ in $d/r$ gives
 
-$$\boxed{\vec E_{\rm dip}(\vec r) = \frac{1}{4\pi\varepsilon_0}\,\frac{3(\vec p\cdot\hat r)\hat r - \vec p}{r^3}.}$$
+$$\boxed{\vec E_{\rm dip}(\vec r) = \frac{1}{4\pi\varepsilon_0}\\,\frac{3(\vec p\cdot\hat r)\hat r - \vec p}{r^3}.}$$
 
-For $\vec p = p\,\hat x$ in the plane this reads
+For $\vec p = p\\,\hat x$ in the plane this reads
 
-$$E_x^{\rm dip} = k_e\,p\,\frac{2x^2 - y^2}{r^5},\qquad E_y^{\rm dip} = k_e\,p\,\frac{3xy}{r^5}.$$
+$$E_x^{\rm dip} = k_e\\,p\\,\frac{2x^2 - y^2}{r^5},\qquad E_y^{\rm dip} = k_e\\,p\\,\frac{3xy}{r^5}.$$
 
 This is the prototype for *every* multipole expansion in the rest of the course. The same template — leading exact behavior + leading correction in a small parameter — drives radiation theory in Lesson 12 and antenna analysis in Lesson 13.
 
@@ -258,9 +258,9 @@ streamplot(X, Y, Ex, Ey, "Dipole field lines  —  start on +q, end on -q")
 
 A ring of total charge $Q$ and radius $R$ in the $xy$-plane, centered at the origin, produces (on its symmetry axis) a field with only a $z$-component:
 
-$$E_z(z) = \frac{1}{4\pi\varepsilon_0}\,\frac{Q\,z}{(z^2 + R^2)^{3/2}}.$$
+$$E_z(z) = \frac{1}{4\pi\varepsilon_0}\\,\frac{Q\\,z}{(z^2 + R^2)^{3/2}}.$$
 
-The transverse components vanish by symmetry — every infinitesimal $dq$ on one side of the ring is matched by an equal $dq$ on the diametrically opposite side. The on-axis maximum sits at $z = R/\sqrt 2$, where $|E_z|$ peaks at $k_e Q/(R^2\,\sqrt 2\,(3/2)^{3/2}) \approx k_e Q/(2.598\,R^2)$. With $Q = 1$ nC and $R = 2$ cm that is $\approx 8{,}654$ V/m.
+The transverse components vanish by symmetry — every infinitesimal $dq$ on one side of the ring is matched by an equal $dq$ on the diametrically opposite side. The on-axis maximum sits at $z = R/\sqrt 2$, where $|E_z|$ peaks at $k_e Q/(R^2\\,\sqrt 2\\,(3/2)^{3/2}) \approx k_e Q/(2.598\\,R^2)$. With $Q = 1$ nC and $R = 2$ cm that is $\approx 8{,}654$ V/m.
 
 ### Example — Numerical integration around the ring
 
@@ -342,7 +342,7 @@ Run all three with `make lesson-02` from the repo root, or one at a time via `ru
 2. **Far-field along the dipole axis.** Repeat the relative-error plot along the dipole axis ($y = 0$, $x > d/2$) instead of the perpendicular bisector. The leading correction has the same $(d/r)^2$ scaling but a different prefactor — recover it from the truncated multipole expansion.
 3. **Line of charge.** Replace the ring with a finite line $-L/2 \le x' \le L/2$ at $y = 0$, $z = 0$, total charge $Q$. Compute $E_z$ on the perpendicular axis $(0, 0, z)$ by 1-D quadrature. Check the limits: $L \to 0$ should reproduce a point charge; $L \to \infty$ should give the infinite-line result $E_\rho = \lambda/(2\pi\varepsilon_0\rho)$ from Gauss's law (Lesson 03).
 4. **Ring with off-axis test point.** Compute $\vec E$ at a point in the ring's plane but outside the ring, e.g. $(2R, 0, 0)$. The transverse components no longer cancel — get them right by numerical integration and compare to a perturbative expansion in $R/r$.
-5. **Energy in the dipole.** Compute the electrostatic energy $U = \tfrac12\varepsilon_0\int|\vec E|^2\,dV$ on the grid (use `trapz` twice). Vary $d$ and confirm $U$ diverges as $d \to 0$ — the bare-pair energy is infinite, a Lesson 03 Gauss-law reminder that point charges carry an unphysical self-energy.
+5. **Energy in the dipole.** Compute the electrostatic energy $U = \tfrac12\varepsilon_0\int|\vec E|^2\\,dV$ on the grid (use `trapz` twice). Vary $d$ and confirm $U$ diverges as $d \to 0$ — the bare-pair energy is infinite, a Lesson 03 Gauss-law reminder that point charges carry an unphysical self-energy.
 
 ## What's next
 

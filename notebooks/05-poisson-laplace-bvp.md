@@ -449,12 +449,13 @@ The brightest pixel sits on the inner $(0.06, 0.06)$ corner — that's the singu
 % step in (-1, -1) cells from there.
 j0  = 60; i0 = 60;
 M_r = 30;
-rs  = zeros(1, M_r);
-Es  = zeros(1, M_r);
+% Build as true 1-D vectors so loglog accepts them — `zeros(1, N)`
+% produces a 1×N matrix that the v0.3 loglog rejects.
+rs = (1:M_r) * dx2 * sqrt(2.0);
+Es = linspace(0, 0, M_r);
 for k = 1:M_r
   ic = i0 - k;
   jc = j0 - k;
-  rs(k) = k * dx2 * sqrt(2.0);             % distance along the diagonal (m)
   Es(k) = Emag(ic, jc);
 end
 

@@ -1,0 +1,118 @@
+# charge_conservation.rlab — Displacement current closes the Ampère loop.
+#
+# Setup:    a parallel-plate capacitor (plate area A, gap d) is driven by
+#           a sinusoidal current I(t) = I0 cos(ω t) flowing through the
+#           leads. Charge accumulates on the plates,
+#               Q(t)  = (I0 / ω) sin(ω t)
+#               σ(t)  = Q(t) / A
+#               E(t)  = σ(t) / ε0   = Q(t) / (A ε0)        (in the gap)
+#               J_d(t) = ε0 ∂E/∂t                          (Maxwell)
+#                      = (1/A) dQ/dt = I(t) / A.
+# Verifies: I_disp(t) ≡ ∫ J_d · dA over the gap cross-section equals
+#           the conduction current I(t) in the wire — both Ampère-law
+#           surfaces (one slicing the wire, one slicing the gap) give
+#           the same enclosed current. Without ∂E/∂t in Ampère's law,
+#           charge would not be conserved at the plate boundary.
+# Bonus:    along a 1-D z-axis through the wire-plate-gap-plate-wire
+#           stack, plot the total current I_total = I_cond + I_disp at
+#           every z. It is constant in z (Ampère is consistent) and
+#           equal to I(t) at all times — the visual "the displacement
+#           current bridges the gap".
+#
+# Reference: ../../notebooks/08-maxwell-equations.md.
+
+eps0 = 8.854187817e-12;
+
+# === Circuit parameters ===
+A     = 1e-4;                 # 1 cm² plate area
+d     = 1e-3;                 # 1 mm gap
+freq  = 1.0e6;                # 1 MHz drive
+omega = 2 * pi * freq;
+I0    = 1e-3;                 # 1 mA peak
+
+C_cap = eps0 * A / d;         # 0.886 pF
+print(C_cap)
+
+# === Time traces ===
+Nt = 401;
+ts = linspace(0, 2 / freq, Nt);              # two periods
+I_t   = I0 * cos(omega * ts);
+Q_t   = (I0 / omega) * sin(omega * ts);
+E_t   = Q_t / (A * eps0);
+# Numerical ∂E/∂t via central difference on E_t.
+dt    = ts(2) - ts(1);
+dEdt  = zeros(Nt);
+for i = 2:(Nt - 1)
+  dEdt(i) = (E_t(i + 1) - E_t(i - 1)) / (2 * dt);
+end
+dEdt(1)  = (E_t(2)  - E_t(1))      / dt;
+dEdt(Nt) = (E_t(Nt) - E_t(Nt - 1)) / dt;
+
+I_disp_t = eps0 * A * dEdt;                  # ε0 ∫ ∂E/∂t · dA = ε0 A ∂E/∂t
+
+# Largest discrepancy (interior of the trace, ignoring forward/backward
+# end stencils which are first-order).
+err_int = max(abs(I_t(2:Nt-1) - I_disp_t(2:Nt-1))) / I0;
+print(err_int)        # ~ (ω dt)^2 / 6
+
+figure();
+hold on;
+plot(ts * 1e6, I_t * 1e3,      "I_wire(t)");
+plot(ts * 1e6, I_disp_t * 1e3, "I_disp(t)");
+hold off;
+xlabel("t  (µs)");
+ylabel("current  (mA)");
+title("Conduction vs displacement current — equal at every t");
+legend("I_wire (mA)", "I_disp (mA)");
+savefig("displacement_current.svg");
+
+figure();
+hold on;
+plot(ts * 1e6, I_t * 1e3, "I(t) (mA)");
+plot(ts * 1e6, Q_t * 1e9, "Q(t) (nC)");
+hold off;
+xlabel("t  (µs)");
+title("Drive current and accumulated plate charge");
+legend("I(t)  (mA)", "Q(t)  (nC)");
+savefig("charge_and_current.svg");
+
+# === Spatial picture: I_total(z, t) along a wire-capacitor-wire stack ===
+# z ∈ [-L, L] axis through the centre of the device.
+#   z < -d/2 : wire (conduction current = I(t), no E in this 1-D model)
+#   |z| ≤ d/2: gap  (no conduction current; J_d = ε0 ∂E/∂t = I(t)/A)
+#   z >  d/2 : wire on the other side (carries I(t) leaving the plate)
+# In every region I_total ≡ I_cond + I_disp = I(t), independent of z.
+
+Nz = 161;
+L  = 5 * d;
+zs = linspace(-L, L, Nz);
+
+# Pick a snapshot at the moment of peak current, t = 0 → I = I0.
+I_now    = I0;
+J_d_gap  = I_now / A;
+
+I_cond = zeros(Nz);
+I_disp = zeros(Nz);
+for iz = 1:Nz
+  z = zs(iz);
+  if z < -d / 2 || z > d / 2
+    I_cond(iz) = I_now;
+    I_disp(iz) = 0.0;
+  else
+    I_cond(iz) = 0.0;
+    I_disp(iz) = J_d_gap * A;
+  end
+end
+I_total = I_cond + I_disp;
+
+figure();
+hold on;
+plot(zs * 1e3, I_cond  * 1e3, "I_cond(z)");
+plot(zs * 1e3, I_disp  * 1e3, "I_disp(z)");
+plot(zs * 1e3, I_total * 1e3, "I_total(z)");
+hold off;
+xlabel("z  (mm)");
+ylabel("current  (mA)  — snapshot at t = 0");
+title("Ampère's law: I_cond + I_disp is the same on every loop");
+legend("I_cond", "I_disp", "I_total");
+savefig("ampere_loop_continuity.svg");

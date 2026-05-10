@@ -1,0 +1,110 @@
+# polarization.rlab — Polarisation states of a plane wave via the Jones
+# vector.  At a fixed x, the tip of E in the (y, z) plane traces a curve
+# whose shape encodes the polarisation:
+#
+#   Linear  (45°):    J = (1, 1)/√2          → diagonal line
+#   Right circular:   J = (1, -i)/√2         → clockwise circle (viewed
+#                                              from +x toward the source)
+#   Left circular:    J = (1,  i)/√2         → counter-clockwise circle
+#   Elliptical:       J = (1, 0.5 i)         → ellipse, 2:1 axis ratio,
+#                                              same handedness as LCP
+#
+# Outputs:  (i)  static SVG with all four loci traced over one period;
+#           (ii) animated GIF of the right-circular state, showing the
+#                tip of E sweeping out the circle in real time.
+#
+# Reference: ../../notebooks/09-em-waves.md.
+
+# === Time samples covering one period ===
+N    = 200;
+ts   = linspace(0, 1, N + 1);   # t / T  ∈  [0, 1]
+ts   = ts(1:N);
+phs  = 2 * pi * ts;             # ω t
+
+# Linear at 45°
+Ly = (1 / sqrt(2)) * cos(phs);
+Lz = (1 / sqrt(2)) * cos(phs);
+
+# Right circular (IEEE: looking from +x toward the source, the tip
+# rotates clockwise). With (y, z) drawn as (horizontal, vertical),
+# E_y = cos(ωt), E_z = -sin(ωt) sweeps (1,0)→(0,-1)→(-1,0)→(0,1) — CW.
+Ry = cos(phs);
+Rz = -sin(phs);
+
+# Left circular: opposite handedness, tip counter-clockwise.
+Ly_circ = cos(phs);
+Lz_circ = sin(phs);
+
+# Elliptical (2:1, same handedness as LCP)
+Ey_ell = cos(phs);
+Ez_ell = 0.5 * sin(phs);
+
+# === Static comparison: 2 × 2 subplot of the four loci ===
+figure();
+subplot(2, 2, 1);
+hold on;
+plot(Ly, Lz, "linear");
+hold off;
+xlim([-1.2, 1.2]);
+ylim([-1.2, 1.2]);
+xlabel("E_y");
+ylabel("E_z");
+title("Linear  (45 deg)");
+
+subplot(2, 2, 2);
+hold on;
+plot(Ry, Rz, "RCP");
+hold off;
+xlim([-1.2, 1.2]);
+ylim([-1.2, 1.2]);
+xlabel("E_y");
+ylabel("E_z");
+title("Right circular");
+
+subplot(2, 2, 3);
+hold on;
+plot(Ly_circ, Lz_circ, "LCP");
+hold off;
+xlim([-1.2, 1.2]);
+ylim([-1.2, 1.2]);
+xlabel("E_y");
+ylabel("E_z");
+title("Left circular");
+
+subplot(2, 2, 4);
+hold on;
+plot(Ey_ell, Ez_ell, "elliptical");
+hold off;
+xlim([-1.2, 1.2]);
+ylim([-1.2, 1.2]);
+xlabel("E_y");
+ylabel("E_z");
+title("Elliptical (2:1)");
+savefig("polarization_loci.svg");
+
+# === Animation: tip of E for RCP, sweeping out the circle ===
+# We animate by drawing the partial trace from t = 0 to t = current,
+# plus a marker at the current tip. `hold on` accumulates the trace
+# plot and a 1-point marker plot in the same frame.
+N_frames = 60;
+figure();
+for kf = 1:N_frames
+  m = round(kf * N / N_frames);
+  if m < 2; m = 2; end
+  trace_y = Ry(1:m);
+  trace_z = Rz(1:m);
+  tip_y   = [Ry(m)];
+  tip_z   = [Rz(m)];
+  hold on;
+  plot(trace_y, trace_z, "trace");
+  plot(tip_y,   tip_z,   "tip");
+  hold off;
+  xlim([-1.2, 1.2]);
+  ylim([-1.2, 1.2]);
+  xlabel("E_y");
+  ylabel("E_z");
+  title(sprintf("RCP — tip of E, t/T = %.2f", (kf - 1) / N_frames));
+  legend("trace", "tip");
+  frame();
+end
+saveanim("polarization_rcp.gif", 24);

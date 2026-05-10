@@ -20,9 +20,9 @@ Lessons 01 (curl, gradient), 02 (superposition), 04 (material maps), 05 (sparse 
 
 ### Theory
 
-Every steady current element $I\,d\vec\ell$ at position $\vec r{}'$ contributes a magnetic field at field point $\vec r$:
+Every steady current element $I\\,d\vec\ell$ at position $\vec r{}'$ contributes a magnetic field at field point $\vec r$:
 
-$$d\vec B(\vec r) = \frac{\mu_0}{4\pi}\,\frac{I\,d\vec\ell\times(\vec r-\vec r{}')}{|\vec r-\vec r{}'|^3}.$$
+$$d\vec B(\vec r) = \frac{\mu_0}{4\pi}\\,\frac{I\\,d\vec\ell\times(\vec r-\vec r{}')}{|\vec r-\vec r{}'|^3}.$$
 
 Linear superposition (currents add) makes the integral
 
@@ -34,7 +34,7 @@ Numerically, the natural pattern in rustlab is to **vectorise over field points 
 
 ### Example — Circular loop in vacuum
 
-A horizontal loop of radius $R = 5$ cm carrying $I = 1$ A. Parametrise the loop by angle $\phi \in [0, 2\pi)$; the source position and tangent are $\vec r{}'(\phi) = R(\cos\phi, \sin\phi, 0)$ and $d\vec\ell = R(-\sin\phi, \cos\phi, 0)\,d\phi$. Sample the field on a 41×41 meridional grid in the $x$-$z$ plane (the $y$-component vanishes by symmetry on this plane).
+A horizontal loop of radius $R = 5$ cm carrying $I = 1$ A. Parametrise the loop by angle $\phi \in [0, 2\pi)$; the source position and tangent are $\vec r{}'(\phi) = R(\cos\phi, \sin\phi, 0)$ and $d\vec\ell = R(-\sin\phi, \cos\phi, 0)\\,d\phi$. Sample the field on a 41×41 meridional grid in the $x$-$z$ plane (the $y$-component vanishes by symmetry on this plane).
 
 ```rustlab
 clf;
@@ -117,7 +117,7 @@ The two curves overlap throughout — the $1/r^3$ kernel is benign on a smooth c
 
 ### Theory
 
-For a stack of $N_{\rm loops}$ identical, equally-spaced loops of radius $R$ totalling length $L$, the on-axis field is the sum of each individual loop's contribution. In the **infinite-solenoid limit** ($L\!\to\!\infty$, fixed turns-per-length $n = N_{\rm loops}/L$), Ampère's law $\oint\vec B\cdot d\vec\ell = \mu_0 I_{\rm enc}$ around a rectangle straddling the wall gives the textbook result
+For a stack of $N_{\rm loops}$ identical, equally-spaced loops of radius $R$ totalling length $L$, the on-axis field is the sum of each individual loop's contribution. In the **infinite-solenoid limit** ($L\\!\to\\!\infty$, fixed turns-per-length $n = N_{\rm loops}/L$), Ampère's law $\oint\vec B\cdot d\vec\ell = \mu_0 I_{\rm enc}$ around a rectangle straddling the wall gives the textbook result
 
 $$B_z^{\rm interior} = \mu_0 n I, \qquad B_z^{\rm exterior} = 0.$$
 
@@ -196,7 +196,7 @@ $$\left.\frac{d^2 B_z}{dz^2}\right|_{z=d/2} = 0 \quad\Longleftrightarrow\quad d 
 
 The result is a small region around the midplane where $B_z$ varies only at fourth order in $z$ — useful as a calibration field source. Symbolically:
 
-$$B_z(z) = \frac{\mu_0 I R^2}{2}\!\left[\frac{1}{(R^2+(z-d/2)^2)^{3/2}} + \frac{1}{(R^2+(z+d/2)^2)^{3/2}}\right].$$
+$$B_z(z) = \frac{\mu_0 I R^2}{2}\\!\left[\frac{1}{(R^2+(z-d/2)^2)^{3/2}} + \frac{1}{(R^2+(z+d/2)^2)^{3/2}}\right].$$
 
 ### Example — Sweeping the separation $d/R$
 
@@ -256,13 +256,13 @@ Sums get unwieldy for arbitrary current shapes — and they buy nothing once mag
 
 $$\nabla^2\vec A = -\mu_0\vec J.$$
 
-In 2-D with $\vec J = J_z(x, y)\,\hat z$, only $A_z$ is nonzero, and the system reduces to a single scalar Poisson equation **identical in form to Lesson 05**:
+In 2-D with $\vec J = J_z(x, y)\\,\hat z$, only $A_z$ is nonzero, and the system reduces to a single scalar Poisson equation **identical in form to Lesson 05**:
 
-$$\nabla^2 A_z = -\mu_0\,J_z.$$
+$$\nabla^2 A_z = -\mu_0\\,J_z.$$
 
 The recovered field is the 2-D curl
 
-$$\vec B = (B_x, B_y) = \left(\frac{\partial A_z}{\partial y},\; -\frac{\partial A_z}{\partial x}\right).$$
+$$\vec B = (B_x, B_y) = \left(\frac{\partial A_z}{\partial y},\\; -\frac{\partial A_z}{\partial x}\right).$$
 
 This is the magnetic counterpart of $\vec E = -\nabla V$: solve a scalar PDE, take a derivative, get a vector field.
 
@@ -339,7 +339,7 @@ print(By_an)                                     % analytic  ≈ -2.7e-6 T
 ```
 
 ```text
--0.0000023767539653475737
+-0.000002376753965347522
 -0.0000026966318711941665
 ```
 
@@ -349,9 +349,9 @@ The numerical $B_y$ on the symmetry axis above the wires comes within ~12 % of t
 
 ### Theory
 
-In a piecewise-uniform medium with relative permeability $\mu_r(x, y)$, the right operator is *not* $\nabla^2$ but the variable-coefficient flux-conservative form derived from $\nabla\!\times\!(\vec B/\mu) = \vec J_{\rm free}$:
+In a piecewise-uniform medium with relative permeability $\mu_r(x, y)$, the right operator is *not* $\nabla^2$ but the variable-coefficient flux-conservative form derived from $\nabla\\!\times\\!(\vec B/\mu) = \vec J_{\rm free}$:
 
-$$\nabla\!\cdot\!\bigl(\mu_r^{-1}(x, y)\,\nabla A_z\bigr) = -\mu_0\,J_z.$$
+$$\nabla\\!\cdot\\!\bigl(\mu_r^{-1}(x, y)\\,\nabla A_z\bigr) = -\mu_0\\,J_z.$$
 
 This is **structurally identical to Lesson 05's variable-$\varepsilon$ form** with $\varepsilon \to 1/\mu_r$. The same `laplacian_eps_2d` builder accepts the *reluctivity* map $1/\mu_r$ and produces the right harmonic-mean stencil at material interfaces (where $H_t$ continuity is the magnetic analogue of $D_n$ continuity from Lesson 05).
 
@@ -439,9 +439,9 @@ print(mu0 * 1.0 / (2 * pi * 0.09))
 ```
 
 ```text
-0.003957093026267471
-0.0000030000908545896187
-0.0000026374607745365657
+0.0039570930262576385
+0.0000030000908545821005
+0.0000026374607745301706
 0.000002857142857142857
 0.000002222222222222222
 ```
@@ -485,7 +485,7 @@ Run all five with `make lesson-06`, or individually via `rustlab run lessons/06-
 2. **Toroid field.** Build a toroidal stack of $N = 100$ small loops bent into a torus of major radius $R_{\rm tor} = 5$ cm. Show that the interior field is azimuthal with $B_\phi = \mu_0 N I/(2\pi r)$ (Ampère's law), and that the field outside the toroid is essentially zero.
 3. **Helmholtz analytic.** Differentiate the closed-form on-axis $B_z(z)$ for the pair, set $d^2 B/dz^2|_{z=0} = 0$, and confirm the Helmholtz condition $d = R$ algebraically. Plot the fourth derivative at $z = 0$ to verify it's the leading non-zero term once $d = R$ is enforced.
 4. **Solenoid via Poisson.** Solve the 2-D vector-potential BVP for a *cross-section* of a finite solenoid: many parallel current cells around the perimeter of a long rectangle, alternating polarity along the wall. Show that the interior $\vec B$ is approximately uniform and matches $\mu_0 n I$ for a thin cross-section.
-5. **High-$\mu$ shield against an external field.** Apply a uniform $B_{\rm ext} = B_0\hat x$ across the box by setting Dirichlet boundary values $A_z = -B_0\,y$ on the left and right edges. Place a hollow iron annulus in the middle. Show that the field inside the *cavity* (the inner disk, free of current) is much smaller than $B_0$ — the iron has shielded the cavity from the external field by short-circuiting flux through itself. Sweep $\mu_r \in \{10, 100, 1000\}$ and confirm the cavity field falls roughly as $1/\mu_r$.
+5. **High-$\mu$ shield against an external field.** Apply a uniform $B_{\rm ext} = B_0\hat x$ across the box by setting Dirichlet boundary values $A_z = -B_0\\,y$ on the left and right edges. Place a hollow iron annulus in the middle. Show that the field inside the *cavity* (the inner disk, free of current) is much smaller than $B_0$ — the iron has shielded the cavity from the external field by short-circuiting flux through itself. Sweep $\mu_r \in \{10, 100, 1000\}$ and confirm the cavity field falls roughly as $1/\mu_r$.
 
 ## What's next
 

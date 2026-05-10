@@ -1,0 +1,91 @@
+# standing_wave.rlab — Plane wave reflecting off a perfect electric
+# conductor at x = 0; the superposition of incident and reflected waves
+# is a standing wave with stationary nodes and antinodes.
+#
+# Setup:    incident  E_inc  =  E0 cos(k x + ω t)   (travels in -x)
+#           reflected E_refl = -E0 cos(-k x + ω t)  (sign flip on the
+#                                                    tangential E at PEC)
+#                            = -E0 cos(k x - ω t)
+#           sum       E_y(x, t) = E_inc + E_refl
+#                              = -2 E0 sin(k x) sin(ω t).
+#
+# Verifies: E_y(x = 0, t) = 0 for all t           (PEC boundary)
+#           |E_y(x, t)| ≤ 2 E0                    (constructive bound)
+#           Nodes at k x = n π  (x = n λ/2)       (n integer)
+#           Antinodes at k x = (n + 1/2) π        (x = (2n+1) λ/4)
+#
+# Outputs:  (i)  static SVG of three time snapshots showing the field
+#                oscillating between an envelope of ±2 E0 sin(k x);
+#           (ii) static SVG of the |E_y| envelope vs x;
+#           (iii) GIF animation over one period.
+#
+# Reference: ../../notebooks/09-em-waves.md.
+
+mu0    = 4 * pi * 1e-7;
+eps0   = 8.854187817e-12;
+c      = 1 / sqrt(mu0 * eps0);
+f      = 1.0e9;
+omega  = 2 * pi * f;
+kw     = omega / c;
+lambda = c / f;
+T      = 1 / f;
+E0     = 1.0;
+
+# Standing-wave domain: x ∈ [0, 2 λ] (PEC at x = 0)
+Nx = 401;
+xs = linspace(0, 2 * lambda, Nx);
+
+# === Verify the boundary condition at x = 0 ===
+N_t_test = 21;
+ts_test  = linspace(0, T, N_t_test);
+Ey_at_0  = -2 * E0 * sin(0) * sin(omega * ts_test);
+print(max(abs(Ey_at_0)))         # → 0 (analytic)
+
+# === Static three-snapshot figure ===
+phases_snap = [pi / 8, pi / 4, pi / 2];     # ω t snapshots within (0, π/2)
+Ey_s1 = -2 * E0 * sin(kw * xs) * sin(phases_snap(1));
+Ey_s2 = -2 * E0 * sin(kw * xs) * sin(phases_snap(2));
+Ey_s3 = -2 * E0 * sin(kw * xs) * sin(phases_snap(3));
+
+figure();
+hold on;
+plot(xs / lambda, Ey_s1, "wt = pi/8");
+plot(xs / lambda, Ey_s2, "wt = pi/4");
+plot(xs / lambda, Ey_s3, "wt = pi/2");
+plot(xs / lambda,  2 * E0 * abs(sin(kw * xs)), "envelope (+)");
+plot(xs / lambda, -2 * E0 * abs(sin(kw * xs)), "envelope (-)");
+hold off;
+xlabel("x / lambda");
+ylabel("E_y / E0");
+title("Standing wave: nodes at x/lambda = 0, 1/2, 1, 3/2, 2");
+legend("wt = pi/8", "wt = pi/4", "wt = pi/2", "+envelope", "-envelope");
+savefig("standing_wave_snapshots.svg");
+
+# === Envelope only ===
+envelope = 2 * E0 * abs(sin(kw * xs));
+figure();
+plot(xs / lambda, envelope, "max |E_y(x, t)| over t");
+xlabel("x / lambda");
+ylabel("|E_y| / E0");
+title("Standing-wave envelope: nodes (zeros) at x = n lambda/2");
+savefig("standing_wave_envelope.svg");
+
+# === Animation over one period ===
+N_frames = 60;
+figure();
+for kf = 1:N_frames
+  t  = (kf - 1) / N_frames * T;
+  Ey = -2 * E0 * sin(kw * xs) * sin(omega * t);
+  hold on;
+  plot(xs / lambda, Ey, "E_y(x, t)");
+  plot(xs / lambda,  envelope, "+envelope");
+  plot(xs / lambda, -envelope, "-envelope");
+  hold off;
+  xlim([0.0, 2.0]);
+  ylim([-2.4, 2.4]);
+  xlabel("x / lambda");
+  title(sprintf("Standing wave (PEC at x = 0)  —  t / T = %.2f", t / T));
+  legend("E_y", "+envelope", "-envelope");
+  frame();
+end
+saveanim("standing_wave.gif", 24);

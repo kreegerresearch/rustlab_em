@@ -17,9 +17,9 @@ The curriculum targets a "mini Ansys" endpoint: given arbitrary geometry plus ma
 | 05 | Poisson & Laplace BVP — Dielectrics & Conductors | Drafted |
 | 06 | Magnetostatics & Vector Potential | Drafted |
 | 07 | Faraday's Law & Induction | Drafted |
-| 08 | Maxwell's Equations | Planned |
-| 09 | EM Wave Equation & Plane Waves | Planned |
-| 10 | FDFD — Frequency-Domain Maxwell Solver | Planned |
+| 08 | Maxwell's Equations | Drafted |
+| 09 | EM Wave Equation & Plane Waves | Drafted |
+| 10 | FDFD — Frequency-Domain Maxwell Solver | Drafted |
 | 11 | FDTD — Time-Domain, Dispersive Materials, PML | Planned |
 | 12 | Waveguides, Cavity Eigenmodes & Radiation | Planned |
 | 13 | Transmission Lines, S-Parameters & Antennas | Planned |
@@ -47,9 +47,9 @@ $$\nabla f = \left(\frac{\partial f}{\partial x}, \frac{\partial f}{\partial y},
 $$\oint_{\partial V}\vec{F}\cdot d\vec{A} = \int_V (\nabla\cdot\vec{F})\, dV, \quad \oint_C \vec{F}\cdot d\vec\ell = \int_S (\nabla\times\vec{F})\cdot d\vec A$$
 
 ### Scripts
-- `gradient_field.r` — compute $\nabla f$ for a Gaussian bump; quiver-plot the gradient arrows overlaid on the contour of $f$.
-- `divergence_curl.r` — two canonical fields side-by-side. Radial $\vec F = (x, y)$ has $\nabla\cdot\vec F = 2$ everywhere and $\nabla\times\vec F = 0$. Rotational $\vec F = (-y, x)$ has $\nabla\cdot\vec F = 0$ and $\nabla\times\vec F = 2\hat z$. Plot both quiver fields alongside `imagesc` of div and curl.
-- `stokes_demo.r` — pick a vector field with nonzero curl; compute $\oint \vec F\cdot d\vec\ell$ around a square loop via trapezoidal line integral; compare to the surface integral of $\nabla\times\vec F$ inside. Agreement to a few percent at moderate grid resolution.
+- `gradient_field.rlab` — compute $\nabla f$ for a Gaussian bump; quiver-plot the gradient arrows overlaid on the contour of $f$.
+- `divergence_curl.rlab` — two canonical fields side-by-side. Radial $\vec F = (x, y)$ has $\nabla\cdot\vec F = 2$ everywhere and $\nabla\times\vec F = 0$. Rotational $\vec F = (-y, x)$ has $\nabla\cdot\vec F = 0$ and $\nabla\times\vec F = 2\hat z$. Plot both quiver fields alongside `imagesc` of div and curl.
+- `stokes_demo.rlab` — pick a vector field with nonzero curl; compute $\oint \vec F\cdot d\vec\ell$ around a square loop via trapezoidal line integral; compare to the surface integral of $\nabla\times\vec F$ inside. Agreement to a few percent at moderate grid resolution.
 
 ---
 
@@ -70,9 +70,9 @@ Dipole far-field ($r \gg d$), $\vec p = qd\hat z$:
 $$\vec E_{\rm dip}(\vec r) = \frac{1}{4\pi\varepsilon_0}\frac{3(\vec p\cdot\hat r)\hat r - \vec p}{r^3}$$
 
 ### Scripts
-- `point_charges.r` — two-charge (dipole) and four-charge (quadrupole) configurations. Quiver plot of $\vec E$ on a 2D slice; `imagesc` of $|\vec E|$ in log scale.
-- `dipole_field.r` — compare exact superposition of $\pm q$ pair with the far-field expression above; show percent error vs $r/d$.
-- `ring_of_charge.r` — axial $\vec E$ of a uniformly charged ring by numerical integration; recover the well-known closed-form $E_z(z) = qz/(4\pi\varepsilon_0(z^2+R^2)^{3/2})$.
+- `point_charges.rlab` — two-charge (dipole) and four-charge (quadrupole) configurations. Quiver plot of $\vec E$ on a 2D slice; `imagesc` of $|\vec E|$ in log scale.
+- `dipole_field.rlab` — compare exact superposition of $\pm q$ pair with the far-field expression above; show percent error vs $r/d$.
+- `ring_of_charge.rlab` — axial $\vec E$ of a uniformly charged ring by numerical integration; recover the well-known closed-form $E_z(z) = qz/(4\pi\varepsilon_0(z^2+R^2)^{3/2})$.
 
 ---
 
@@ -92,9 +92,9 @@ $$\oint_{\partial V}\vec E\cdot d\vec A = \frac{Q_{\rm enc}}{\varepsilon_0}, \qq
 $$V(\vec r) = \frac{1}{4\pi\varepsilon_0}\sum_i\frac{q_i}{|\vec r - \vec r_i|}, \qquad \vec E = -\nabla V$$
 
 ### Scripts
-- `gauss_sphere.r` — uniform spherical charge. Plot $E_r(r)$ and $V(r)$ across the surface; verify the linear-inside, $1/r^2$-outside structure.
-- `potential_dipole.r` — dipole potential $V \propto \cos\theta/r^2$; heatmap plus contour overlay of equipotentials; quiver overlay of $-\nabla V$.
-- `capacitor_1d.r` — 1D parallel-plate capacitor from Gauss's law; uniform $\vec E$ between plates, zero outside; relate to capacitance $C = \varepsilon_0 A/d$.
+- `gauss_sphere.rlab` — uniform spherical charge. Plot $E_r(r)$ and $V(r)$ across the surface; verify the linear-inside, $1/r^2$-outside structure.
+- `potential_dipole.rlab` — dipole potential $V \propto \cos\theta/r^2$; heatmap plus contour overlay of equipotentials; quiver overlay of $-\nabla V$.
+- `capacitor_1d.rlab` — 1D parallel-plate capacitor from Gauss's law; uniform $\vec E$ between plates, zero outside; relate to capacitance $C = \varepsilon_0 A/d$.
 
 ---
 
@@ -125,10 +125,10 @@ where $M_{\rm bg} = \lnot\bigvee_k M_k$ is the background and the sum is disjoin
 
 ### Scripts
 
-- `shape_rasterization.r` — Build `rect_mask(X, Y, x0, y0, w, h)`, `disk_mask(X, Y, xc, yc, r)`, `polygon_mask(X, Y, verts)` as helper functions (inline, since they may not be in upstream rustlab yet). Display each as an `imagesc` to confirm the boundary placement.
-- `boolean_regions.r` — Compose three primitives with union, intersection, and difference to build a C-shape, an annulus, and a "Pac-Man" region. Plot all three.
-- `material_map_2d.r` — Take a configuration (air background, a rectangular dielectric block with $\varepsilon_r = 4.4$, a metallic disk with $\sigma = 5.8\times10^7$) and produce three synchronized arrays `eps`, `mu`, `sigma`. `imagesc` each with a discrete colormap.
-- `conformal_disk.r` — Compare staircase vs area-weighted $\varepsilon$ map for a dielectric disk. Plot the difference. For a quantitative check, solve the disk's electrostatic capacitance via Lesson 05's solver using both maps and compare to the analytic coaxial answer — the conformal version converges faster with grid resolution.
+- `shape_rasterization.rlab` — Build `rect_mask(X, Y, x0, y0, w, h)`, `disk_mask(X, Y, xc, yc, r)`, `polygon_mask(X, Y, verts)` as helper functions (inline, since they may not be in upstream rustlab yet). Display each as an `imagesc` to confirm the boundary placement.
+- `boolean_regions.rlab` — Compose three primitives with union, intersection, and difference to build a C-shape, an annulus, and a "Pac-Man" region. Plot all three.
+- `material_map_2d.rlab` — Take a configuration (air background, a rectangular dielectric block with $\varepsilon_r = 4.4$, a metallic disk with $\sigma = 5.8\times10^7$) and produce three synchronized arrays `eps`, `mu`, `sigma`. `imagesc` each with a discrete colormap.
+- `conformal_disk.rlab` — Compare staircase vs area-weighted $\varepsilon$ map for a dielectric disk. Plot the difference. For a quantitative check, solve the disk's electrostatic capacitance via Lesson 05's solver using both maps and compare to the analytic coaxial answer — the conformal version converges faster with grid resolution.
 
 ### What Students Learn
 
@@ -163,11 +163,13 @@ SOR with relaxation $\omega \in (1, 2)$:
 $$V_{i,j}^{(k+1)} = (1-\omega)V_{i,j}^{(k)} + \omega V_{i,j}^{\rm GS}$$
 
 ### Scripts
-- `laplace_2d.r` — Laplace's equation on a unit square with $V = \sin(\pi x)$ on the top edge, 0 on the others. Compare Jacobi vs Gauss-Seidel vs SOR convergence. Verify against the analytic separation-of-variables solution.
-- `parallel_plate.r` — two conducting plates inside a grounded box; solve Poisson with charge on the plates set via fixed-$V$ boundary. Extract $\vec E = -\nabla V$ and show fringing fields at the plate edges.
-- `dielectric_slab.r` — parallel-plate capacitor with a dielectric slab ($\varepsilon_r = 4$) filling half the gap. Use the variable-coefficient stencil. Verify the field drop by $\varepsilon_r$ inside the slab and continuity of $D_n$ at the interface; compute $C$ and compare to the analytic series-capacitor result $C = \varepsilon_0 A /(d_1 + d_2/\varepsilon_r)$.
-- `coaxial_cable.r` — inner conductor at $V_1$, outer at 0; square-grid discretization of the annular region; verify $V(r) = V_1\ln(b/r)/\ln(b/a)$.
-- `corner_singularity.r` — L-shaped conductor in a box; show the $1/\sqrt r$ field singularity at the re-entrant corner.
+- `laplace_2d.rlab` — Laplace's equation on a unit square with $V = \sin(\pi x)$ on the top edge, 0 on the others. Sparse-direct `spsolve` against the analytic separation-of-variables solution.
+- `iterative_solvers.rlab` — Same Laplace problem solved by Jacobi, Gauss–Seidel, and SOR; plot residual histories side by side to expose the convergence-rate gap that motivates SOR (and ultimately direct solvers).
+- `parallel_plate.rlab` — two conducting plates inside a grounded box; solve Poisson with charge on the plates set via fixed-$V$ boundary. Extract $\vec E = -\nabla V$ and show fringing fields at the plate edges.
+- `dielectric_slab.rlab` — parallel-plate capacitor with a dielectric slab ($\varepsilon_r = 4$) filling half the gap. Use the variable-coefficient stencil. Verify the field drop by $\varepsilon_r$ inside the slab and continuity of $D_n$ at the interface; compute $C$ and compare to the analytic series-capacitor result $C = \varepsilon_0 A /(d_1 + d_2/\varepsilon_r)$.
+- `corner_singularity.rlab` — L-shaped conductor in a box; log-log fit recovers the $r^{-1/3}$ field exponent at the re-entrant corner.
+
+Coaxial geometry is intentionally deferred to Lesson 13's `coax_impedance.rlab`, where the same 2D Laplace solve produces $C'$ and $Z_0$ alongside the magnetostatic counterpart.
 
 ---
 
@@ -198,11 +200,11 @@ Variable-$\mu$ form (for magnetic materials, in terms of $H$ and the magnetic sc
 $$\nabla\!\cdot\!(\mu\nabla\phi_m) = 0, \qquad \vec H = -\nabla\phi_m$$
 
 ### Scripts
-- `biot_savart_loop.r` — single circular current loop; 3D $\vec B$ via Biot-Savart on a parameterized path; quiver on the $r$-$z$ half-plane; compare on-axis result to the closed form.
-- `solenoid_field.r` — stack of loops approximating a finite solenoid; show uniform interior $B_z$ and the fall-off at the ends.
-- `helmholtz_pair.r` — two coaxial coils at separation $d = R$; compute $B_z$ along the axis; verify $d^2B/dz^2 = 0$ at the midpoint that gives a uniform field sweet spot.
-- `vector_potential_2d.r` — two infinite parallel wires carrying opposite currents. Solve $\nabla^2 A_z = -\mu_0 J_z$ on a 2D grid (reuse Lesson 05's solver), recover $\vec B = (\partial A_z/\partial y, -\partial A_z/\partial x)$, compare to the analytic Biot-Savart result. Introduces the solver style used in FDFD/FDTD for magnetic materials.
-- `iron_core_shielding.r` — single current-carrying wire inside a cylindrical iron shell ($\mu_r = 1000$). Solve the variable-$\mu$ form; show field concentration in the iron and dramatic reduction outside. Demonstrates why material maps matter for magnetostatics.
+- `biot_savart_loop.rlab` — single circular current loop; 3D $\vec B$ via Biot-Savart on a parameterized path; quiver on the $r$-$z$ half-plane; compare on-axis result to the closed form.
+- `solenoid_field.rlab` — stack of loops approximating a finite solenoid; show uniform interior $B_z$ and the fall-off at the ends.
+- `helmholtz_pair.rlab` — two coaxial coils at separation $d = R$; compute $B_z$ along the axis; verify $d^2B/dz^2 = 0$ at the midpoint that gives a uniform field sweet spot.
+- `vector_potential_2d.rlab` — two infinite parallel wires carrying opposite currents. Solve $\nabla^2 A_z = -\mu_0 J_z$ on a 2D grid (reuse Lesson 05's solver), recover $\vec B = (\partial A_z/\partial y, -\partial A_z/\partial x)$, compare to the analytic Biot-Savart result. Introduces the solver style used in FDFD/FDTD for magnetic materials.
+- `iron_core_shielding.rlab` — single current-carrying wire inside a cylindrical iron shell ($\mu_r = 1000$). Solve the variable-$\mu$ form; show field concentration in the iron and dramatic reduction outside. Demonstrates why material maps matter for magnetostatics.
 
 ---
 
@@ -222,9 +224,9 @@ $$\oint \vec E\cdot d\vec\ell = -\frac{d\Phi_B}{dt}, \qquad \nabla\times\vec E =
 $$L = \frac{\Phi_B}{I}, \qquad M_{12} = \frac{\Phi_2}{I_1}$$
 
 ### Scripts
-- `induced_emf.r` — loop in a sinusoidal $\vec B(t) = B_0\sin(\omega t)\hat z$; plot $\Phi(t)$ and $\varepsilon(t) = -d\Phi/dt$.
-- `mutual_inductance.r` — two concentric coplanar loops; compute $M$ by integrating the flux of loop 1's field through loop 2.
-- `eddy_current_plate.r` — thin conducting disk in a time-varying uniform $\vec B$; solve the scalar stream-function Laplace equation for the induced current distribution on a 2D grid.
+- `induced_emf.rlab` — loop in a sinusoidal $\vec B(t) = B_0\sin(\omega t)\hat z$; plot $\Phi(t)$ and $\varepsilon(t) = -d\Phi/dt$.
+- `mutual_inductance.rlab` — two concentric coplanar loops; compute $M$ by integrating the flux of loop 1's field through loop 2.
+- `eddy_current_plate.rlab` — thin conducting disk in a time-varying uniform $\vec B$; solve the scalar stream-function Laplace equation for the induced current distribution on a 2D grid.
 
 ---
 
@@ -245,9 +247,9 @@ $$\nabla\times\vec E = -\partial\vec B/\partial t \qquad \nabla\times\vec B = \m
 Poynting's theorem: $\partial u/\partial t + \nabla\cdot\vec S = -\vec J\cdot\vec E$, where $u = \tfrac12(\varepsilon_0 E^2 + B^2/\mu_0)$.
 
 ### Scripts
-- `maxwell_consistency.r` — build a known $\vec E(\vec r, t)$ and $\vec B(\vec r, t)$ plane-wave solution; verify numerically that all four Maxwell equations are satisfied to machine precision (modulo discretization).
-- `charge_conservation.r` — current through a capacitor: show $\nabla\cdot\vec J = -\partial\rho/\partial t$ at the plates, and that the displacement current bridges the gap.
-- `poynting_flow.r` — energy flow in a coaxial cable carrying DC power; compute $\vec S$ in the dielectric between the conductors; verify integrated $\int\vec S\cdot d\vec A = IV$.
+- `maxwell_consistency.rlab` — build a known $\vec E(\vec r, t)$ and $\vec B(\vec r, t)$ plane-wave solution; verify numerically that all four Maxwell equations are satisfied to machine precision (modulo discretization).
+- `charge_conservation.rlab` — current through a capacitor: show $\nabla\cdot\vec J = -\partial\rho/\partial t$ at the plates, and that the displacement current bridges the gap.
+- `poynting_flow.rlab` — energy flow in a coaxial cable carrying DC power; compute $\vec S$ in the dielectric between the conductors; verify integrated $\int\vec S\cdot d\vec A = IV$.
 
 ---
 
@@ -267,9 +269,9 @@ $$\nabla^2\vec E - \mu_0\varepsilon_0\frac{\partial^2\vec E}{\partial t^2} = 0, 
 Plane wave: $\vec E(\vec r,t) = \vec E_0 e^{i(\vec k\cdot\vec r - \omega t)}$ with $\omega = c|\vec k|$, $\vec B = \hat k\times\vec E/c$.
 
 ### Scripts
-- `plane_wave.r` — a single plane wave propagating along $+\hat x$; plot $E_y(x,t)$ and $B_z(x,t)$ at several time snapshots; verify the perpendicularity and the $E/B = c$ ratio.
-- `polarization.r` — Jones-vector sweep: linear, right-circular, left-circular, elliptical. Animated tip of $\vec E$ traced on the $y$-$z$ plane.
-- `standing_wave.r` — plane wave + perfect-conductor reflection; observe $E(x=0,t) = 0$ at all times and the spatial node/antinode pattern.
+- `plane_wave.rlab` — a single plane wave propagating along $+\hat x$; plot $E_y(x,t)$ and $B_z(x,t)$ at several time snapshots; verify the perpendicularity and the $E/B = c$ ratio.
+- `polarization.rlab` — Jones-vector sweep: linear, right-circular, left-circular, elliptical. Animated tip of $\vec E$ traced on the $y$-$z$ plane.
+- `standing_wave.rlab` — plane wave + perfect-conductor reflection; observe $E(x=0,t) = 0$ at all times and the spatial node/antinode pattern.
 
 ---
 
@@ -300,10 +302,10 @@ Stretched-coordinate PML: replace $\partial/\partial\alpha$ with $(1/s_\alpha)\p
 
 ### Scripts
 
-- `fdfd_1d_layers.r` — 1D scalar Helmholtz $(d^2/dx^2 + k^2\varepsilon_r(x))E = -i\omega\mu_0 J$ on a stratified dielectric (air / quarter-wave layer / air); extract transmission $|T|^2$ over a frequency sweep; verify the quarter-wave antireflection minimum vs the analytic thin-film formula.
-- `fdfd_2d_tmz.r` — 2D TM$_z$ scattering from a dielectric cylinder at one frequency. Complex-valued sparse assembly; `spsolve`; plot $|E_z|$ and the phase. Verify the low-frequency limit against Mie series for a dielectric cylinder.
-- `fdfd_pml_demo.r` — stretched-coordinate PML vs a hard Dirichlet wall around a point source. Show the standing-wave pattern when reflections dominate and the clean outgoing-wave pattern with PML.
-- `fdfd_resonator.r` — rectangular 2D cavity with one absorbing port; sweep frequency and find the resonant peaks in the port response. Compare to the analytic cavity modes from Lesson 12.
+- `fdfd_1d_layers.rlab` — 1D scalar Helmholtz $(d^2/dx^2 + k^2\varepsilon_r(x))E = -i\omega\mu_0 J$ on a stratified dielectric (air / quarter-wave layer / air); extract transmission $|T|^2$ over a frequency sweep; verify the quarter-wave antireflection minimum vs the analytic thin-film formula.
+- `fdfd_2d_tmz.rlab` — 2D TM$_z$ scattering from a dielectric cylinder at one frequency. Complex-valued sparse assembly; `spsolve`; plot $|E_z|$ and the phase. Verify the low-frequency limit against Mie series for a dielectric cylinder.
+- `fdfd_pml_demo.rlab` — stretched-coordinate PML vs a hard Dirichlet wall around a point source. Show the standing-wave pattern when reflections dominate and the clean outgoing-wave pattern with PML.
+- `fdfd_resonator.rlab` — rectangular 2D cavity with one absorbing port; sweep frequency and find the resonant peaks in the port response. Compare to the analytic cavity modes from Lesson 12.
 
 ---
 
@@ -336,11 +338,11 @@ Split-field PML (Berenger): inside the PML, each field component is split into t
 
 ### Scripts
 
-- `fdtd_1d.r` — Gaussian pulse launched from the center; propagates in both directions; hit a dielectric slab; measure reflection coefficient and compare to the Fresnel formula.
-- `fdtd_2d_scattering.r` — TM$_z$ polarization, TF/SF plane-wave source on one side, PEC cylinder in the middle; watch the incident wave, scattered wave, and total field; animated frames.
-- `fdtd_dispersive.r` — 1D pulse through a thin Drude metal film ($\omega_p$, $\gamma$ for gold); verify the plasma transmission peak above $\omega_p$ and evanescent decay below. ADE update integrated with the normal Yee step.
-- `fdtd_tfsf_validation.r` — TF/SF box with *nothing* inside. Ensure the incident wave is exact inside the box and zero outside (to machine precision modulo discretization). Isolates injection correctness from solver correctness.
-- `fdtd_pml_depth.r` — point source in a 2D box with PMLs of varying depth; measure the residual reflection by comparing the field in the computational domain to the same source in a much larger domain. Verify exponential improvement with PML thickness.
+- `fdtd_1d.rlab` — Gaussian pulse launched from the center; propagates in both directions; hit a dielectric slab; measure reflection coefficient and compare to the Fresnel formula.
+- `fdtd_2d_scattering.rlab` — TM$_z$ polarization, TF/SF plane-wave source on one side, PEC cylinder in the middle; watch the incident wave, scattered wave, and total field; animated frames.
+- `fdtd_dispersive.rlab` — 1D pulse through a thin Drude metal film ($\omega_p$, $\gamma$ for gold); verify the plasma transmission peak above $\omega_p$ and evanescent decay below. ADE update integrated with the normal Yee step.
+- `fdtd_tfsf_validation.rlab` — TF/SF box with *nothing* inside. Ensure the incident wave is exact inside the box and zero outside (to machine precision modulo discretization). Isolates injection correctness from solver correctness.
+- `fdtd_pml_depth.rlab` — point source in a 2D box with PMLs of varying depth; measure the residual reflection by comparing the field in the computational domain to the same source in a much larger domain. Verify exponential improvement with PML thickness.
 
 ---
 
@@ -375,11 +377,11 @@ so a single FDTD or FDFD run in a small box gives the full 3D radiation pattern.
 
 ### Scripts
 
-- `waveguide_modes.r` — rectangular waveguide eigenvalue problem via 2D Laplacian on an interior grid with Dirichlet BCs, solved as a sparse generalized eigenvalue problem with `eigs`; recover the lowest 4 cutoff frequencies and plot the mode patterns. Extend to an L-shape to show the solver works on non-separable geometries.
-- `cavity_resonances.r` — 2D rectangular cavity eigenmodes on a grid; compare to the analytic $\omega_{mn} = c\pi\sqrt{(m/a)^2+(n/b)^2}$. Add a small dielectric perturbation and show the frequency shift matches first-order perturbation theory.
-- `hertzian_dipole.r` — far-field pattern $\sin\theta$; plot as a polar diagram and a 3D torus; compute the total radiated power.
-- `half_wave_dipole.r` — numerically integrate over a sinusoidal current distribution $I(z) = I_0\cos(kz)$ for $|z| < \lambda/4$; compare the slightly narrower pattern to the Hertzian result.
-- `nf2ff_transform.r` — wrap a small FDTD run of a Hertzian dipole inside an imaginary closed surface; record $\vec E_{\rm tan}$, $\vec H_{\rm tan}$ on the surface; apply the surface integral to produce the 3D far-field pattern; compare to the analytic $\sin\theta$ pattern. Validates the transform that Lesson 14 uses on a real antenna.
+- `waveguide_modes.rlab` — rectangular waveguide eigenvalue problem via 2D Laplacian on an interior grid with Dirichlet BCs, solved as a sparse generalized eigenvalue problem with `eigs`; recover the lowest 4 cutoff frequencies and plot the mode patterns. Extend to an L-shape to show the solver works on non-separable geometries.
+- `cavity_resonances.rlab` — 2D rectangular cavity eigenmodes on a grid; compare to the analytic $\omega_{mn} = c\pi\sqrt{(m/a)^2+(n/b)^2}$. Add a small dielectric perturbation and show the frequency shift matches first-order perturbation theory.
+- `hertzian_dipole.rlab` — far-field pattern $\sin\theta$; plot as a polar diagram and a 3D torus; compute the total radiated power.
+- `half_wave_dipole.rlab` — numerically integrate over a sinusoidal current distribution $I(z) = I_0\cos(kz)$ for $|z| < \lambda/4$; compare the slightly narrower pattern to the Hertzian result.
+- `nf2ff_transform.rlab` — wrap a small FDTD run of a Hertzian dipole inside an imaginary closed surface; record $\vec E_{\rm tan}$, $\vec H_{\rm tan}$ on the surface; apply the surface integral to produce the 3D far-field pattern; compare to the analytic $\sin\theta$ pattern. Validates the transform that Lesson 14 uses on a real antenna.
 
 ---
 
@@ -434,25 +436,25 @@ Short dipole: $R_{\rm rad} = 20\pi^2(L/\lambda)^2$.
 
 ### Scripts
 
-- `coax_impedance.r` — 2D Laplace on the coax cross-section; extract $C'$ via flux method and energy method; sweep $b/a$; verify $Z_0 \approx 60\ln(b/a)\,\Omega$.
-- `twin_wire_impedance.r` — pair of conductor disks at $\pm V$; $C'$ via energy; sweep $d/a$; verify $Z_0 = (\eta_0/\pi)\cosh^{-1}(d/2a)$.
-- `telegrapher_propagation.r` — 1D staggered leapfrog for $V(i)$, $I(i+\tfrac12)$; pulse propagation at $v = 1/\sqrt{L'C'}$; reflection cases (matched, open, short, $2Z_0$).
-- `vswr_standing_wave.r` — CW-driven terminated line; measure $|V(z)|$ envelope; extract VSWR; compare to $(1+|\Gamma|)/(1-|\Gamma|)$.
-- `s_parameters_tline.r` — 1D FDTD of a two-section transmission line with an impedance step; inject a Gaussian pulse; extract $S_{11}$, $S_{21}$ via FFT and compare to the analytic two-port network. Demonstrates the mode-filter + time-gating workflow before Lesson 14 uses it on a 3D antenna.
-- `dipole_standing_wave.r` — standing-wave current on a dipole from end-reflection; sweep $L/\lambda$; show the $\cos(kz)$ profile at $L = \lambda/2$.
-- `radiation_resistance.r` — far-field Poynting integration; extract $R_{\rm rad}$ vs $L/\lambda$; verify 73 Ω and $20\pi^2(L/\lambda)^2$.
+- `coax_impedance.rlab` — 2D Laplace on the coax cross-section; extract $C'$ via flux method and energy method; sweep $b/a$; verify $Z_0 \approx 60\ln(b/a)\,\Omega$.
+- `twin_wire_impedance.rlab` — pair of conductor disks at $\pm V$; $C'$ via energy; sweep $d/a$; verify $Z_0 = (\eta_0/\pi)\cosh^{-1}(d/2a)$.
+- `telegrapher_propagation.rlab` — 1D staggered leapfrog for $V(i)$, $I(i+\tfrac12)$; pulse propagation at $v = 1/\sqrt{L'C'}$; reflection cases (matched, open, short, $2Z_0$).
+- `vswr_standing_wave.rlab` — CW-driven terminated line; measure $|V(z)|$ envelope; extract VSWR; compare to $(1+|\Gamma|)/(1-|\Gamma|)$.
+- `s_parameters_tline.rlab` — 1D FDTD of a two-section transmission line with an impedance step; inject a Gaussian pulse; extract $S_{11}$, $S_{21}$ via FFT and compare to the analytic two-port network. Demonstrates the mode-filter + time-gating workflow before Lesson 14 uses it on a 3D antenna.
+- `dipole_standing_wave.rlab` — standing-wave current on a dipole from end-reflection; sweep $L/\lambda$; show the $\cos(kz)$ profile at $L = \lambda/2$.
+- `radiation_resistance.rlab` — far-field Poynting integration; extract $R_{\rm rad}$ vs $L/\lambda$; verify 73 Ω and $20\pi^2(L/\lambda)^2$.
 
 ### What Each Derivation Proves
 
 | Derivation | Geometry | Proof |
 |---|---|---|
-| $Z_0 = (\eta_0/2\pi)\ln(b/a)$ for coax | Annular 2D cross-section | `coax_impedance.r` |
-| $Z_0 \approx 120\ln(d/a)$ for twin-wire | Pair of disks in 2D | `twin_wire_impedance.r` |
-| $v = 1/\sqrt{L'C'} = c$ (air) | 1D TL cascade | `telegrapher_propagation.r` |
-| $\Gamma = (Z_L-Z_0)/(Z_L+Z_0)$, VSWR formula | Terminated 1D line | `vswr_standing_wave.r` |
-| $S$-parameters from time-gating + FFT | 1D two-section line | `s_parameters_tline.r` |
-| $I(z) = I_0\sin[k(L/2-\|z\|)]$ | Open-ended 1D stub | `dipole_standing_wave.r` |
-| $R_{\rm rad}\approx 73.1\,\Omega$ half-wave | 3D far-field sphere | `radiation_resistance.r` |
+| $Z_0 = (\eta_0/2\pi)\ln(b/a)$ for coax | Annular 2D cross-section | `coax_impedance.rlab` |
+| $Z_0 \approx 120\ln(d/a)$ for twin-wire | Pair of disks in 2D | `twin_wire_impedance.rlab` |
+| $v = 1/\sqrt{L'C'} = c$ (air) | 1D TL cascade | `telegrapher_propagation.rlab` |
+| $\Gamma = (Z_L-Z_0)/(Z_L+Z_0)$, VSWR formula | Terminated 1D line | `vswr_standing_wave.rlab` |
+| $S$-parameters from time-gating + FFT | 1D two-section line | `s_parameters_tline.rlab` |
+| $I(z) = I_0\sin[k(L/2-\|z\|)]$ | Open-ended 1D stub | `dipole_standing_wave.rlab` |
+| $R_{\rm rad}\approx 73.1\,\Omega$ half-wave | 3D far-field sphere | `radiation_resistance.rlab` |
 
 ### Prerequisites Satisfied
 
@@ -488,7 +490,7 @@ A classical rectangular microstrip patch antenna at 2.45 GHz on FR-4 substrate:
 
 ### Script (single long capstone)
 
-- `patch_antenna.r` — the entire pipeline in one script, sectioned clearly:
+- `patch_antenna.rlab` — the entire pipeline in one script, sectioned clearly:
 
   1. **Geometry & material map.** Build $\varepsilon_r(x,y,z)$, $\mu_r$, $\sigma$ as `Tensor3` arrays using the Lesson 04 helpers. `imagesc` a horizontal slice through each layer to verify.
   2. **Mesh + CFL time step.** Choose $\Delta = \lambda_{\rm min}/20$ in the substrate; compute $\Delta t$ from CFL.

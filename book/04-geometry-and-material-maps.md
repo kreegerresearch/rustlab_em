@@ -44,7 +44,7 @@ Throughout the lesson coordinates are in metres. Holding `X, Y, dx, dy` constant
 
 A *rasterization* turns a continuous geometric description (a rectangle, a disk, a polygon) into a discrete mask $M(i,j) \in \{0, 1\}$ on the grid. The mask is the indicator function of the shape evaluated at the grid points:
 
-$$M(i, j) = \mathbb{1}\bigl[(X(i,j),\,Y(i,j)) \in S\bigr].$$
+$$M(i, j) = \mathbb{1}\bigl[(X(i,j),\\,Y(i,j)) \in S\bigr].$$
 
 Three primitives cover the bulk of EM device geometry:
 
@@ -218,7 +218,7 @@ A *material map* is a dense scalar array — one number per grid cell — that t
 
 There are two equivalent ways to build it from masks. The **disjoint-sum** form assumes regions don't overlap (or that the user has already taken differences):
 
-$$\varepsilon_r(i,j) = \sum_k M_k(i,j)\,\varepsilon_{r,k} + M_{\rm bg}(i,j)\,\varepsilon_{r,\rm bg}, \qquad M_{\rm bg} = 1 - \bigvee_k M_k.$$
+$$\varepsilon_r(i,j) = \sum_k M_k(i,j)\\,\varepsilon_{r,k} + M_{\rm bg}(i,j)\\,\varepsilon_{r,\rm bg}, \qquad M_{\rm bg} = 1 - \bigvee_k M_k.$$
 
 The **layered overwrite** form lets later layers replace earlier ones — the canonical idiom is
 
@@ -301,7 +301,7 @@ A binary mask resolves a curved boundary as a staircase: every cell is either fu
 
 The fix is **area-weighted conformal coverage**. For each grid cell, replace the binary indicator with the *fraction* $\alpha(i,j) \in [0,1]$ of that cell's area that lies inside the shape. The cell-averaged material property becomes a linear blend:
 
-$$\bar\varepsilon_r(i,j) = \alpha(i,j)\,\varepsilon_{r,\rm in} + (1-\alpha(i,j))\,\varepsilon_{r,\rm out}.$$
+$$\bar\varepsilon_r(i,j) = \alpha(i,j)\\,\varepsilon_{r,\rm in} + (1-\alpha(i,j))\\,\varepsilon_{r,\rm out}.$$
 
 For interfaces normal to a grid axis this is exact; for diagonal interfaces it converges as $O(h^2)$, matching the bulk solver. The fractional-coverage map $\alpha$ is the same data structure as a mask, just with values in $[0, 1]$ instead of $\{0, 1\}$ — every later solver consumes it without modification.
 

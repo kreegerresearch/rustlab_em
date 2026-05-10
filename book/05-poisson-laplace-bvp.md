@@ -24,11 +24,11 @@ Lessons 01 (gradient), 03 (potential, Gauss's law), 04 (material maps). Comfort 
 
 The continuous Laplacian on a uniform 2-D grid spacing $h$ is approximated by central differences. Taylor-expanding $V(x \pm h, y)$ and $V(x, y \pm h)$ to fourth order and adding gives
 
-$$\nabla^2 V(x_i, y_j) = \frac{V_{i+1,j} + V_{i-1,j} + V_{i,j+1} + V_{i,j-1} - 4\,V_{i,j}}{h^2} + O(h^2).$$
+$$\nabla^2 V(x_i, y_j) = \frac{V_{i+1,j} + V_{i-1,j} + V_{i,j+1} + V_{i,j-1} - 4\\,V_{i,j}}{h^2} + O(h^2).$$
 
 This is the **5-point stencil** — every grid cell couples only to its four nearest neighbours. The discretization error is $O(h^2)$ in the bulk, so doubling the grid resolution cuts the error by 4×.
 
-Stacking every interior cell's equation into a system $L\vec V = \vec b$ produces a sparse $(N\!\cdot\!N)\times(N\!\cdot\!N)$ matrix with at most five non-zeros per row. The rustlab builtin `laplacian_2d(nx, ny, dx, dy)` returns exactly this $L$, with the sign convention $L \approx +\nabla^2$. For the Poisson form $\nabla^2 V = -\rho/\varepsilon_0$ the SPD-friendly assembly is $A = -L$, and the system is
+Stacking every interior cell's equation into a system $L\vec V = \vec b$ produces a sparse $(N\\!\cdot\\!N)\times(N\\!\cdot\\!N)$ matrix with at most five non-zeros per row. The rustlab builtin `laplacian_2d(nx, ny, dx, dy)` returns exactly this $L$, with the sign convention $L \approx +\nabla^2$. For the Poisson form $\nabla^2 V = -\rho/\varepsilon_0$ the SPD-friendly assembly is $A = -L$, and the system is
 
 $$A\vec V = \vec b, \qquad A = -L,\qquad b_{\rm flat} = \frac{\rho}{\varepsilon_0}.$$
 
@@ -42,7 +42,7 @@ $$\nabla^2 V = 0, \qquad V(x, 0) = V(0, y) = V(1, y) = 0, \qquad V(x, 1) = \sin(
 
 The analytic solution is a single Fourier mode that transports the top boundary down through the box:
 
-$$V_{\rm an}(x, y) = \sin(\pi x)\,\frac{\sinh(\pi y)}{\sinh \pi}.$$
+$$V_{\rm an}(x, y) = \sin(\pi x)\\,\frac{\sinh(\pi y)}{\sinh \pi}.$$
 
 Solve the same problem numerically with `laplacian_2d` + `spsolve`, then read off the relative error to the closed form. Use an interior-only grid: cell $(i, j)$ sits at $(x_j, y_i) = (j h, i h)$ with $h = 1/(N+1)$, so the physical boundary at $x = 0, 1$ and $y = 0, 1$ lies one cell *outside* the grid.
 
@@ -80,9 +80,9 @@ print(real(max(err(:))))             % ≈ 1.6e-4 — well below the (1/42)² �
 ```
 
 ```text
-0.18317394238233575
+0.18317394238233684
 0.18304604079678616
-0.00016149246740271295
+0.00016149246740576606
 ```
 
 The two values agree to four digits; the worst-case error sits comfortably under the $(1/(N+1))^2$ bound the second-order stencil promises.
@@ -106,13 +106,13 @@ The contours bend smoothly from a sinusoid at the top to flat zero at the other 
 
 Before sparse direct solvers were practical, the discrete Laplace problem was solved by iterative relaxation. Rewrite the stencil at $(i, j)$ as a fixed-point equation,
 
-$$V_{i,j} = \tfrac14\bigl(V_{i+1,j} + V_{i-1,j} + V_{i,j+1} + V_{i,j-1}\bigr) + \tfrac{h^2}{4}\,\rho_{i,j}/\varepsilon_0,$$
+$$V_{i,j} = \tfrac14\bigl(V_{i+1,j} + V_{i-1,j} + V_{i,j+1} + V_{i,j-1}\bigr) + \tfrac{h^2}{4}\\,\rho_{i,j}/\varepsilon_0,$$
 
 and sweep across the grid updating each cell from its current neighbours. **Jacobi** uses the previous iterate's neighbours (synchronous update); **Gauss–Seidel** uses already-updated values where available (in-place update); **SOR** over-relaxes Gauss–Seidel by a factor $\omega \in (1, 2)$,
 
-$$V_{i,j}^{(k+1)} = (1 - \omega)\,V_{i,j}^{(k)} + \omega\,V_{i,j}^{\rm GS}.$$
+$$V_{i,j}^{(k+1)} = (1 - \omega)\\,V_{i,j}^{(k)} + \omega\\,V_{i,j}^{\rm GS}.$$
 
-The convergence rate is set by the spectral radius of the iteration matrix. For an $N\!\times\!N$ Dirichlet grid:
+The convergence rate is set by the spectral radius of the iteration matrix. For an $N\\!\times\\!N$ Dirichlet grid:
 
 | Method | Spectral radius | Iterations to $10^{-6}$ residual ($N=20$) |
 |---|---|---|
@@ -175,7 +175,7 @@ Numerically the plates are treated as **pinned cells**: every grid cell inside a
 
 ### Example — Two finite plates inside a grounded box
 
-A 100×100 grid covers a $0.10\,\text{m}\times 0.10\,\text{m}$ box. Two horizontal plates of width $w = 0.06$ m sit centred at $y = \pm d/2$ with $d = 0.02$ m, driven to $\pm 0.5$ V (so $V_0 = 1$ V).
+A 100×100 grid covers a $0.10\\,\text{m}\times 0.10\\,\text{m}$ box. Two horizontal plates of width $w = 0.06$ m sit centred at $y = \pm d/2$ with $d = 0.02$ m, driven to $\pm 0.5$ V (so $V_0 = 1$ V).
 
 ```rustlab
 clf;
@@ -263,7 +263,7 @@ print(C_1d)                                     % ≈ 2.66e-11 F/m
 ```
 
 ```text
-48.08953556667842
+48.08953558439116
 0.0000000000265625634384
 ```
 
@@ -275,17 +275,17 @@ The mid-gap field comes out close to $V_0/d = 50$ V/m, confirming that the 1-D e
 
 In a piecewise-uniform medium the right operator is *not* the constant-coefficient Laplacian but the flux-conservative form
 
-$$\nabla\!\cdot\!\bigl(\varepsilon(x, y)\nabla V\bigr) = -\rho.$$
+$$\nabla\\!\cdot\\!\bigl(\varepsilon(x, y)\nabla V\bigr) = -\rho.$$
 
 Discretising it directly with arithmetic-mean face coefficients introduces artificial sources at material interfaces — the field component normal to the interface is supposed to satisfy $D_n^{\rm in} = D_n^{\rm out}$ (i.e. $\varepsilon E_n$ is continuous), and the wrong mean breaks that exactly. The right choice is the **harmonic mean** at half-cell faces,
 
-$$\varepsilon_{i, j+1/2} = \frac{2\,\varepsilon_{i,j}\,\varepsilon_{i,j+1}}{\varepsilon_{i,j} + \varepsilon_{i,j+1}},$$
+$$\varepsilon_{i, j+1/2} = \frac{2\\,\varepsilon_{i,j}\\,\varepsilon_{i,j+1}}{\varepsilon_{i,j} + \varepsilon_{i,j+1}},$$
 
 which preserves flux continuity exactly. The rustlab builtin `laplacian_eps_2d(eps_map, dx, dy)` assembles the resulting sparse matrix from a Lesson-04 material map. With $\varepsilon \equiv 1$ it reduces to `laplacian_2d`; with a piecewise $\varepsilon$ it produces the right operator without any user-side stencil bookkeeping.
 
 A textbook check is the **series-dielectric capacitor**: a parallel-plate capacitor with two stacked dielectric layers (thicknesses $d_1$, $d_2$, permittivities $\varepsilon_{r1}$, $\varepsilon_{r2}$) has capacitance per unit area
 
-$$\frac{C}{A} = \frac{\varepsilon_0}{d_1/\varepsilon_{r1} + d_2/\varepsilon_{r2}} = \varepsilon_0\,\bigl(d_1 + d_2/\varepsilon_{r2}\bigr)^{-1}\quad\text{(if $\varepsilon_{r1} = 1$)},$$
+$$\frac{C}{A} = \frac{\varepsilon_0}{d_1/\varepsilon_{r1} + d_2/\varepsilon_{r2}} = \varepsilon_0\\,\bigl(d_1 + d_2/\varepsilon_{r2}\bigr)^{-1}\quad\text{(if $\varepsilon_{r1} = 1$)},$$
 
 with field $E_1 / E_2 = \varepsilon_{r2}/\varepsilon_{r1}$ (stronger field in the lower-$\varepsilon$ layer) and $D_1 = D_2$ continuous across the interface.
 
@@ -378,11 +378,11 @@ print(real(D_air))         % same value to six+ digits → continuity verified
 ```
 
 ```text
-39.70223376549903
-158.8089353407245
-4.000000007020471
--0.0000000014061241373896727
--0.0000000014061241398575861
+39.70223358024655
+158.8089296451023
+3.999999882226175
+-0.0000000014061241308286318
+-0.0000000014061240894274774
 ```
 
 The field jump-by-$\varepsilon_r$ and the displacement continuity both come out of the harmonic-mean stencil for free — no user-side bookkeeping at the interface. Now read off the capacitance per unit area and compare to the series-dielectric formula.
@@ -403,7 +403,7 @@ print(C_num)                                   % matches C_an to ~10⁻³
 
 ```text
 0.000000001416670050048
-0.0000000014061234887250392
+0.0000000014061236586766112
 ```
 
 ## Field Singularities at Sharp Corners
@@ -412,7 +412,7 @@ print(C_num)                                   % matches C_an to ~10⁻³
 
 A re-entrant conductor corner — one with interior dielectric angle $\beta > \pi$ as seen from the field side — produces a $V$ that is *not* analytic at the corner. Separation of variables in the wedge geometry gives
 
-$$V(r, \theta) \sim r^{\pi/\beta}\,\sin\!\bigl(\pi\theta/\beta\bigr) \quad \text{as } r \to 0.$$
+$$V(r, \theta) \sim r^{\pi/\beta}\\,\sin\\!\bigl(\pi\theta/\beta\bigr) \quad \text{as } r \to 0.$$
 
 For $\beta = 3\pi/2$ (the L-shape's $270°$ interior corner) the leading term is $V \sim r^{2/3}$, and the field magnitude diverges as $|\vec E| = |\nabla V| \sim r^{-1/3}$. This is the textbook answer for why lightning likes lightning rods, and why high-voltage HV terminals are shaped to avoid sharp re-entrants. Numerically the singularity shows up as a fixed slope on a log-log plot of $|\vec E|$ versus distance from the corner along any ray that stays in the dielectric.
 
@@ -420,7 +420,7 @@ The discretisation does *not* resolve the singularity exactly — the stencil er
 
 ### Example — Square conductor in a grounded box
 
-Place a $40\times40$ pinned conductor at $V = 1$ in the upper-right quadrant of a $100\times100$ grounded $0.1\,\text{m}\times 0.1\,\text{m}$ box. The L-shaped Laplace domain wraps around the conductor; the inner corner of the L is the re-entrant.
+Place a $40\times40$ pinned conductor at $V = 1$ in the upper-right quadrant of a $100\times100$ grounded $0.1\\,\text{m}\times 0.1\\,\text{m}$ box. The L-shaped Laplace domain wraps around the conductor; the inner corner of the L is the re-entrant.
 
 ```rustlab
 clf;
@@ -497,12 +497,13 @@ The brightest pixel sits on the inner $(0.06, 0.06)$ corner — that's the singu
 % step in (-1, -1) cells from there.
 j0  = 60; i0 = 60;
 M_r = 30;
-rs  = zeros(1, M_r);
-Es  = zeros(1, M_r);
+% Build as true 1-D vectors so loglog accepts them — `zeros(1, N)`
+% produces a 1×N matrix that the v0.3 loglog rejects.
+rs = (1:M_r) * dx2 * sqrt(2.0);
+Es = linspace(0, 0, M_r);
 for k = 1:M_r
   ic = i0 - k;
   jc = j0 - k;
-  rs(k) = k * dx2 * sqrt(2.0);             % distance along the diagonal (m)
   Es(k) = Emag(ic, jc);
 end
 
@@ -522,7 +523,7 @@ print(real(slope))                          % ≈ -0.38 (theory: -1/3 ≈ -0.333
 ```
 
 ```text
--0.3776039516914204
+-0.37760395168279587
 ```
 
 ```rustlab
@@ -571,11 +572,11 @@ Run all five with `make lesson-05`, or one at a time via `rustlab run lessons/05
 
 1. **Convergence study.** Solve the Laplace problem at $N \in \{20, 40, 80, 160\}$ and plot the maximum error vs $h$ on a log-log axis. Fit the slope and verify the predicted $O(h^2)$ rate of the 5-point stencil.
 2. **SOR with optimal $\omega$.** Implement SOR on the 20-cell unit-square problem. Sweep $\omega$ from 1.0 to 1.95 in steps of 0.05 and plot iterations-to-$10^{-4}$ residual versus $\omega$. Verify the optimum sits near $2/(1 + \sin(\pi/N))$.
-3. **Capacitance of finite plates.** Take the parallel-plate result from this lesson and compute $C$ via the surface integral $C = (\varepsilon_0/V_0)\oint\!\vec E\!\cdot\!\hat n\,dA$ on a rectangle just outside the top plate. Compare to the 1-D estimate $\varepsilon_0 w/d$ and quantify the fringing-field correction (typically 10–20 % above the 1-D value at $w/d \sim 3$).
+3. **Capacitance of finite plates.** Take the parallel-plate result from this lesson and compute $C$ via the surface integral $C = (\varepsilon_0/V_0)\oint\\!\vec E\\!\cdot\\!\hat n\\,dA$ on a rectangle just outside the top plate. Compare to the 1-D estimate $\varepsilon_0 w/d$ and quantify the fringing-field correction (typically 10–20 % above the 1-D value at $w/d \sim 3$).
 4. **Coaxial cable on a Cartesian grid.** Pin two concentric conductor rings at $V = 1$ and $V = 0$; verify $V(r) = \ln(b/r)/\ln(b/a)$ along a radial slice and compute the capacitance per unit length, comparing to $C' = 2\pi\varepsilon_0/\ln(b/a)$.
 5. **Re-entrant angle sweep.** Modify the corner example to have an interior angle $\beta \in \{3\pi/2, 5\pi/4, 7\pi/4\}$ (the third is a near-flat angle, so almost no singularity; the second is sharper than 90°). Verify the fitted slope of $|\vec E|$ vs $r$ is $1/\beta\cdot\pi - 1$, and that an interior $\pi/2$ corner has $|E|$ regular (no singularity).
 
 ## What's next
 
-Lesson 06 swaps electrostatics for magnetostatics: $\vec B = \nabla\!\times\!\vec A$ with $\nabla^2\vec A = -\mu_0\vec J$. In two dimensions with $\vec J = J_z(x,y)\hat z$ this is *the same scalar Poisson equation* solved here, with $V \to A_z$ and $\rho/\varepsilon_0 \to \mu_0 J_z$. Exactly the same `laplacian_2d` + `spsolve` pipeline reappears with a different right-hand side. For magnetic materials with piecewise $\mu_r$, the variable-coefficient form $\nabla\!\cdot\!(\mu^{-1}\nabla A_z)$ uses `laplacian_eps_2d` (passing $1/\mu$). This lesson built the machine; Lesson 06 is the first time a different physics walks through the same door.
+Lesson 06 swaps electrostatics for magnetostatics: $\vec B = \nabla\\!\times\\!\vec A$ with $\nabla^2\vec A = -\mu_0\vec J$. In two dimensions with $\vec J = J_z(x,y)\hat z$ this is *the same scalar Poisson equation* solved here, with $V \to A_z$ and $\rho/\varepsilon_0 \to \mu_0 J_z$. Exactly the same `laplacian_2d` + `spsolve` pipeline reappears with a different right-hand side. For magnetic materials with piecewise $\mu_r$, the variable-coefficient form $\nabla\\!\cdot\\!(\mu^{-1}\nabla A_z)$ uses `laplacian_eps_2d` (passing $1/\mu$). This lesson built the machine; Lesson 06 is the first time a different physics walks through the same door.
 

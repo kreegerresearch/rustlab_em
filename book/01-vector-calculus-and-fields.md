@@ -27,7 +27,7 @@ Three first-order differential operators generate all of vector calculus. Each t
 
 **Mathematical Form (Cartesian):**
 
-$$\nabla f = \frac{\partial f}{\partial x}\,\mathbf{i} + \frac{\partial f}{\partial y}\,\mathbf{j} + \frac{\partial f}{\partial z}\,\mathbf{k}$$
+$$\nabla f = \frac{\partial f}{\partial x}\\,\mathbf{i} + \frac{\partial f}{\partial y}\\,\mathbf{j} + \frac{\partial f}{\partial z}\\,\mathbf{k}$$
 
 ### 2. The Divergence Operator ($\nabla \cdot \mathbf{A}$)
 
@@ -82,7 +82,7 @@ The center $(x, y) = (0, 0)$ is at index $(11, 11)$; the corner $(2, 2)$ is at $
 
 Define $f(x, y) = \exp(-r^2/\sigma^2)$ with $\sigma = 1$. The analytic gradient is
 
-$$\nabla f = -\frac{2}{\sigma^2}(x, y)\,f(x, y),$$
+$$\nabla f = -\frac{2}{\sigma^2}(x, y)\\,f(x, y),$$
 
 which vanishes at the peak ($r = 0$) and at large $r$, and peaks in magnitude on the inflection ring $r = \sigma/\sqrt{2} \approx 0.707$. Below we compute it numerically on the 21×21 grid and compare to these analytic landmarks.
 
@@ -99,8 +99,8 @@ print(fx(11, 15))        % ≈ -0.824 at (x=0.8, y=0)  (analytic: -0.844; ~2% st
 ```
 
 ```text
-0.0000000000000005551115123125782
-0.0000000000000005551115123125782
+0.0000000000000005551115123125783
+0.0000000000000005551115123125783
 -0.8244922122489718
 ```
 
@@ -150,7 +150,7 @@ print(divU(1, 1))        % ≈ 2  (boundary — one-sided stencil is exact for l
 
 ```text
 2
-1.9999999999999993
+1.9999999999999996
 ```
 
 ```rustlab
@@ -174,7 +174,7 @@ title("∇·F for F = (x, y)  —  uniformly = 2")
 
 For $\vec F = (-y, x)$, the 2-D scalar curl is $\partial_x x - \partial_y(-y) = 1 + 1 = 2$. Every infinitesimal paddle wheel spins counterclockwise with angular velocity 1.
 
-Drop a tiny paddle wheel at a point; the value of $\nabla\times\vec F$ there is twice the angular velocity the wheel picks up. Where $\nabla\times\vec F = 0$ the field is *irrotational* — the wheel translates without spinning. Later, $\nabla\times\vec E = -\partial\vec B/\partial t$ (Faraday) and $\nabla\times\vec B = \mu_0\vec J + \mu_0\varepsilon_0\,\partial\vec E/\partial t$ (Ampère–Maxwell) are the two most productive equations in all of physics.
+Drop a tiny paddle wheel at a point; the value of $\nabla\times\vec F$ there is twice the angular velocity the wheel picks up. Where $\nabla\times\vec F = 0$ the field is *irrotational* — the wheel translates without spinning. Later, $\nabla\times\vec E = -\partial\vec B/\partial t$ (Faraday) and $\nabla\times\vec B = \mu_0\vec J + \mu_0\varepsilon_0\\,\partial\vec E/\partial t$ (Ampère–Maxwell) are the two most productive equations in all of physics.
 
 ### Example — Rotational field $\vec F = (-y, x)$ and its curl
 
@@ -214,7 +214,7 @@ The two quivers (this one and the radial one above) look qualitatively similar �
 
 ### Theory
 
-Sanity check that the operators chain. For $V = x^2 + y^2$, $\nabla^2 V = \nabla\cdot(\nabla V) = 4$ everywhere. This is exactly the Laplacian operator that shows up in Poisson's equation $\nabla^2 V = -\rho/\varepsilon_0$ (Lesson 05) and the wave equation $\nabla^2\vec E = \mu_0\varepsilon_0\,\partial^2\vec E/\partial t^2$ (Lesson 09).
+Sanity check that the operators chain. For $V = x^2 + y^2$, $\nabla^2 V = \nabla\cdot(\nabla V) = 4$ everywhere. This is exactly the Laplacian operator that shows up in Poisson's equation $\nabla^2 V = -\rho/\varepsilon_0$ (Lesson 05) and the wave equation $\nabla^2\vec E = \mu_0\varepsilon_0\\,\partial^2\vec E/\partial t^2$ (Lesson 09).
 
 ### Example — $\nabla^2(x^2 + y^2) = 4$
 
@@ -236,7 +236,7 @@ print(laplV(11, 11))     % ≈ 4
 
 For any nice region $V$ bounded by a closed surface $\partial V$,
 
-$$\boxed{\oint_{\partial V}\vec F\cdot d\vec A = \int_V \nabla\cdot\vec F\, dV.}$$
+$$\boxed{\oint_{\partial V}\vec F\cdot d\vec A = \int_V \nabla\cdot\vec F\\, dV.}$$
 
 *Total flux through the boundary equals the total source strength inside.* Coulomb's law, Gauss's law, and every charge-conservation statement in EM are instances of this. We do not verify it numerically here — Lesson 03 will, on a physical $\vec E$ field — but Exercise 2 below is the natural warm-up.
 
@@ -311,7 +311,7 @@ Both expressions for the same physical quantity agree to within sub-percent disc
 
 Rustlab's `gradient`, `divergence`, and `curl` use a 2nd-order central-difference stencil
 
-$$\frac{\partial f}{\partial x}\bigg|_{i,j} \approx \frac{f_{i,\,j+1} - f_{i,\,j-1}}{2\,\Delta x}$$
+$$\frac{\partial f}{\partial x}\bigg|_{i,j} \approx \frac{f_{i,\\,j+1} - f_{i,\\,j-1}}{2\\,\Delta x}$$
 
 in interior cells and a 2nd-order one-sided stencil at boundary cells, so the output keeps the input shape and stays accurate at the edges. Each axis must have length $\geq 3$. See `../rustlab/docs/quickref.md` for the full API.
 
@@ -345,7 +345,7 @@ Run all three with `make lesson-01` from the repo root (or `rustlab run lessons/
 
 ## Exercises
 
-1. **Analytic gradient check.** In `gradient_field.rlab`, compute the analytic $\nabla f = -(2/\sigma^2)(x, y)\,f$ at every grid point and plot the pointwise error $|\nabla f_{\rm num} - \nabla f_{\rm ana}|$ as a heatmap. Where is the error largest? Why?
+1. **Analytic gradient check.** In `gradient_field.rlab`, compute the analytic $\nabla f = -(2/\sigma^2)(x, y)\\,f$ at every grid point and plot the pointwise error $|\nabla f_{\rm num} - \nabla f_{\rm ana}|$ as a heatmap. Where is the error largest? Why?
 2. **Divergence theorem on the Gaussian.** Integrate $\nabla\cdot(\nabla f) = \nabla^2 f$ over the $[-2, 2]^2$ domain (2-D trapezoidal) and compare to the boundary flux $\oint_{\partial\Omega}\nabla f\cdot d\vec A$ via line integrals along the four edges.
 3. **Saddle field.** Replace the rotational field in `divergence_curl.rlab` with $\vec F = (x, -y)$. Predict the divergence and curl analytically, then verify numerically.
 4. **Loop shape independence.** In `stokes_demo.rlab`, swap the square for a circular loop of the same enclosed area and re-run. The circulation should match.

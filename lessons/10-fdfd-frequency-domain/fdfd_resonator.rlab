@@ -1,0 +1,124 @@
+# fdfd_resonator.rlab — Closed rectangular cavity, sweep frequency to
+# expose the analytic TM_{m n} resonant modes.
+#
+# Cavity:    a × b = 0.10 m × 0.075 m, PEC on all four walls, filled
+#            with a slightly lossy dielectric (ε_r = 1 + j·tan_delta).
+#            The bulk loss replaces the absorbing-port idiom of a
+#            "real" FDFD setup with a simpler scalar in the operator
+#            — modes turn into Lorentzian peaks of finite height.
+# Method:    Helmholtz operator A(ω) = ∇² + ω² μ₀ ε(complex) on a
+#            uniform grid with Dirichlet BCs from `laplacian_2d`,
+#            assembled as L + ω² μ₀ ε₀ M, where M is the diagonal
+#            mass matrix built from the (complex) ε map.
+# Drive:     point source at one corner well off any modal node; read
+#            out |E_z| at a different corner, also off any node, and
+#            plot |E|² over a frequency sweep covering several modes.
+# Theory:    f_{m n} = c/(2 √(ε_r)) · √((m/a)² + (n/b)²)
+#            with c = 1/√(μ₀ ε₀). For a = 0.10 m, b = 0.075 m,
+#            ε_r ≈ 1 the lowest few modes are
+#               TM10  ≈ 1.500 GHz
+#               TM01  ≈ 2.000 GHz
+#               TM11  ≈ 2.500 GHz
+#               TM20  ≈ 3.000 GHz
+#               TM21  ≈ 3.606 GHz
+#
+# Reference: ../../notebooks/10-fdfd-frequency-domain.md.
+
+mu0  = 4 * pi * 1e-7;
+eps0 = 8.854187817e-12;
+c0   = 1 / sqrt(mu0 * eps0);
+
+# === Cavity ===
+a_cav  = 0.10;
+b_cav  = 0.075;
+tan_d  = 0.005;     # bulk loss tangent — Q ≈ 1/tan_delta ≈ 200
+eps_re = 1.0;
+eps_c  = eps_re - j * eps_re * tan_d;     # ε with small loss
+
+# === Grid ===
+nx = 81;
+ny = 61;
+dx = a_cav / (nx + 1);   # Dirichlet boundary lives at i = 0 and i = nx + 1
+dy = b_cav / (ny + 1);
+
+N = nx * ny;
+L = laplacian_2d(nx, ny, dx, dy);
+
+# Source at a "non-modal" cell, away from likely nodes.
+i_src = round(0.3 * ny);
+j_src = round(0.3 * nx);
+k_src = (j_src - 1) * ny + i_src;
+
+# Measurement at a different corner.
+i_meas = round(0.7 * ny);
+j_meas = round(0.6 * nx);
+k_meas = (j_meas - 1) * ny + i_meas;
+
+# === Frequency sweep ===
+f_lo = 1.0e9;
+f_hi = 4.0e9;
+Nf   = 121;
+fs   = linspace(f_lo, f_hi, Nf);
+amp  = zeros(1, Nf);
+
+# Diagonal mass: M = ε_c * I  (uniform), so the omega-dependent
+# operator is A(ω) = L + ω² μ₀ ε₀ ε_c · I = L + ω² μ₀ ε_c (after
+# absorbing ε₀ via c² = 1/(μ₀ε₀)). Equivalently A = L + (ω/c₀)² ε_c.
+for kf = 1:Nf
+  omega = 2 * pi * fs(kf);
+  k0sq  = (omega / c0)^2;
+  A = L + (k0sq * eps_c) * speye(N);
+  b = zeros(1, N);
+  b(k_src) = -j * omega * mu0;
+  E_flat = spsolve(A, b);
+  amp(kf) = abs(E_flat(k_meas));
+end
+
+# Analytic resonance frequencies for the lowest five modes
+f_10 = c0 / (2 * a_cav) * sqrt(1) / sqrt(eps_re);
+f_01 = c0 / (2 * b_cav) * sqrt(1) / sqrt(eps_re);
+f_11 = (c0 / (2 * sqrt(eps_re))) * sqrt((1 / a_cav)^2 + (1 / b_cav)^2);
+f_20 = c0 / a_cav        * sqrt(1) / sqrt(eps_re);
+f_21 = (c0 / (2 * sqrt(eps_re))) * sqrt((2 / a_cav)^2 + (1 / b_cav)^2);
+print(f_10 / 1e9)
+print(f_01 / 1e9)
+print(f_11 / 1e9)
+print(f_20 / 1e9)
+print(f_21 / 1e9)
+
+figure();
+plot(fs / 1e9, amp, "|E_z(meas)| vs f");
+xlabel("frequency  (GHz)");
+ylabel("|E_z| at sample point");
+title("Closed-cavity FDFD response — resonant peaks at TM_{m n}");
+savefig("fdfd_resonator_sweep.svg");
+
+# === Field snapshot at the lowest resonance ===
+omega_r = 2 * pi * f_10;
+A_r  = L + ((omega_r / c0)^2 * eps_c) * speye(N);
+b_r  = zeros(1, N);
+b_r(k_src) = -j * omega_r * mu0;
+E_r  = spsolve(A_r, b_r);
+E_grid = reshape(E_r, ny, nx);
+
+figure();
+imagesc(real(E_grid), "viridis");
+title("Re(E_z) at TM_{10} resonance (single-half-wave along x)");
+xlabel("x cell index");
+ylabel("y cell index");
+savefig("fdfd_resonator_TM10.svg");
+
+# Snapshot at TM_{11}
+omega_r = 2 * pi * f_11;
+A_r  = L + ((omega_r / c0)^2 * eps_c) * speye(N);
+b_r  = zeros(1, N);
+b_r(k_src) = -j * omega_r * mu0;
+E_r  = spsolve(A_r, b_r);
+E_grid = reshape(E_r, ny, nx);
+
+figure();
+imagesc(real(E_grid), "viridis");
+title("Re(E_z) at TM_{11} resonance");
+xlabel("x cell index");
+ylabel("y cell index");
+savefig("fdfd_resonator_TM11.svg");
