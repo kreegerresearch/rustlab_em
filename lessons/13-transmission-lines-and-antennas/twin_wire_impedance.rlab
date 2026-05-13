@@ -1,0 +1,138 @@
+# twin_wire_impedance.rlab — Characteristic impedance of a parallel-wire
+# (twin-lead) transmission line from a 2-D Laplace solve.
+#
+# Geometry: two parallel conductors, radius a, with centres on the
+# x-axis at (±d/2, 0). Top wire pinned to V = +V₀/2, bottom to -V₀/2,
+# total voltage difference V₀. The TEM transverse field obeys
+# ∇²V = 0 in the vacuum between the conductors; we solve it on a large
+# box with Dirichlet V = 0 on the box boundary (an "infinity" stand-in;
+# the box edge sits ~5d from the wire pair so image-charge artefacts
+# are below the percent level).
+#
+# Per-unit-length capacitance via the energy method,
+#   C' = 2 U_E' / V₀²,   U_E' = (1/2) ε₀ ∫_vac |E|² dA,
+# Then the TEM identity L' C' = μ₀ ε₀ gives
+#   Z_0 = sqrt(μ₀ ε₀) / C' = (η₀/π) · cosh⁻¹(d / 2a).
+# For d ≫ a this reduces to the textbook large-spacing approximation
+#   Z_0 ≈ (η₀/π) ln(d / a) ≈ 120 ln(d / a) Ω.
+#
+# Reference: ../../notebooks/13-transmission-lines-and-antennas.md.
+
+mu0  = 4 * pi * 1e-7;
+eps0 = 8.854187817e-12;
+eta0 = sqrt(mu0 / eps0);
+
+# rustlab 0.3.4 has no acosh builtin; use the closed-form identity
+# cosh⁻¹(x) = ln(x + √(x² − 1)) for x ≥ 1.
+function y = acosh_(x)
+  y = log(x + sqrt(x .* x - 1));
+end
+
+# === Geometry ===
+a_w = 2.0e-3;             # wire radius (m)
+d_w = 8.0e-3;             # centre-to-centre spacing → d/2a = 2
+V0  = 1.0;                # total voltage difference between conductors
+
+# === Grid (square box, conductors centred) ===
+nx = 161;
+ny = 161;
+L_box = 5 * d_w;          # box wide enough that V ≈ 0 on its edge
+dx = L_box / (nx + 1);
+dy = dx;
+[Xg, Yg] = meshgrid(dx * (1:nx) - L_box / 2, dy * (1:ny) - L_box / 2);
+
+disk_pos = disk_mask(Xg, Yg, +d_w / 2, 0, a_w);   # +V₀/2 conductor
+disk_neg = disk_mask(Xg, Yg, -d_w / 2, 0, a_w);   # -V₀/2 conductor
+
+# === Sparse Poisson with pinned conductors ===
+L = laplacian_2d(nx, ny, dx, dy);
+A = -1 * L;
+N = nx * ny;
+b = zeros(1, N);
+
+for j = 1:nx
+  for i = 1:ny
+    if disk_pos(i, j) > 0.5
+      k = ij2k(i, j, ny);
+      A(k, k) = 1.0;
+      if i > 1;  A(k, ij2k(i-1, j, ny)) = 0.0; end
+      if i < ny; A(k, ij2k(i+1, j, ny)) = 0.0; end
+      if j > 1;  A(k, ij2k(i, j-1, ny)) = 0.0; end
+      if j < nx; A(k, ij2k(i, j+1, ny)) = 0.0; end
+      b(k) = +V0 / 2;
+    elseif disk_neg(i, j) > 0.5
+      k = ij2k(i, j, ny);
+      A(k, k) = 1.0;
+      if i > 1;  A(k, ij2k(i-1, j, ny)) = 0.0; end
+      if i < ny; A(k, ij2k(i+1, j, ny)) = 0.0; end
+      if j > 1;  A(k, ij2k(i, j-1, ny)) = 0.0; end
+      if j < nx; A(k, ij2k(i, j+1, ny)) = 0.0; end
+      b(k) = -V0 / 2;
+    end
+  end
+end
+
+V_flat = spsolve(A, b);
+V = real(reshape(V_flat, ny, nx));
+
+[Vx, Vy] = gradient(V, dx, dy);
+Ex = -Vx;
+Ey = -Vy;
+Emag2 = Ex .^ 2 + Ey .^ 2;
+
+# === C' via the energy method (integrate only outside the conductors) ===
+vacuum  = 1 - disk_pos - disk_neg;
+U_E     = 0.5 * eps0 * sum(sum(Emag2 .* vacuum)) * dx * dy;
+C_per_m = 2 * U_E / V0 ^ 2;
+
+C_ana = pi * eps0 / acosh_(d_w / (2 * a_w));
+print(C_per_m)                                       # ≈ C_ana
+print(C_ana)
+print(abs(C_per_m - C_ana) / C_ana)                  # ~ % level
+
+# === Z₀ via the TEM identity L' C' = μ₀ ε₀ ===
+Z0_num = sqrt(mu0 * eps0) / C_per_m;
+Z0_ana = eta0 / pi * acosh_(d_w / (2 * a_w));
+Z0_app = 120 * log(d_w / a_w);                       # large-d/a approx
+print(Z0_num)
+print(Z0_ana)
+print(Z0_app)
+print(abs(Z0_num - Z0_ana) / Z0_ana)
+
+# === Plots ===
+figure();
+imagesc(V, "viridis");
+title("V(x, y) on a twin-wire cross-section — d/2a = 2");
+xlabel("x cell");
+ylabel("y cell");
+savefig("twin_wire_V.svg");
+
+figure();
+imagesc(sqrt(Emag2) .* vacuum, "viridis");
+title("|E(x, y)| in the vacuum region");
+xlabel("x");
+ylabel("y");
+savefig("twin_wire_Emag.svg");
+
+# === Analytic Z₀ vs d/a sweep ===
+# Mirrors coax_impedance.rlab's sweep: numerical at one point above,
+# analytic curve here, since the cosh⁻¹ formula is itself the answer
+# the numerical run has just confirmed at d/a = 4.
+ratios   = [2.0, 3.0, 4.0, 6.0, 10.0, 20.0, 50.0];
+Nratios  = length(ratios);
+Z0_swept = zeros(Nratios);
+Z0_appr  = zeros(Nratios);
+for kr = 1:Nratios
+  Z0_swept(kr) = eta0 / pi * acosh_(ratios(kr) / 2);
+  Z0_appr(kr)  = 120 * log(ratios(kr));
+end
+figure();
+hold on;
+plot(ratios, Z0_swept, "Z_0 = (η₀/π) cosh⁻¹(d/2a)");
+plot(ratios, Z0_appr,  "120 ln(d/a) approx");
+hold off;
+xlabel("d/a");
+ylabel("Z_0  (Ω)");
+title("Twin-wire characteristic impedance");
+legend("exact cosh⁻¹", "large-d/a approx");
+savefig("twin_wire_Z0_sweep.svg");

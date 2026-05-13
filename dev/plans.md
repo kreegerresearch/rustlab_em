@@ -437,7 +437,7 @@ Short dipole: $R_{\rm rad} = 20\pi^2(L/\lambda)^2$.
 ### Scripts
 
 - `coax_impedance.rlab` — 2D Laplace on the coax cross-section; extract $C'$ via flux method and energy method; sweep $b/a$; verify $Z_0 \approx 60\ln(b/a)\,\Omega$.
-- `twin_wire_impedance.rlab` — pair of conductor disks at $\pm V$; $C'$ via energy; sweep $d/a$; verify $Z_0 = (\eta_0/\pi)\cosh^{-1}(d/2a)$.
+- `twin_wire_impedance.rlab` — *(shipped)* pair of conductor disks at $\pm V_0/2$ in vacuum; energy-method $C'$ on a finite-box 2-D Laplace solve; analytic $Z_0 = (\eta_0/\pi)\cosh^{-1}(d/2a)$ sweep over $d/a \in [2, 50]$.
 - `telegrapher_propagation.rlab` — 1D staggered leapfrog for $V(i)$, $I(i+\tfrac12)$; pulse propagation at $v = 1/\sqrt{L'C'}$; reflection cases (matched, open, short, $2Z_0$).
 - `vswr_standing_wave.rlab` — CW-driven terminated line; measure $|V(z)|$ envelope; extract VSWR; compare to $(1+|\Gamma|)/(1-|\Gamma|)$.
 - `s_parameters_tline.rlab` — 1D FDTD of a two-section transmission line with an impedance step; inject a Gaussian pulse; extract $S_{11}$, $S_{21}$ via FFT and compare to the analytic two-port network. Demonstrates the mode-filter + time-gating workflow before Lesson 14 uses it on a 3D antenna.

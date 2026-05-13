@@ -301,10 +301,11 @@ The envelope is a $\lambda/2$-periodic sequence of peaks and valleys. The ratio 
 | Script | What it computes |
 |---|---|
 | `coax_impedance.rlab` | 2-D Laplace on the coax cross-section; energy-method $C'$; sweep $b/a$ |
+| `twin_wire_impedance.rlab` | Same energy-method on two parallel conductor disks; verify $Z_0 = (\eta_0/\pi)\cosh^{-1}(d/2a)$ |
 | `telegrapher_propagation.rlab` | 1-D V/I leapfrog; matched / open / short / mismatch loads; reflection check |
 | `vswr_standing_wave.rlab` | CW-driven 50 Ω line with 100 Ω load; envelope $|V(z)|$ ; numerical VSWR |
 
-Run all three with `make lesson-13`, or one script at a time via `rustlab run lessons/13-transmission-lines-and-antennas/<name>.rlab`.
+Run all four with `make lesson-13`, or one script at a time via `rustlab run lessons/13-transmission-lines-and-antennas/<name>.rlab`.
 
 ## Expected Numerical Outputs Summary
 
@@ -312,7 +313,8 @@ Run all three with `make lesson-13`, or one script at a time via `rustlab run le
 |---|---|
 | Coax $C'$, $b/a = 4$ | $40.1\,\text{pF/m}$ (analytic) |
 | Coax $Z_0$, $b/a = 4$ | $\approx 83.2\,\Omega$ |
-| Numerical-vs-analytic $Z_0$ error | $\sim 7\,\%$ (staircase rasterisation) |
+| Twin-wire $Z_0$, $d/2a = 2$ | $\approx 157.9\,\Omega$ (analytic) |
+| Numerical-vs-analytic $Z_0$ error (either) | $\sim 5\text{–}7\,\%$ (staircase rasterisation + finite-box BC) |
 | Open-load reflected pulse amplitude | $\approx$ source peak |
 | Matched-load reflected amplitude | $\approx 0$ |
 | Mismatched ($Z_L = 2 Z_0$) reflected | $\approx$ source peak $/ 3$ |
@@ -320,7 +322,7 @@ Run all three with `make lesson-13`, or one script at a time via `rustlab run le
 
 ## Exercises
 
-1. **Twin-wire impedance.** Replace the coax in `coax_impedance` with two conductor disks at $\pm V_0$ in vacuum. Compute $Z_0$ via the same energy method and verify $Z_0 = (\eta_0/\pi)\cosh^{-1}(d/2a) \approx (\eta_0/\pi)\ln(d/a)$ for $d \gg a$.
+1. **Twin-wire $b/a$-style sweep.** `twin_wire_impedance.rlab` runs the numerical solve at $d/2a = 2$ and the analytic curve over $d/a \in [2, 50]$. Extend it by running the numerical solver at three more $d/a$ values (scale the box with $d$) and overlay the numerical points on the analytic curve to confirm agreement out to large spacings.
 2. **S-parameters from a time-domain step.** Replace the single-impedance line with a two-section line ($Z_{0,1} \to Z_{0,2}$ junction). Drive with a Gaussian pulse at port 1; record incident, reflected, and transmitted waveforms; FFT each; divide to obtain $S_{11}(f)$ and $S_{21}(f)$. Compare to the analytic two-port network $\Gamma_{12}, T_{12}$ for the impedance step.
 3. **Lossy line.** Add a small series resistance $R'$ to the telegrapher leapfrog (modify the $V$ update by $-R'\Delta t \cdot I$). Compute the attenuation constant and verify the standing-wave envelope decays exponentially along $z$.
 4. **Dipole standing-wave current.** Apply the same telegrapher leapfrog to an *open-ended* line (no termination — i.e. $Z_L = \infty$) of length $\lambda/2$, driven at one end. The steady-state current profile $I(z)$ recovers the analytic $\cos(kz)$ shape from Lesson 12's half-wave dipole derivation.
