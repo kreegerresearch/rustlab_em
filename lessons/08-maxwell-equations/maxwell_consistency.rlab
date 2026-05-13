@@ -1,0 +1,130 @@
+# maxwell_consistency.rlab — Verify a plane-wave solution numerically
+# satisfies all four of Maxwell's equations.
+#
+# Setup:    a y-polarized plane wave propagating in +x in vacuum,
+#             E_y(x, t) = E0 cos(k x - ω t)
+#             B_z(x, t) = (E0 / c) cos(k x - ω t)
+#           with ω = c k. All other field components vanish identically,
+#           so ∇·E = 0 and ∇·B = 0 hold trivially.
+# Check:    Faraday  (curl E)_z + ∂B_z/∂t  →  0
+#           Ampère  -(curl B)_y - μ0 ε0 ∂E_y/∂t = -∂B_z/∂x - μ0 ε0 ∂E_y/∂t
+#                                              →  0  (no source current)
+# Method:   sample the analytic field on a 2-D (x, t) grid covering one
+#           wavelength × one period, take centred differences via
+#           `gradient`, plot the residual as a fraction of the analytic
+#           peak amplitude — should scale as O((k Δx)²) from truncation.
+#
+# Reference: ../../notebooks/08-maxwell-equations.md.
+
+mu0  = 4 * pi * 1e-7;
+eps0 = 8.854187817e-12;
+c    = 1 / sqrt(mu0 * eps0);
+
+f      = 1.0e9;                # 1 GHz
+omega  = 2 * pi * f;
+k      = omega / c;
+lambda = c / f;
+T      = 1 / f;
+E0     = 1.0;
+
+# (x, t) grid: one wavelength × one period. Treating time as a second
+# axis lets us reuse the same `gradient` operator for ∂/∂x and ∂/∂t.
+Nx = 81;
+Nt = 81;
+xs = linspace(0, lambda, Nx);
+ts = linspace(0, T, Nt);
+[Xg, Tg] = meshgrid(xs, ts);
+dx = xs(2) - xs(1);
+dt = ts(2) - ts(1);
+
+phase = k * Xg - omega * Tg;
+Ey    = E0          * cos(phase);
+Bz    = (E0 / c)    * cos(phase);
+
+# rustlab `gradient(F, dx, dy)` returns derivatives in argument order;
+# here the first axis of the meshgrid is x (columns), the second is t
+# (rows), matching the (dx, dt) ordering below.
+[Ey_x, Ey_t] = gradient(Ey, dx, dt);
+[Bz_x, Bz_t] = gradient(Bz, dx, dt);
+
+# Faraday:  (curl E)_z = ∂E_y/∂x = -∂B_z/∂t.
+# Residual = ∂E_y/∂x + ∂B_z/∂t  (should be ≈ 0).
+r_faraday = Ey_x + Bz_t;
+
+# Ampère, J = 0:  -∂B_z/∂x = μ0 ε0 ∂E_y/∂t.
+# Residual = -∂B_z/∂x - μ0 ε0 ∂E_y/∂t.
+r_ampere = -Bz_x - mu0 * eps0 * Ey_t;
+
+# Normalise each residual by the analytic peak of either side of the
+# corresponding equation: |∂E_y/∂x|_peak = E0 k for Faraday and
+# |∂B_z/∂x|_peak = (E0/c) k for Ampère (their peaks are equal up to ω/c).
+peak_F = E0 * k;
+peak_A = (E0 / c) * k;
+
+print(max(max(abs(r_faraday))) / peak_F)   # ≈ (k dx)^2 / 6
+print(max(max(abs(r_ampere)))  / peak_A)
+
+# === Field snapshots ===
+figure();
+imagesc(Ey, "viridis");
+title("E_y(x, t) — one period × one wavelength");
+xlabel("x  (column index → 0 ... lambda)");
+ylabel("t  (row index → 0 ... T)");
+savefig("plane_wave_Ey.svg");
+
+figure();
+imagesc(Bz, "viridis");
+title("B_z(x, t)");
+xlabel("x");
+ylabel("t");
+savefig("plane_wave_Bz.svg");
+
+# === Residuals (relative to peak amplitude of each Maxwell equation) ===
+figure();
+imagesc(r_faraday / peak_F, "viridis");
+title("Faraday residual / peak  —  truncation only");
+xlabel("x");
+ylabel("t");
+savefig("residual_faraday.svg");
+
+figure();
+imagesc(r_ampere / peak_A, "viridis");
+title("Ampère residual / peak  —  truncation only");
+xlabel("x");
+ylabel("t");
+savefig("residual_ampere.svg");
+
+# === Convergence study: max residual vs grid spacing ===
+# Halving dx and dt should drop the centred-difference error by ~4×.
+# Plot only at three resolutions to keep the script fast.
+Ns = [41, 81, 161];
+errs_F = zeros(3);
+errs_A = zeros(3);
+for ii = 1:3
+  N = Ns(ii);
+  xs2 = linspace(0, lambda, N);
+  ts2 = linspace(0, T, N);
+  [X2, T2] = meshgrid(xs2, ts2);
+  dx2 = xs2(2) - xs2(1);
+  dt2 = ts2(2) - ts2(1);
+  ph2 = k * X2 - omega * T2;
+  Ey2 = E0       * cos(ph2);
+  Bz2 = (E0 / c) * cos(ph2);
+  [Ex2, Et2] = gradient(Ey2, dx2, dt2);
+  [Bx2, Bt2] = gradient(Bz2, dx2, dt2);
+  errs_F(ii) = max(max(abs(Ex2 + Bt2))) / peak_F;
+  errs_A(ii) = max(max(abs(-Bx2 - mu0 * eps0 * Et2))) / peak_A;
+end
+print(errs_F)
+print(errs_A)
+
+figure();
+hold on;
+plot(Ns, errs_F, "Faraday");
+plot(Ns, errs_A, "Ampère");
+hold off;
+xlabel("grid size N (per axis)");
+ylabel("relative residual");
+title("Maxwell residual vs grid resolution — 2nd-order convergence");
+legend("Faraday", "Ampère");
+savefig("residual_convergence.svg");

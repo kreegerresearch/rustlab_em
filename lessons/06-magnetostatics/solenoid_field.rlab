@@ -18,25 +18,27 @@ phi  = linspace(0, 2*pi, N_seg + 1);
 phi  = phi(1:N_seg);
 dphi = 2 * pi / N_seg;
 
-# Sample Bz along the axis (x = y = 0).
-zline = linspace(-0.10, 0.10, 121);
+# Per-segment source positions and tangent vectors (constant across all
+# field points and across all loops in the stack — only the source
+# centre's z-coordinate changes loop-to-loop).
+sx   =  Rs * cos(phi);
+sy   =  Rs * sin(phi);
+dl_x = -Rs * sin(phi) * dphi;
+dl_y =  Rs * cos(phi) * dphi;
+
+# Sample Bz along the axis (x = y = 0). For each loop in the stack,
+# vectorise over the N_seg segments — the inner cross product becomes
+# one elementwise expression, no per-segment scalar loop.
+zline   = linspace(-0.10, 0.10, 121);
 Bz_axis = zeros(length(zline));
 for iz = 1:length(zline)
   fz_p = zline(iz);
-  bz = 0.0;
+  bz   = 0.0;
   for li = 1:N_l
-    z_loop = zs_l(li);
-    for k = 1:N_seg
-      sx = Rs * cos(phi(k));
-      sy = Rs * sin(phi(k));
-      Rxk = -sx; Ryk = -sy; Rzk = fz_p - z_loop;
-      r2 = Rxk*Rxk + Ryk*Ryk + Rzk*Rzk;
-      if r2 < 1e-10; r2 = 1e-10; end
-      inv_r3 = 1.0 / (r2 ^ 1.5);
-      dl_x = -Rs * sin(phi(k)) * dphi;
-      dl_y =  Rs * cos(phi(k)) * dphi;
-      bz = bz + (dl_x * Ryk - dl_y * Rxk) * inv_r3;
-    end
+    Rzk    = fz_p - zs_l(li);
+    r2     = sx .^ 2 + sy .^ 2 + Rzk^2;        # = Rs^2 + Rzk^2 (axisymmetric)
+    inv_r3 = 1.0 ./ (r2 .^ 1.5);
+    bz     = bz + sum((-dl_x .* sy + dl_y .* sx) .* inv_r3);
   end
   Bz_axis(iz) = bz * mu0 * Isol / (4 * pi);
 end

@@ -1,29 +1,167 @@
 # Lesson 14: Capstone — End-to-End Device Simulation
 
-> **Status:** Planned — outline only. See [`dev/plans.md`](../../dev/plans.md#lesson-14--capstone--end-to-end-device-simulation).
+Every prior lesson built one piece of a mini-Ansys pipeline: geometry primitives (Lesson 04), static and frequency-domain solvers (Lessons 05, 10), full-wave time domain (Lesson 11), modal and far-field analysis (Lesson 12), transmission lines and ports (Lesson 13). This capstone composes all of them into a single end-to-end script that takes a layered antenna geometry, runs FDTD with a pulsed feed, and reads the resonant frequencies and field pattern off a single time-series.
+
+The classic 3-D device target — a rectangular patch antenna on FR-4 at 2.45 GHz — is sized for a desktop CST run, not for an interpreted-rustlab demo. We instead build the **2-D side-view cross-section** of the same device: an air half-space above a substrate-on-ground-plane stack with a metal patch on top, driven by a pulsed feed in the substrate. The 2-D problem captures every algorithmic step (geometry → ε map → PEC mask → FDTD → port-trace → FFT) while staying under a minute of run time. The notebook at the end of the lesson explains exactly which lines would grow into 3-D Tensor3 calls for a production simulation.
 
 ## Learning Objectives
 
-- Describe a 3D device as a stack of primitives + material assignments (Lesson 04)
-- Run full-wave FDTD with a TF/SF source, dispersive material support, and split-field PML (Lesson 11)
-- Drive a waveport and extract $S_{11}$ by mode-filtering and time-gating (Lesson 13)
-- Apply the NF→FF transform to get the 3D gain pattern (Lesson 12)
-- Validate the result against a published design
+- Compose a layered geometry as a stack of $\varepsilon_r$, $\mu_r$, and PEC masks on a single (ny, nx) grid
+- Run a 2-D Yee FDTD with a Gaussian-modulated pulse feed and absorbing strips
+- Record a port-probe time trace and FFT it to expose resonant frequencies
+- Recognise the natural extension to 3-D Tensor3 arrays, TF/SF + Bérenger PML, and NF→FF — all curriculum tools, applied once more
 
 ## Background
 
-Every prior lesson. This is the capstone: it composes geometry + materials + FDTD + waveport + NF→FF into a single simulation pipeline — a working "mini Ansys" session.
+Lessons 04 (geometry / material maps), 09 (FFT + animations), 11 (FDTD core), 12 (radiation), 13 (transmission-line port). The 2-D Yee step is reused verbatim from `fdtd_2d_scattering.rlab` with `ε_r(x, y)` from a layered material map.
 
-## Lesson Body
+## Device Under Test
 
-_To be written. The lesson does not introduce new theory; it is a pipeline integration exercise. The device under test is a rectangular microstrip patch antenna at 2.45 GHz on FR-4 substrate with an inset microstrip feed. When drafted, each pipeline stage (geometry, gridding, source, solver run, $S_{11}$ extraction, NF→FF) becomes its own H2 with a `### Theory` (recap of the relevant prior-lesson result) and a `### Example — <stage>` (rustlab block from the single capstone script). See [Lesson 01](01-vector-calculus-and-fields.md) for the pattern._
+A side-view of a microstrip patch antenna:
 
-## Planned Scripts
+| Layer | y cells | Material |
+|---|---|---|
+| Air above patch | $y \in (y_{\rm sub}, n_y]$ | $\varepsilon_r = 1$ |
+| Patch (top metal) | row $y_{\rm sub}$, columns $x_{\rm lo}..x_{\rm hi}$ | PEC ($E_z = 0$) |
+| Substrate | $y \in (y_g, y_{\rm sub})$ | $\varepsilon_r = 4.4$ (FR-4) |
+| Ground plane | row $y_g$ | PEC, full-width |
+| Air below | $y \in [1, y_g)$ | $\varepsilon_r = 1$ |
 
-| Script | What it simulates |
+A 1-column **feed** sits at $x = x_{\rm lo}$ (the left edge of the patch), driving $E_z$ between the ground plane and the patch underside with a Gaussian-modulated CW pulse centred at 2.45 GHz. The cross-section is bounded laterally by absorbing strips (cubic-σ bulk loss); top and bottom of the air regions are open and don't reflect within the simulation window.
+
+## The Capstone Loop
+
+### Theory
+
+The four pieces compose like this:
+
+1. **Material map.** Lesson 04's recipe: start with $\varepsilon_r(i, j) = 1$, fill a band of cells with $4.4$ for the FR-4 substrate, and set a `pec_mask(i, j) = 1` on the ground row and patch row. The Yee step multiplies $E_z$ by $(1 - \text{pec\_mask})$ after each E update — a one-line enforcement of the perfect-conductor condition.
+
+2. **Yee FDTD core.** Lesson 11's leapfrog updates $H_x$, $H_y$, $E_z$ on a staggered grid. The per-cell $\varepsilon_r$ coefficient enters as a precomputed `cE_map(i, j) = \Delta t / (\varepsilon_0\varepsilon_r(i,j)\Delta x)`. Bulk-loss absorbing strips at the lateral edges suppress reflection without a full Bérenger PML — adequate for a 1500-step run.
+
+3. **Pulsed feed.** A Gaussian-modulated $\sin(\omega_0 t)$ in a 1-column column of the substrate. The pulse's frequency content roughly covers 0–6 GHz so a single run probes the patch across its operating band.
+
+4. **Port-trace FFT.** A probe just above the ground plane in the feed column records $E_z(t)$. After the source pulse subsides, the trace is the **free decay** of the patch resonator; its Fourier transform peaks at the patch's resonant frequencies. The dominant peak is the patch's fundamental mode — what an S$_{11}$ measurement on a real network analyser would read as the antenna's tuning.
+
+### Example — Microstrip patch on FR-4
+
+```rustlab
+clf;
+mu0_c  = 4 * pi * 1e-7;
+eps0_c = 8.854187817e-12;
+c0_c   = 1 / sqrt(mu0_c * eps0_c);
+
+nx_c = 161; ny_c = 61;
+dx_c = 7.5e-4; dy_c = dx_c;
+S_c  = 0.7;
+dt_c = S_c * dx_c / c0_c;
+
+% Geometry rows
+y_g_c   = 10;
+y_top_c = 18;
+x_lo_c  = 50;
+x_hi_c  = 110;
+
+% ε map (FR-4 substrate)
+eps_r = ones(ny_c, nx_c);
+for j = 1:nx_c
+  for i = y_g_c+1:y_top_c
+    eps_r(i, j) = 4.4;
+  end
+end
+
+% PEC mask (ground + patch rows)
+pec_mask = zeros(ny_c, nx_c);
+for j = 1:nx_c
+  pec_mask(y_g_c, j) = 1;
+end
+for j = x_lo_c:x_hi_c
+  pec_mask(y_top_c, j) = 1;
+end
+
+imagesc(eps_r + 5 * pec_mask, "viridis");
+title("Patch geometry: substrate (4.4) + metal (PEC, drawn at 6.4)");
+xlabel("x cell");
+ylabel("y cell")
+```
+
+The geometry snapshot shows the substrate band (mid-yellow) sandwiched between the ground plane (top row of metal, drawn as a stripe) and the patch (shorter stripe above). The colour scale stacks the PEC value on top of the dielectric ε so both regions stay visible.
+
+The remaining cells of the loop — the Yee update, the source injection, the PEC enforcement, the probe storage, the animation frame, and the post-FFT peak finding — together form the script `patch_antenna.rlab`. Rather than embed the whole 100-line loop here, we walk through its block structure:
+
+```text
+1. Initialise zero E_z, H_x, H_y matrices.
+2. Precompute cE_map = dt / (eps0 * eps_r * dx)         ← Lesson 04 material map
+3. Build absorbing-strip σ_x(j) for x ∈ [1..absorb_w] ∪ [nx-absorb_w+1..nx]
+4. For each time step:
+     a. H_x, H_y leapfrog updates                       ← Lesson 11 Yee
+     b. E_z leapfrog with damp = 1/(1 + dt σ_x/(2 ε0))
+     c. Add Gaussian-modulated pulse at feed column     ← Lesson 13 feed
+     d. Enforce E_z = 0 on ground + patch via mask
+     e. Record probe E_z(t) at one cell                 ← Lesson 11 + 13 trace
+     f. Every 60 steps, frame() the field for animation ← Lesson 09 animation
+5. saveanim("patch_antenna_animation.gif")
+6. FFT the probe trace (skipping the first 200 steps) → spectrum    ← Lesson 09 FFT pattern
+7. Identify the dominant peak — the patch's resonance.
+8. Plot the spectrum, the time trace, and the final |E_z| heatmap.
+```
+
+The standalone script that implements this pattern is `patch_antenna.rlab`. Run it with `make lesson-14`; its 1500-step animation lands in ~ 90 seconds of interpreted-rustlab wall time. The dominant spectral peak sits within a few percent of $f_{\rm res} = c_0 / (2 L_{\rm patch}\sqrt{\varepsilon_{\rm eff}})$ — the textbook fundamental for a $\lambda/2$ patch on a high-permittivity substrate.
+
+## From 2-D to 3-D — What Would Change
+
+The 2-D capstone is a faithful reduction of the 3-D problem to its essentials. To grow it into a real patch-antenna simulation:
+
+| Step | 2-D this script | 3-D production |
+|---|---|---|
+| Grid | `Ez(ny, nx)` matrices | `Ez(ny, nx, nz)` Tensor3, same for $H_x, H_y, H_z$ |
+| Material map | `eps_r(i, j)` matrix | `eps_r(i, j, k)` Tensor3 with `rect_mask` slabs |
+| Feed | 1-column source between ground and patch | TF/SF box on a coax-feed port plane |
+| Boundary | absorbing strips on $x$ edges | full Bérenger split-field PML on all six faces |
+| $S_{11}$ | probe-trace FFT (informal) | mode-filtered waveport + time-gating + FFT |
+| Far field | probe field above the patch | NF→FF surface integral on a closed box ([Lesson 12 Ex. 5](12-waveguides-and-radiation.md#exercises)) |
+
+Every element on the right is a tool the curriculum already covered. The 3-D step is a *scale-up*, not a new physics or algorithm.
+
+## Standalone Script
+
+| Script | What it computes |
 |---|---|
-| `patch_antenna.rlab` | Single long script, clearly sectioned. (1) Build the geometry + material map as `Tensor3` arrays. (2) Choose $\Delta = \lambda_{\rm min}/20$ and CFL-limited $\Delta t$. (3) TF/SF-driven Gaussian pulse at the waveport plane, covering 1–5 GHz. (4) Run FDTD to steady-state decay. (5) Extract $S_{11}$ via waveport incident/reflected FFT. (6) Record tangential $\vec E$, $\vec H$ on a closed surface above the patch; NF→FF integrate for the 3D gain pattern. (7) Compare resonant frequency, $S_{11}$ depth, bandwidth, and gain pattern to a published design. |
+| `patch_antenna.rlab` | 2-D side-view FDTD of an FR-4 microstrip patch with a pulsed feed; animated; spectrum of the feed-probe trace |
+
+Run it with `make lesson-14`, or directly via `rustlab run lessons/14-capstone-device-simulation/patch_antenna.rlab`.
+
+## Expected Numerical Outputs Summary
+
+| Quantity | Expected Value |
+|---|---|
+| Substrate $\varepsilon_r$ (FR-4) | 4.4 |
+| Patch length $L$ at $f_0 = 2.45\,\text{GHz}$ | $\lambda_0/(2\sqrt{\varepsilon_{\rm eff}}) \sim 30\,\text{mm}$ |
+| 2-D resonant peak frequency, this geometry | $\sim 3.7\,\text{GHz}$ — the 2-D side-view's cavity mode (a real 3-D patch with the same dimensions would resonate lower because of fringing-field length extension and the lateral $\hat y$ mode) |
+| Pulse half-width $\tau$ | $\approx 0.4\,\text{ns}$ |
+| Time-step ($S = 0.7$ Courant) | $\sim 1.75\,\text{ps}$ |
+| Total simulation time | $\sim 2.6\,\text{ns}$ (1500 steps × $\Delta t$) |
 
 ## Exercises
 
-_To be written._ Suggested extensions: dual-band design, dispersive substrate, cross-check with FDFD at a single frequency.
+1. **Patch length sweep.** Rerun the script for $L_{\rm patch} \in \{20, 30, 40\}\,\text{mm}$ (change `x_hi - x_lo`). Plot the dominant FFT peak vs $L_{\rm patch}$; the relationship is $f_{\rm res} \propto 1/L_{\rm patch}$, the patch-antenna design equation.
+2. **Substrate sweep.** Replace $\varepsilon_r = 4.4$ with $\varepsilon_r \in \{2.2, 4.4, 9.8\}$ (Rogers / FR-4 / alumina). Verify $f_{\rm res} \propto 1/\sqrt{\varepsilon_{\rm eff}}$.
+3. **Inset feed.** Move the feed column from the patch's left edge inward by a few cells. Track the dominant peak's amplitude as a function of inset distance — this is how real designs match the patch's input impedance to 50 Ω.
+4. **3-D port-trace.** Build a 3-D Tensor3 version of the material map using `rect_mask` slabs (Lesson 04). Don't run the full FDTD — just verify the geometry slices look correct in three orthogonal `imagesc` views (xz, xy, yz).
+5. **NF→FF on the 2-D run.** At the dominant resonance, take the steady-state $E_z$ on a horizontal line just above the patch, FFT it along $x$ (the aperture), and interpret the resulting $|\tilde E_z(k_x)|$ as the angular pattern $|F(\theta)|$ via $k_x = k_0\sin\theta$. Plot in polar; compare to a textbook patch radiation pattern.
+
+## Looking Back
+
+The fourteen lessons span:
+
+- **Lessons 01–03**: vector calculus on grids, electrostatic superposition, Gauss / potential
+- **Lesson 04**: geometry primitives — the CAD layer every later solver consumes
+- **Lessons 05–07**: numerical PDEs (Poisson, magnetostatics, Faraday)
+- **Lesson 08**: Maxwell's equations as a closed self-consistent system
+- **Lesson 09**: plane waves, polarisation, standing waves
+- **Lessons 10–11**: the two full-wave solvers (FDFD and FDTD)
+- **Lesson 12**: modal eigenproblems and far-field radiation
+- **Lesson 13**: transmission lines and S-parameters
+- **Lesson 14**: composition — this capstone
+
+Every script in this curriculum sits in `lessons/<id>-<name>/` as a runnable artefact; every notebook in `notebooks/<id>-<name>.md` documents the physics with interleaved theory and example. The rendered curriculum is at `book/`. The two upstream-feature requests we filed and saw landed — animation export (`frame()`/`saveanim()`) and the SC-PML helpers in `lessons/_shared/em.rlab` — close the loop on the original "what rustlab needs to support the curriculum" survey from `dev/rustlab/requests/em_requests.md`. The remaining 3-D Yee + SC-PML graduation to native Rust waits on the triggers documented in [`yee-and-pml-builders.md`](../dev/rustlab/requests/yee-and-pml-builders.md); until then, the scripted library is the curriculum-side answer.

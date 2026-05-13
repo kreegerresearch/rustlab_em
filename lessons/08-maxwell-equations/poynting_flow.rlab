@@ -1,0 +1,87 @@
+# poynting_flow.rlab — Poynting vector S = E × H in a coaxial cable
+# carrying DC power, and the integrated flux ∫ S · dA = V I.
+#
+# Setup:    coax of inner radius a = 1 mm, outer radius b = 4 mm,
+#           inner conductor at +V, outer at 0, current I flowing along
+#           +z in the inner conductor and back along the outer shield.
+# Fields in the dielectric (a < r < b), DC and lossless:
+#               E_r(r)  =  V / (r ln(b/a))
+#               H_phi(r)= I / (2 π r)
+#               S_z(r)  = E_r H_phi  =  V I / (2 π r² ln(b/a))
+# Identity:   ∫_a^b S_z · 2π r dr = V I.   The energy is delivered to
+#             the load through the *dielectric*, not down the wire — a
+#             counterintuitive but rigorous consequence of Maxwell.
+# Method:     two complementary checks.
+#               (i) Cartesian 2-D cross-section: imagesc of S_z(x,y);
+#               (ii) radial profile S_z(r) on a 1-D grid in r, with the
+#                    integral ∫ S_z · 2π r dr computed by `trapz` and
+#                    compared to V I.
+#
+# Reference: ../../notebooks/08-maxwell-equations.md.
+
+eps0 = 8.854187817e-12;
+mu0  = 4 * pi * 1e-7;
+
+# === Geometry & operating point ===
+a = 1.0e-3;         # 1 mm inner radius
+b = 4.0e-3;         # 4 mm outer radius
+V = 10.0;           # 10 V across the dielectric
+Iax = 1.0;          # 1 A axial current
+P_circuit = V * Iax;   # 10 W expected
+print(P_circuit)
+
+# === (i) 2-D cross-section heatmap ===
+N = 161;
+xs = linspace(-1.2 * b, 1.2 * b, N);
+ys = linspace(-1.2 * b, 1.2 * b, N);
+[Xg, Yg] = meshgrid(xs, ys);
+Rg = sqrt(Xg .* Xg + Yg .* Yg);
+
+# Vectorised: build the dielectric annulus as a (b-disk) − (a-disk)
+# rasterisation and divide by Rg² safely outside it. The `+ (1-ann)`
+# trick replaces zeros in Rg² with ones so the off-annulus cells
+# never form a 0/0 and the mask zeros them out cleanly anyway.
+inner = disk_mask(Xg, Yg, 0, 0, a);
+outer = disk_mask(Xg, Yg, 0, 0, b);
+ann   = outer - inner;
+Rg_safe = Rg + (1 - ann);
+Sz = ann * (V * Iax / (2 * pi * log(b / a))) ./ (Rg_safe .^ 2);
+
+figure();
+imagesc(Sz, "viridis");
+title("Poynting flux S_z(x, y) in the coax dielectric  (W/m²)");
+xlabel("x");
+ylabel("y");
+savefig("coax_S_xsection.svg");
+
+# === (ii) radial profile + integrated flux ===
+Nr   = 401;
+rs   = linspace(a, b, Nr);
+Sz_r = V * Iax ./ (2 * pi * rs .* rs * log(b / a));
+
+# ∫_a^b S_z(r) · 2π r dr  via trapezoidal rule.
+integrand = Sz_r .* (2 * pi * rs);
+P_integrated = trapz(rs, integrand);
+print(P_integrated)                         # → 10 W
+print(abs(P_integrated - P_circuit) / P_circuit)
+
+figure();
+plot(rs * 1e3, Sz_r * 1e-3, "S_z(r)  (kW/m²)");
+xlabel("r  (mm)");
+ylabel("S_z  (kW/m²)");
+title("Radial Poynting profile S_z(r) ∝ 1/r²");
+savefig("coax_S_radial.svg");
+
+# === Companion plot: |E| and |H| profiles, useful for the notebook ===
+Er    = V       ./ (rs * log(b / a));
+Hphi  = Iax     ./ (2 * pi * rs);
+
+figure();
+hold on;
+plot(rs * 1e3, Er,         "E_r  (V/m)");
+plot(rs * 1e3, Hphi * 100, "H_phi · 100  (A/m)");
+hold off;
+xlabel("r  (mm)");
+title("Coax fields  —  E_r ∝ 1/r,  H_phi ∝ 1/r");
+legend("E_r  (V/m)", "H_phi × 100  (A/m)");
+savefig("coax_fields_radial.svg");

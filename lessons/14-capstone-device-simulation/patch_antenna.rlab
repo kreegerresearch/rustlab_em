@@ -1,0 +1,186 @@
+# patch_antenna.rlab — End-to-end capstone: 2-D side-view FDTD of a
+# microstrip patch antenna driven by a pulsed feed, with the
+# resonance read off the time series via FFT.
+#
+# A faithful 3-D production simulation requires Tensor3 fields,
+# Bérenger PML on all six faces, and TF/SF excitation — every piece
+# the curriculum has covered, just scaled up. The 2-D cross-section
+# below stays inside a one-minute interpreted-rustlab budget while
+# composing every solver block:
+#
+#   1. Geometry & material map  → Lesson 04
+#   2. ε_r and PEC arrays         → Lesson 04
+#   3. Vectorised 2-D Yee FDTD    → Lesson 11 (cat-rebuild updates)
+#   4. Pulsed-feed waveport       → Lesson 13
+#   5. Probe FFT → S_11           → Lesson 13 + Lesson 09 FFT
+#   6. Animated field             → Lesson 09 frame()/saveanim()
+#
+# Geometry (side view, 2-D TMz):
+#   y_top  ___________________________________
+#                    ┌──── patch (PEC) ────┐
+#         |          |                     |
+#         |   substrate (ε_r = 4.4)         | air above
+#         |          ____________________   |
+#         |          ┃ feed segment      ┃  |
+#   y_g   ━━━━━━━━━━━┃━━━━━━ ground PEC ━┃━━ (full width)
+#                    └─ feed ─┘
+#
+# Reference: ../../notebooks/14-capstone-device-simulation.md.
+
+mu0  = 4 * pi * 1e-7;
+eps0 = 8.854187817e-12;
+c0   = 1 / sqrt(mu0 * eps0);
+
+# === Grid ===
+nx = 121;
+ny = 51;
+dx = 1.0e-3;
+dy = dx;
+S  = 0.7;
+dt = S * dx / c0;
+n_step = 900;
+
+# === Geometry rows ===
+y_g     = 8;
+y_top   = 14;            # substrate is 6 cells = 6 mm thick
+x_lo    = 35;
+x_hi    = 85;            # patch length 50 cells = 50 mm
+
+# === ε map (FR-4 substrate) ===
+eps_r_map = ones(ny, nx);
+for j = 1:nx
+  for i = y_g+1:y_top
+    eps_r_map(i, j) = 4.4;
+  end
+end
+
+# === PEC mask: 1 = metal (force E_z=0 each step) ===
+pec_mask = zeros(ny, nx);
+for j = 1:nx
+  pec_mask(y_g, j) = 1;
+end
+for j = x_lo:x_hi
+  pec_mask(y_top, j) = 1;
+end
+field_mask = 1 - pec_mask;
+
+# === Lateral absorbing strips (cubic σ profile) ===
+sigma_b  = 8 * eps0 * c0 / dx;
+absorb_w = 12;
+sig_x = zeros(1, nx);
+for jj = 1:absorb_w
+  xa = (absorb_w - jj + 1) / absorb_w;
+  sig_x(jj)              = sigma_b * xa^3;
+  sig_x(nx - jj + 1)     = sigma_b * xa^3;
+end
+# Implicit-loss damping factor per column (length nx)
+damp_row = 1 ./ (1 + dt * sig_x / (2 * eps0));
+
+# === Coefficients ===
+cH = dt / (mu0 * dx);
+cE = dt / (eps0 * dx);
+cE_map = cE ./ eps_r_map;          # (ny, nx)
+
+# === Fields ===
+Ez = zeros(ny, nx);
+Hx = zeros(ny, nx);
+Hy = zeros(ny, nx);
+
+# === Feed source ===
+f0     = 2.5e9;
+omega0 = 2 * pi * f0;
+tau_s  = 0.4e-9;
+t0_s   = 3 * tau_s;
+j_feed = x_lo;
+i_probe = y_g + 2;
+
+# === Records ===
+Ez_probe = linspace(0, 0, n_step);
+
+figure();
+for step = 1:n_step
+  t = step * dt;
+
+  # ----- H_x update on rows 1..ny-1 (vectorised slice-cat) -----
+  Hx = cat(1, Hx(1:ny-1, :) - cH * (Ez(2:ny, :) - Ez(1:ny-1, :)), Hx(ny, :));
+
+  # ----- H_y update on cols 1..nx-1 -----
+  Hy = cat(2, Hy(:, 1:nx-1) + cH * (Ez(:, 2:nx) - Ez(:, 1:nx-1)), Hy(:, nx)');
+
+  # ----- E_z update on the interior, with damp_row broadcasting -----
+  curl_Hy = Hy(2:ny-1, 2:nx-1) - Hy(2:ny-1, 1:nx-2);
+  curl_Hx = Hx(2:ny-1, 2:nx-1) - Hx(1:ny-2, 2:nx-1);
+  Ez_int_new = damp_row(2:nx-1) .* (Ez(2:ny-1, 2:nx-1) + cE_map(2:ny-1, 2:nx-1) .* (curl_Hy - curl_Hx));
+
+  top    = Ez(1, :);
+  bot    = Ez(ny, :);
+  left   = Ez(2:ny-1, 1)';
+  right  = Ez(2:ny-1, nx)';
+  middle = cat(2, left, Ez_int_new, right);
+  Ez = cat(1, top, middle, bot);
+
+  # ----- Source on the feed column (substrate cells only) -----
+  src_amp = exp(-((t - t0_s) / tau_s)^2) * sin(omega0 * (t - t0_s));
+  src = zeros(ny, nx);
+  for i = y_g+1:y_top-1
+    src(i, j_feed) = src_amp;
+  end
+  Ez = Ez + src;
+
+  # ----- PEC: zero E_z on ground + patch -----
+  Ez = Ez .* field_mask;
+
+  # ----- Probe -----
+  Ez_probe(step) = real(Ez(i_probe, j_feed));
+
+  if mod(step, 40) == 0
+    imagesc(real(Ez), "viridis");
+    title(sprintf("t = %.2f ns", t * 1e9));
+    xlabel("x cell");
+    ylabel("y cell");
+    frame();
+  end
+end
+saveanim("patch_antenna_animation.gif", 24);
+
+# === Time trace + FFT spectrum ===
+ts = (1:n_step) * dt;
+figure();
+plot(ts * 1e9, Ez_probe, "E_z(t) at feed probe");
+xlabel("t  (ns)");
+ylabel("E_z");
+title("Time trace at the feed probe — pulse + patch ring-down");
+savefig("patch_time_trace.svg");
+
+trace = Ez_probe(200:n_step);
+Sp = abs(fft(trace));
+Nw = length(trace);
+fs = (0:Nw-1) / (Nw * dt);
+half = round(Nw / 2);
+
+figure();
+plot(fs(1:half) / 1e9, Sp(1:half), "|FFT|");
+xlim([0.5, 8.0]);
+xlabel("frequency  (GHz)");
+ylabel("|E_z(f)|");
+title("Feed-probe spectrum — patch resonance peaks");
+savefig("patch_spectrum.svg");
+
+[Sp_max, kmax] = max(Sp(1:half));
+print(fs(kmax) / 1e9)               # GHz of dominant peak
+print(Sp_max)
+
+# === Geometry + final field snapshots ===
+figure();
+imagesc(eps_r_map + 5 * pec_mask, "viridis");
+title("Geometry: substrate eps_r = 4.4 + ground / patch (PEC, drawn as 6.4)");
+xlabel("x cell");
+ylabel("y cell");
+savefig("patch_geometry.svg");
+
+figure();
+imagesc(abs(Ez), "viridis");
+title("Final |E_z| — late-time standing-wave pattern under the patch");
+xlabel("x cell");
+ylabel("y cell");
+savefig("patch_final_field.svg");

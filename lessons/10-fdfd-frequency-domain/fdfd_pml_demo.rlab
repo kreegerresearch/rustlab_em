@@ -1,0 +1,93 @@
+# fdfd_pml_demo.rlab — Stretched-coordinate PML vs hard Dirichlet walls.
+#
+# Same point-source 2-D Helmholtz problem solved twice:
+#   (a) hard walls — outgoing waves reflect back, producing a standing-
+#       wave pattern that fills the box and overwhelms the desired
+#       free-space radiation pattern.
+#   (b) SC-PML on all four sides — the same outgoing waves are
+#       absorbed cleanly and the field reads like a free-space point
+#       source (concentric rings of equal phase).
+#
+# The "no PML" reference operator is just the constant-coefficient
+# Helmholtz built from `laplacian_2d` + the diagonal ω² ε mass term.
+# `laplacian_2d` is Dirichlet by default, so the boundary cells act
+# like a perfect reflector — exactly what we want to highlight here.
+#
+# Reference: ../../notebooks/10-fdfd-frequency-domain.md.
+
+run "../_shared/em.rlab"
+
+mu0  = 4 * pi * 1e-7;
+eps0 = 8.854187817e-12;
+c0   = 1 / sqrt(mu0 * eps0);
+
+f0       = 5e9;
+omega    = 2 * pi * f0;
+lambda0  = c0 / f0;
+
+nx        = 121;
+ny        = 121;
+dx        = lambda0 / 12;
+dy        = dx;
+npml      = 18;
+sigma_max = 4 * eps0 * c0 / dx;
+
+eps_map = ones(ny, nx);
+
+# Source: single cell at the centre.
+J = zeros(ny, nx);
+J(round(ny / 2), round(nx / 2)) = 1.0 / (dx * dy);
+b = -j * omega * mu0 * J(:)';
+
+# === (a) No-PML reference ===
+# Build a constant-coefficient Helmholtz operator L + k0² I from
+# `laplacian_2d`. The Dirichlet BCs act as PEC walls. A 1e-12 j loss
+# promotes the operator to complex so spsolve will accept the complex
+# RHS — the loss is far below any physical scale of interest.
+L     = laplacian_2d(nx, ny, dx, dy);
+k0sq  = (omega / c0)^2;
+A_box = L + k0sq * (1 - 1e-12 * j) * speye(nx * ny);
+E_box_flat = spsolve(A_box, b);
+E_box = reshape(E_box_flat, ny, nx);
+
+# === (b) SC-PML on all four sides ===
+A_pml = fdfd_tmz_pml_2d(eps_map, omega, dx, dy, npml, sigma_max);
+E_pml_flat = spsolve(A_pml, b);
+E_pml = reshape(E_pml_flat, ny, nx);
+
+# Sanity: PML case should be ~ radially symmetric far from the source.
+# Sample at four equidistant points; values should agree to a few %.
+ic = round(ny / 2);
+jc = round(nx / 2);
+r  = round(0.3 * nx);
+sN = abs(E_pml(ic - r, jc));
+sS = abs(E_pml(ic + r, jc));
+sE = abs(E_pml(ic, jc + r));
+sW = abs(E_pml(ic, jc - r));
+print(sN)
+print(sS)
+print(sE)
+print(sW)
+sym_err = (max([sN, sS, sE, sW]) - min([sN, sS, sE, sW])) / mean([sN, sS, sE, sW]);
+print(sym_err)         # should be ~ 1e-3 — discretisation anisotropy only
+
+figure();
+imagesc(real(E_box), "viridis");
+title("Hard-wall box: standing-wave pattern fills the cavity");
+xlabel("x cell index");
+ylabel("y cell index");
+savefig("fdfd_pml_box_re.svg");
+
+figure();
+imagesc(real(E_pml), "viridis");
+title("SC-PML on all sides: clean outgoing wave, free-space-like");
+xlabel("x cell index");
+ylabel("y cell index");
+savefig("fdfd_pml_open_re.svg");
+
+figure();
+imagesc(abs(E_pml), "viridis");
+title("|E_z| with SC-PML — radial decay from the centre source");
+xlabel("x cell index");
+ylabel("y cell index");
+savefig("fdfd_pml_open_mag.svg");

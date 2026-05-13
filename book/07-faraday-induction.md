@@ -119,23 +119,19 @@ ys2 = linspace(-1.5 * a_i, 1.5 * a_i, Ng);
 dxg = xs2(2) - xs2(1);
 dyg = ys2(2) - ys2(1);
 
+% Vectorised Biot-Savart: one outer loop over the N_seg outer-loop
+% segments, with each segment broadcasting (Xg - rxs(k), Yg - rys(k))
+% across the entire (Ng × Ng) field grid. Both source and field sit
+% in the z = 0 plane so the Rz term drops.
 Bz_grid = zeros(Ng, Ng);
-for iy = 1:Ng
-  for ix = 1:Ng
-    fx = xs2(ix); fy = ys2(iy); fz = 0.0;
-    bz = 0.0;
-    for k = 1:N_seg
-      Rxk = fx - rxs(k);
-      Ryk = fy - rys(k);
-      Rzk = fz - rzs(k);
-      r2 = Rxk*Rxk + Ryk*Ryk + Rzk*Rzk;
-      if r2 < 1e-10; r2 = 1e-10; end
-      inv_r3 = 1.0 / (r2 ^ 1.5);
-      bz = bz + (dlx(k)*Ryk - dly(k)*Rxk) * inv_r3;
-    end
-    Bz_grid(iy, ix) = bz * mu0 * I1 / (4 * pi);
-  end
+for k = 1:N_seg
+  Rx = Xg - rxs(k);
+  Ry = Yg - rys(k);
+  r2 = Rx .^ 2 + Ry .^ 2;
+  inv_r3 = 1.0 ./ (r2 .^ 1.5);
+  Bz_grid = Bz_grid + (dlx(k) * Ry - dly(k) * Rx) .* inv_r3;
 end
+Bz_grid = Bz_grid * mu0 * I1 / (4 * pi);
 ```
 
 ```rustlab
@@ -147,16 +143,12 @@ title("B_z from the outer loop sampled on the inner disk's plane")
 ![plot 2](plots/07-faraday-induction/plot-2.svg)
 
 ```rustlab
-% Integrate Bz over the inner-disk area: cells with x²+y² ≤ a_i²
-Phi_inner = 0.0;
-for iy = 1:Ng
-  for ix = 1:Ng
-    if Xg(iy, ix)^2 + Yg(iy, ix)^2 <= a_i^2
-      Phi_inner = Phi_inner + Bz_grid(iy, ix) * dxg * dyg;
-    end
-  end
-end
-M_num = real(Phi_inner / I1);
+% Φ = ∫∫_{disk_a} Bz dA, picked out by Lesson-04's disk_mask. The
+% mask × heatmap product is the same toolkit a device-level capacitance
+% integral would use — the L04 primitives keep paying off downstream.
+inner_disk = disk_mask(Xg, Yg, 0.0, 0.0, a_i);
+Phi_inner  = sum(sum(real(Bz_grid) .* inner_disk)) * dxg * dyg;
+M_num = Phi_inner / I1;
 
 M_an  = mu0 * pi * a_i^2 / (2 * b_o);     % a ≪ b limit
 print(M_num)                              % ≈ 7.94e-9 H
@@ -286,9 +278,9 @@ print(real(Jmag(i_c, nx3 / 2 + 1)))                            % near centre
 ```
 
 ```text
-1175649.6329799083
+1175649.633045984
 1218000
-40606.132024952974
+40606.13198313814
 ```
 
 The numerical $|J|$ at $r = 0.7\,R$ matches the analytic $\sigma\dot B_z r/2$ within a few percent; near $r = 0$ both go to zero. The eddy-current pattern this produces — circular flow lines, current density growing linearly outward — is the same one industrial-induction-heating cookers exploit (a strong $\dot B$ from a coil drives huge $J$ in the steel pan, which dissipates as $\int|\vec J|^2/\sigma$). The drift of these eddies into a conductor is also why **transformer cores must be laminated**: replacing solid iron with thin insulated sheets confines the eddy stream-function support to each lamination's small disk, killing $\propto R^4$ eddy losses to a manageable level.
@@ -311,8 +303,8 @@ Run all three with `make lesson-07`, or one at a time via `rustlab run lessons/0
 | Peak EMF $\varepsilon_{\rm peak}$ at 60 Hz | $\pi R^2 B_0\omega \approx 0.296$ V |
 | Numerical $M$ (concentric loops, $a/b = 0.2$) | $\approx 7.94\times10^{-9}$ H |
 | Analytic small-$a/b$ $M$ | $\mu_0\pi a^2/(2b) \approx 7.90\times10^{-9}$ H |
-| Eddy $|J|$ at $r = 0.7R$ on Cu plate | $\approx \sigma\dot B_z R\cdot 0.35 \approx 1.2\times10^{6}$ A/m² |
-| Eddy $|J|$ near $r = 0$ | $\approx 0$ |
+| Eddy $\lvert J\rvert$ at $r = 0.7R$ on Cu plate | $\approx \sigma\dot B_z R\cdot 0.35 \approx 1.2\times10^{6}$ A/m² |
+| Eddy $\lvert J\rvert$ near $r = 0$ | $\approx 0$ |
 
 ## Exercises
 

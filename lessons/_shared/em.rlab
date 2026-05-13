@@ -1,0 +1,165 @@
+# em.rlab — Shared electromagnetics helpers for Lessons 10/11/13.
+#
+# Phase 1 of the Yee/SC-PML upstream request kept curriculum-side as
+# scripted rustlab. See `dev/rustlab/requests/yee-and-pml-builders.md`.
+# When any of the documented graduation triggers fires, these get
+# re-implemented in pure Rust as `crates/rustlab-em` and this file
+# goes away.
+#
+# Functions provided:
+#   sigma = pml_sigma_profile(N, npml, sigma_max)
+#       Cubic-polynomial σ ramp on a length-N grid (primal cells), zero
+#       in the interior, sigma_max at the outermost cell of each PML
+#       layer.
+#
+#   sigma_h = pml_sigma_profile_h(N, npml, sigma_max)
+#       Same cubic profile evaluated at the dual grid (face between
+#       cells i and i+1, sampled at offset +0.5). Required for proper
+#       face-centred SC-PML — using the primal profile alone leaves a
+#       ~ unity-amplitude reflection from the PML inner edge in the
+#       discrete approximation.
+#
+#   s = pml_stretching_factor(sigma, omega, eps0)
+#       Complex SC-PML stretching factor s = 1 + i σ / (ω ε₀).
+#
+#   A = fdfd_tmz_pml_2d(eps_map, omega, dx, dy, npml, sigma_max)
+#       Assemble the 2-D TMz Helmholtz operator with face-centred
+#       SC-PML on all four boundaries. The continuous equation is
+#           ∇²E_z + ω² μ₀ ε(x,y) E_z = -i ω μ₀ J_z
+#       discretised on a uniform grid with column-major flattening
+#       (matching `laplacian_2d`). Inside each PML layer the spatial
+#       derivative chain (1/s_E)∂(1/s_H)∂ uses the cubic σ profile
+#       above at primal and dual locations; outside the PML, s = 1
+#       and the operator reduces to the Helmholtz form.
+#       Solve with
+#           E_flat = spsolve(A, -j * omega * mu0 * J(:)');
+#           E_grid = reshape(E_flat, ny, nx);
+#
+# Conventions:
+#   - Time-harmonic factor e^{-i ω t}.
+#   - eps_map shape is (ny, nx) — the meshgrid / imagesc convention.
+#   - Index k = (j - 1) * ny + i for cell (i, j).
+#   - sigma_max ≈ (m + 1) * eps0 * c / (2 dx) is a textbook starting
+#     point with cubic order (m = 3); in practice 4*eps0*c/dx works
+#     well for npml = 20 and gives ~ 80 dB attenuation.
+#
+# Reference: Rumpf, *Electromagnetic and Photonic Simulation for the
+# Beginner* (2022), ch. 5; Taflove & Hagness 3rd ed. ch. 7 & 11.
+
+# ---------------------------------------------------------------------
+function sigma = pml_sigma_profile(N, npml, sigma_max)
+  if npml < 1
+    sigma = zeros(1, N);
+    return;
+  end
+  # Vectorised: x_l is the normalised distance from the inner edge of
+  # the left PML (positive inside, negative elsewhere), x_r is the
+  # same for the right PML. The clip-to-zero trick (v + abs(v))/2
+  # plays the role of max(v, 0), and only one of x_l / x_r is positive
+  # for any cell, so the two cubes never overlap.
+  ii = 1:N;
+  x_l = (npml - ii + 1) / npml;
+  x_r = (ii - (N - npml)) / npml;
+  sigma = sigma_max * (((x_l + abs(x_l)) / 2) .^ 3 + ((x_r + abs(x_r)) / 2) .^ 3);
+end
+
+# ---------------------------------------------------------------------
+function sigma_h = pml_sigma_profile_h(N, npml, sigma_max)
+  # σ at the face between cells ii and ii+1, length N (the last entry
+  # is unused but kept for index alignment). Same cubic profile as the
+  # primal grid, sampled at a +0.5 cell offset.
+  if npml < 1
+    sigma_h = zeros(1, N);
+    return;
+  end
+  ii = 1:N;
+  x_l = (npml - ii + 0.5) / npml;
+  x_r = (ii - (N - npml) + 0.5) / npml;
+  sigma_h = sigma_max * (((x_l + abs(x_l)) / 2) .^ 3 + ((x_r + abs(x_r)) / 2) .^ 3);
+end
+
+# ---------------------------------------------------------------------
+function s = pml_stretching_factor(sigma, omega, eps0)
+  s = 1 + j * sigma / (omega * eps0);
+end
+
+# ---------------------------------------------------------------------
+function A = fdfd_tmz_pml_2d(eps_map, omega, dx, dy, npml, sigma_max)
+  mu0  = 4 * pi * 1e-7;
+  eps0 = 8.854187817e-12;
+  c0   = 1 / sqrt(mu0 * eps0);
+  k0sq = (omega / c0)^2;
+
+  sz = size(eps_map);
+  ny = sz(1);
+  nx = sz(2);
+  N  = nx * ny;
+
+  # PML profiles: primal (cell-centred) and dual (face-centred), per axis.
+  sx_e = pml_stretching_factor(pml_sigma_profile  (nx, npml, sigma_max), omega, eps0);
+  sx_h = pml_stretching_factor(pml_sigma_profile_h(nx, npml, sigma_max), omega, eps0);
+  sy_e = pml_stretching_factor(pml_sigma_profile  (ny, npml, sigma_max), omega, eps0);
+  sy_h = pml_stretching_factor(pml_sigma_profile_h(ny, npml, sigma_max), omega, eps0);
+
+  max_nnz = 5 * N;
+  Ii = zeros(1, max_nnz);
+  Ji = zeros(1, max_nnz);
+  Vv = zeros(1, max_nnz);
+  cnt = 0;
+
+  for j = 1:nx
+    sxe = sx_e(j);
+    for i = 1:ny
+      sye = sy_e(i);
+      k   = (j - 1) * ny + i;
+
+      # Off-diagonal coefficients for the four neighbours, using face
+      # stretching factors that live on the dual grid.
+      if j < nx
+        ap_x = 1 / (sxe * sx_h(j) * dx * dx);
+      else
+        ap_x = 0;
+      end
+      if j > 1
+        am_x = 1 / (sxe * sx_h(j - 1) * dx * dx);
+      else
+        am_x = 0;
+      end
+      if i < ny
+        ap_y = 1 / (sye * sy_h(i) * dy * dy);
+      else
+        ap_y = 0;
+      end
+      if i > 1
+        am_y = 1 / (sye * sy_h(i - 1) * dy * dy);
+      else
+        am_y = 0;
+      end
+
+      diag_v = -ap_x - am_x - ap_y - am_y + k0sq * eps_map(i, j);
+      cnt = cnt + 1;
+      Ii(cnt) = k; Ji(cnt) = k; Vv(cnt) = diag_v;
+      if j < nx
+        cnt = cnt + 1;
+        Ii(cnt) = k; Ji(cnt) = j * ny + i; Vv(cnt) = ap_x;
+      end
+      if j > 1
+        cnt = cnt + 1;
+        Ii(cnt) = k; Ji(cnt) = (j - 2) * ny + i; Vv(cnt) = am_x;
+      end
+      if i < ny
+        cnt = cnt + 1;
+        Ii(cnt) = k; Ji(cnt) = (j - 1) * ny + (i + 1); Vv(cnt) = ap_y;
+      end
+      if i > 1
+        cnt = cnt + 1;
+        Ii(cnt) = k; Ji(cnt) = (j - 1) * ny + (i - 1); Vv(cnt) = am_y;
+      end
+    end
+  end
+
+  Ii_t = Ii(1:cnt);
+  Ji_t = Ji(1:cnt);
+  Vv_t = Vv(1:cnt);
+  A = sparse(Ii_t, Ji_t, Vv_t, N, N);
+end

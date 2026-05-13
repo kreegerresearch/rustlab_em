@@ -1,0 +1,111 @@
+# fdfd_2d_tmz.rlab — TMz scattering from a dielectric cylinder.
+#
+# Geometry: vacuum background (ε_bg = 1) with a circular dielectric
+# inclusion of ε_r = 4, radius R = 0.4 λ₀, centred in the domain.
+# A plane wave E_inc = exp(j k₀ x) ẑ propagates in the +x direction.
+#
+# Scattered-field formulation: write E_total = E_inc + E_scat, where
+# E_inc is the analytic plane wave (which solves the background
+# vacuum Helmholtz exactly). E_scat then satisfies
+#   (∇² + k₀² ε_total) E_scat = -k₀² (ε_total - ε_bg) E_inc.
+# The right-hand side is non-zero only inside the scatterer — a
+# polarisation-current "secondary source" — and the SC-PML on all
+# four sides absorbs the outgoing scattered wave cleanly.
+#
+# Outputs:
+#   - imagesc of Re(E_total) showing the plane wave bent and
+#     focused on the lit side of the cylinder, with a shadow
+#     forming in the +x lee.
+#   - imagesc of |E_total| showing the same field intensity, with
+#     the standing-wave-like pattern in front of the cylinder.
+#   - imagesc of |E_scat| isolating just the scattered radiation.
+#
+# Reference: ../../notebooks/10-fdfd-frequency-domain.md.
+
+run "../_shared/em.rlab"
+
+mu0  = 4 * pi * 1e-7;
+eps0 = 8.854187817e-12;
+c0   = 1 / sqrt(mu0 * eps0);
+
+f0       = 5e9;
+omega    = 2 * pi * f0;
+k0       = omega / c0;
+lambda0  = c0 / f0;
+
+# Domain: 4 λ × 4 λ, with 12 cells per λ in the background.
+nx        = 161;
+ny        = 161;
+dx        = lambda0 / 12;
+dy        = dx;
+npml      = 18;
+sigma_max = 4 * eps0 * c0 / dx;
+
+# Cylinder: ε_r = 4, R = 0.4 λ₀, centred.
+[Xg, Yg] = meshgrid((1:nx) * dx, (1:ny) * dy);
+xc = (nx + 1) / 2 * dx;
+yc = (ny + 1) / 2 * dy;
+R_cyl = 0.4 * lambda0;
+mask  = disk_mask(Xg, Yg, xc, yc, R_cyl);
+
+eps_bg = 1.0;
+eps_in = 4.0;
+eps_total = eps_bg * (1 - mask) + eps_in * mask;
+
+# === Assemble TMz operator with SC-PML ===
+A = fdfd_tmz_pml_2d(eps_total, omega, dx, dy, npml, sigma_max);
+
+# === Incident plane wave  (+x propagating) ===
+E_inc = exp(j * k0 * Xg);
+
+# === Scattered-field source: contrast × E_inc ===
+contrast = eps_total - eps_bg;
+src = -k0 * k0 * contrast .* E_inc;
+
+# Solve A * E_scat = src(:)
+b = src(:)';
+E_scat_flat = spsolve(A, b);
+E_scat = reshape(E_scat_flat, ny, nx);
+
+E_total = E_inc + E_scat;
+
+# Sanity: scattered field outside the cylinder + PML should be the
+# outgoing wave from the cylinder. Sample at four equidistant points
+# on a circle of radius 1.5 λ from the cylinder centre — magnitudes
+# differ but should be of comparable order (fwd-scatter ≠ back-scatter
+# because the cylinder isn't sub-wavelength).
+ic = round(ny / 2);
+jc = round(nx / 2);
+r_test = round(1.5 * lambda0 / dx);
+print(abs(E_scat(ic, jc + r_test)))    # forward
+print(abs(E_scat(ic, jc - r_test)))    # backward
+print(abs(E_scat(ic + r_test, jc)))    # transverse +y
+print(abs(E_scat(ic - r_test, jc)))    # transverse -y
+
+figure();
+imagesc(real(E_total), "viridis");
+title("Re(E_z total) — plane wave scattering off ε_r = 4 cylinder");
+xlabel("x cell index");
+ylabel("y cell index");
+savefig("fdfd_2d_tmz_total_re.svg");
+
+figure();
+imagesc(abs(E_total), "viridis");
+title("|E_z total| — incident + scattered");
+xlabel("x");
+ylabel("y");
+savefig("fdfd_2d_tmz_total_mag.svg");
+
+figure();
+imagesc(abs(E_scat), "viridis");
+title("|E_z scat| — outgoing scattered radiation only");
+xlabel("x");
+ylabel("y");
+savefig("fdfd_2d_tmz_scat_mag.svg");
+
+figure();
+imagesc(real(eps_total), "viridis");
+title("eps_r(x, y) — vacuum + cylinder");
+xlabel("x");
+ylabel("y");
+savefig("fdfd_2d_tmz_eps.svg");

@@ -1,0 +1,125 @@
+# coax_impedance.rlab — Characteristic impedance of a coaxial line
+# from a 2-D Laplace solve on the cross-section.
+#
+# Geometry: inner conductor radius a, outer shield radius b, with the
+# inner conductor pinned to V = 1 V and the outer shield pinned to
+# V = 0 V. The TEM transverse field obeys ∇²V = 0 in the dielectric
+# annulus; the per-unit-length capacitance follows from
+#   C' = Q'/V_0 = ε₀ ∮_{inner} E · n̂ dℓ / V_0,
+# or equivalently from the field energy
+#   C' = 2 U_E' / V_0², U_E' = (1/2) ε₀ ∫|E|² dA.
+# For TEM in a homogeneous dielectric, L' C' = μ₀ ε₀, so
+#   Z_0 = sqrt(L'/C') = sqrt(μ₀/(ε₀ * (C'/ε₀)²)) · ε₀  → simplify to
+#   Z_0 = η_0 / (2π) · ln(b/a)
+# which is the well-known analytic coax formula.
+#
+# Reference: ../../notebooks/13-transmission-lines-and-antennas.md.
+
+mu0  = 4 * pi * 1e-7;
+eps0 = 8.854187817e-12;
+eta0 = sqrt(mu0 / eps0);
+
+# === Geometry ===
+a_in = 0.5e-3;
+b_out = 2.0e-3;
+V0    = 1.0;
+
+# === Grid (square box containing the coax cross-section) ===
+nx = 121;
+ny = 121;
+L_box = 3 * b_out;
+dx = L_box / (nx + 1);
+dy = dx;
+
+[Xg, Yg] = meshgrid(dx * (1:nx) - L_box / 2, dy * (1:ny) - L_box / 2);
+R = sqrt(Xg .^ 2 + Yg .^ 2);
+
+inner_mask = disk_mask(Xg, Yg, 0, 0, a_in);
+outer_mask = disk_mask(Xg, Yg, 0, 0, b_out);
+dielectric = outer_mask - inner_mask;
+not_dielectric = 1 - dielectric;        # 1 wherever we'll pin
+
+# === Sparse Poisson with pinned conductors ===
+L = laplacian_2d(nx, ny, dx, dy);
+A = -1 * L;
+N = nx * ny;
+b = zeros(1, N);
+
+# Pin cells inside inner conductor (V = V0), outside outer (V = 0).
+for j = 1:nx
+  for i = 1:ny
+    if inner_mask(i, j) > 0.5
+      k = ij2k(i, j, ny);
+      A(k, k) = 1.0;
+      if i > 1;  A(k, ij2k(i-1, j, ny)) = 0.0; end
+      if i < ny; A(k, ij2k(i+1, j, ny)) = 0.0; end
+      if j > 1;  A(k, ij2k(i, j-1, ny)) = 0.0; end
+      if j < nx; A(k, ij2k(i, j+1, ny)) = 0.0; end
+      b(k) = V0;
+    elseif outer_mask(i, j) < 0.5
+      k = ij2k(i, j, ny);
+      A(k, k) = 1.0;
+      if i > 1;  A(k, ij2k(i-1, j, ny)) = 0.0; end
+      if i < ny; A(k, ij2k(i+1, j, ny)) = 0.0; end
+      if j > 1;  A(k, ij2k(i, j-1, ny)) = 0.0; end
+      if j < nx; A(k, ij2k(i, j+1, ny)) = 0.0; end
+      b(k) = 0.0;
+    end
+  end
+end
+
+V_flat = spsolve(A, b);
+V = real(reshape(V_flat, ny, nx));
+
+[Vx, Vy] = gradient(V, dx, dy);
+Ex = -Vx;
+Ey = -Vy;
+Emag2 = Ex .^ 2 + Ey .^ 2;
+
+# === Capacitance via energy method ===
+# Integrate (1/2) ε₀ |E|² dA over the dielectric annulus.
+U_E = 0.5 * eps0 * sum(sum(Emag2 .* dielectric)) * dx * dy;
+C_per_m = 2 * U_E / V0^2;
+print(C_per_m)                  % F/m
+
+# Analytic comparison
+C_ana = 2 * pi * eps0 / log(b_out / a_in);
+print(C_ana)
+print(abs(C_per_m - C_ana) / C_ana)   % ~ few %
+
+# === Characteristic impedance (TEM: L' C' = μ₀ ε₀) ===
+Z0_num = sqrt(mu0 * eps0) / C_per_m;
+Z0_ana = eta0 / (2 * pi) * log(b_out / a_in);
+print(Z0_num)
+print(Z0_ana)
+print(60 * log(b_out / a_in))          % the famous "60 ln(b/a)" approx
+print(abs(Z0_num - Z0_ana) / Z0_ana)
+
+# === Plots ===
+figure();
+imagesc(V, "viridis");
+title("V(x, y) on a coax cross-section");
+xlabel("x cell");
+ylabel("y cell");
+savefig("coax_V.svg");
+
+figure();
+imagesc(sqrt(Emag2) .* dielectric, "viridis");
+title("|E(x, y)| in the dielectric — 1/r profile");
+xlabel("x");
+ylabel("y");
+savefig("coax_Emag.svg");
+
+# === Z_0 vs b/a sweep ===
+ratios = [1.5, 2.0, 3.0, 4.0, 5.0, 7.0, 10.0];
+Nratios = length(ratios);
+Z0_swept = linspace(0, 0, Nratios);
+for kr = 1:Nratios
+  Z0_swept(kr) = eta0 / (2 * pi) * log(ratios(kr));
+end
+figure();
+plot(ratios, Z0_swept, "Z_0 = (η_0/2π) ln(b/a)");
+xlabel("b/a");
+ylabel("Z_0  (Ω)");
+title("Coax characteristic impedance");
+savefig("coax_Z0_sweep.svg");

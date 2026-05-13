@@ -1,9 +1,14 @@
 # Request: Yee-Grid Curl Operators and SC-PML Builders
 
-**Status**: Discussion (Phase 1 implementation lives in
-`rustlab_em/lessons/_shared/em.r` as a scripted library; upstream
-rustlab implementation deferred until a graduation trigger fires —
-see "Decision criteria" below).
+**Status**: **Phase 1 Landed** (2026-05-09). Scripted library
+`rustlab_em/lessons/_shared/em.rlab` provides `pml_sigma_profile`,
+`pml_sigma_profile_h`, `pml_stretching_factor`, and
+`fdfd_tmz_pml_2d` (face-centred SC-PML 2-D TMz Helmholtz operator).
+Validated by Lesson 10's four FDFD demos: 1-D AR coating reaches the
+discretisation floor, 2-D point source achieves 80 dB attenuation
+across 18 PML cells, cardinal-point symmetry on a 121×121 grid is
+~ 2 × 10⁻⁵. Phase 2 (upstream `rustlab-em` crate) deferred until a
+graduation trigger fires — see "Decision criteria" below.
 **Date**: 2026-04-26
 **Origin**: `rustlab_em` Lesson 10 (FDFD), Lesson 11 (FDTD), Lesson 13
 (transmission lines and antennas), and the upstream-side em_requests

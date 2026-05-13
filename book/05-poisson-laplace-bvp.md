@@ -80,9 +80,9 @@ print(real(max(err(:))))             % ≈ 1.6e-4 — well below the (1/42)² �
 ```
 
 ```text
-0.18317394238233575
+0.18317394238233684
 0.18304604079678616
-0.00016149246740271295
+0.00016149246740576606
 ```
 
 The two values agree to four digits; the worst-case error sits comfortably under the $(1/(N+1))^2$ bound the second-order stencil promises.
@@ -263,7 +263,7 @@ print(C_1d)                                     % ≈ 2.66e-11 F/m
 ```
 
 ```text
-48.08953556667842
+48.08953558439116
 0.0000000000265625634384
 ```
 
@@ -378,11 +378,11 @@ print(real(D_air))         % same value to six+ digits → continuity verified
 ```
 
 ```text
-39.70223376549903
-158.8089353407245
-4.000000007020471
--0.0000000014061241373896727
--0.0000000014061241398575861
+39.70223358024655
+158.8089296451023
+3.999999882226175
+-0.0000000014061241308286318
+-0.0000000014061240894274774
 ```
 
 The field jump-by-$\varepsilon_r$ and the displacement continuity both come out of the harmonic-mean stencil for free — no user-side bookkeeping at the interface. Now read off the capacitance per unit area and compare to the series-dielectric formula.
@@ -403,7 +403,7 @@ print(C_num)                                   % matches C_an to ~10⁻³
 
 ```text
 0.000000001416670050048
-0.0000000014061234887250392
+0.0000000014061236586766112
 ```
 
 ## Field Singularities at Sharp Corners
@@ -497,12 +497,13 @@ The brightest pixel sits on the inner $(0.06, 0.06)$ corner — that's the singu
 % step in (-1, -1) cells from there.
 j0  = 60; i0 = 60;
 M_r = 30;
-rs  = zeros(1, M_r);
-Es  = zeros(1, M_r);
+% Build as true 1-D vectors so loglog accepts them — `zeros(1, N)`
+% produces a 1×N matrix that the v0.3 loglog rejects.
+rs = (1:M_r) * dx2 * sqrt(2.0);
+Es = linspace(0, 0, M_r);
 for k = 1:M_r
   ic = i0 - k;
   jc = j0 - k;
-  rs(k) = k * dx2 * sqrt(2.0);             % distance along the diagonal (m)
   Es(k) = Emag(ic, jc);
 end
 
@@ -522,7 +523,7 @@ print(real(slope))                          % ≈ -0.38 (theory: -1/3 ≈ -0.333
 ```
 
 ```text
--0.3776039516914204
+-0.37760395168279587
 ```
 
 ```rustlab

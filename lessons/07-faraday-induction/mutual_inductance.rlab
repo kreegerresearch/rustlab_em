@@ -3,8 +3,8 @@
 # Geometry:   outer loop radius b = 0.10 m (current I1 = 1 A, in xy-plane),
 #             inner loop radius a = 0.02 m (also in xy-plane, concentric).
 # Method:     numerical Biot-Savart for Bz from the outer loop on a 41×41
-#             grid covering the inner-loop disk; integrate over cells with
-#             x² + y² ≤ a² to get Φ; M = Φ / I1.
+#             grid covering the inner-loop disk; integrate over cells inside
+#             the inner-loop disk via Lesson-04's disk_mask; M = Φ / I1.
 # Verifies:   small-a/b limit M ≈ μ₀ π a² / (2 b).
 #
 # Reference: ../../notebooks/07-faraday-induction.md.
@@ -21,10 +21,8 @@ phi   = phi(1:N_seg);
 dphi  = 2 * pi / N_seg;
 rxs   = b_o * cos(phi);
 rys   = b_o * sin(phi);
-rzs   = zeros(N_seg);
 dlx   = -b_o * sin(phi) * dphi;
 dly   =  b_o * cos(phi) * dphi;
-dlz   = zeros(N_seg);
 
 # Field grid covering the inner disk
 Ng  = 41;
@@ -34,39 +32,31 @@ ys2 = linspace(-1.5 * a_i, 1.5 * a_i, Ng);
 dxg = xs2(2) - xs2(1);
 dyg = ys2(2) - ys2(1);
 
+# Vectorised Biot-Savart: for each outer-loop segment k, the displacement
+# (Xg - rxs(k), Yg - rys(k), 0) broadcasts over the whole field grid in
+# one matrix expression — much faster than a per-cell loop, and lines up
+# with the textbook sum B_z(r) = (μ₀I/4π) Σ_k [dl × (r - r')]·ẑ / |r - r'|³.
 Bz_grid = zeros(Ng, Ng);
-for iy = 1:Ng
-  for ix = 1:Ng
-    fx = xs2(ix); fy = ys2(iy); fz = 0.0;
-    bz = 0.0;
-    for k = 1:N_seg
-      Rxk = fx - rxs(k);
-      Ryk = fy - rys(k);
-      Rzk = fz - rzs(k);
-      r2 = Rxk*Rxk + Ryk*Ryk + Rzk*Rzk;
-      if r2 < 1e-10; r2 = 1e-10; end
-      inv_r3 = 1.0 / (r2 ^ 1.5);
-      bz = bz + (dlx(k)*Ryk - dly(k)*Rxk) * inv_r3;
-    end
-    Bz_grid(iy, ix) = bz * mu0 * I1 / (4 * pi);
-  end
+for k = 1:N_seg
+  Rx = Xg - rxs(k);
+  Ry = Yg - rys(k);
+  r2 = Rx .^ 2 + Ry .^ 2;            # source z = field z = 0 → no Rz term
+  inv_r3 = 1.0 ./ (r2 .^ 1.5);
+  Bz_grid = Bz_grid + (dlx(k) * Ry - dly(k) * Rx) .* inv_r3;
 end
+Bz_grid = Bz_grid * mu0 * I1 / (4 * pi);
 
 figure();
 imagesc(real(Bz_grid), "viridis");
 title("Bz from outer loop, sampled on the inner disk's plane");
 savefig("mutual_Bz.svg");
 
-# Integrate Bz over the inner-disk area to get Φ.
-Phi_inner = 0.0;
-for iy = 1:Ng
-  for ix = 1:Ng
-    if Xg(iy, ix)^2 + Yg(iy, ix)^2 <= a_i^2
-      Phi_inner = Phi_inner + Bz_grid(iy, ix) * dxg * dyg;
-    end
-  end
-end
-M_num = real(Phi_inner / I1);
+# Φ = ∫∫_{disk_a} Bz dA, using Lesson-04's disk_mask to pick out the cells
+# inside r ≤ a_i. The mask × heatmap product reuses the same toolkit a
+# device-level capacitance integral would.
+inner_disk = disk_mask(Xg, Yg, 0.0, 0.0, a_i);
+Phi_inner  = sum(sum(real(Bz_grid) .* inner_disk)) * dxg * dyg;
+M_num = Phi_inner / I1;
 M_an  = mu0 * pi * a_i^2 / (2 * b_o);
 
 print(M_num)            # ≈ 7.94e-9 H

@@ -1,0 +1,85 @@
+# waveguide_modes.rlab — TM cutoff modes of a hollow rectangular
+# waveguide via the sparse partial eigensolver.
+#
+# Physics: TM modes have E_z out of the cross-sectional plane with
+# E_z = 0 on the metal walls (Dirichlet). The 2-D Helmholtz mode
+# equation on the cross-section is
+#   -∇²_⊥ E_z = k_c² E_z, k_c = sqrt((m π / a)² + (n π / b)²)
+# and the cutoff frequency is f_{c,mn} = c k_c / (2π).
+#
+# Discretisation: 5-point Laplacian via `laplacian_2d` (Dirichlet by
+# default). The smallest-magnitude eigenvalues of -L are the lowest-
+# cutoff modes; we solve them with `eigs(-L, n_modes, "sm")` (sparse
+# Lanczos / Arnoldi under the hood) and reshape each eigenvector into
+# the cross-sectional grid.
+#
+# Reference: ../../notebooks/12-waveguides-and-radiation.md.
+
+mu0  = 4 * pi * 1e-7;
+eps0 = 8.854187817e-12;
+c0   = 1 / sqrt(mu0 * eps0);
+
+# === Waveguide cross-section ===
+a_wg = 0.04;        # 40 mm — the wide dimension
+b_wg = 0.025;       # 25 mm — narrow dimension
+
+# === Grid ===
+nx = 41;
+ny = 25;
+dx = a_wg / (nx + 1);   # Dirichlet boundary lives at i = 0 and nx + 1
+dy = b_wg / (ny + 1);
+
+# === Sparse eigenproblem ===
+# Lanczos converges fastest at the extremes of the spectrum and tends
+# to "miss" eigenvalues near a cluster when the Krylov subspace is
+# small. Requesting 30 modes and using only the first 6 gives Lanczos
+# enough room to nail the lowest cutoffs to ~ 0.5 % vs the analytic
+# formula.
+L = -1 * laplacian_2d(nx, ny, dx, dy);
+[V, D] = eigs(L, 30, "sm");
+
+# === Compare to analytic cutoff frequencies ===
+# For a 40×25 mm guide the order of cutoff frequencies is
+#   TM_{11} < TM_{21} < TM_{12} < TM_{31} < TM_{22} < TM_{41} < ...
+mn_pairs = [1, 1; 2, 1; 1, 2; 3, 1; 2, 2; 4, 1];
+n_modes = 6;
+for k = 1:n_modes
+  kc_num = sqrt(real(D(k)));
+  fc_num = c0 * kc_num / (2 * pi);
+  m = mn_pairs(k, 1);
+  n = mn_pairs(k, 2);
+  kc_ana = pi * sqrt((m / a_wg)^2 + (n / b_wg)^2);
+  fc_ana = c0 * kc_ana / (2 * pi);
+  print(m)
+  print(n)
+  print(fc_num / 1e9)        # numerical cutoff (GHz)
+  print(fc_ana / 1e9)        # analytic cutoff (GHz)
+end
+
+# === Plot mode patterns ===
+for k = 1:4
+  mode = real(V(:, k));
+  M = reshape(mode, ny, nx);
+  figure();
+  imagesc(M, "viridis");
+  m = mn_pairs(k, 1);
+  n = mn_pairs(k, 2);
+  title(sprintf("TM_{%d%d}  —  f_c = %.3f GHz", m, n, c0 * sqrt(real(D(k))) / (2 * pi) / 1e9));
+  xlabel("x cell");
+  ylabel("y cell");
+  savefig(sprintf("waveguide_mode_%d.svg", k));
+end
+
+# === Print summary table ===
+print("--- Cutoff frequency comparison (GHz) ---")
+print("mode | numerical | analytic | rel. err")
+for k = 1:n_modes
+  m = mn_pairs(k, 1);
+  n = mn_pairs(k, 2);
+  fc_num = c0 * sqrt(real(D(k))) / (2 * pi);
+  fc_ana = c0 * pi * sqrt((m / a_wg)^2 + (n / b_wg)^2) / (2 * pi);
+  err = abs(fc_num - fc_ana) / fc_ana;
+  print(fc_num / 1e9)
+  print(fc_ana / 1e9)
+  print(err)
+end

@@ -318,7 +318,7 @@ print(real(divE(40, 30)))      % expect a small finite stencil-error value (V/m�
 ```
 
 ```text
--106873.6513062643
+-106873.65130626428
 ```
 
 The numerical value is *not* particularly small in absolute units (V/m² values in the $10^4$–$10^5$ range are typical here) — the central-difference stencil sees the steep $1/r^3$ dipole falloff and the leading truncation error is of order $\Delta^2\,\partial^3 E/\partial x^3$, which is sizeable when $|\vec E|/\Delta^2$ is large. Lesson 05 fixes this by solving for $V$ on a grid using the finite-difference Laplacian directly, where the discretization is *consistent with the operator*: the algebraic identity $\nabla^2 V_{\rm num} = -\rho_{\rm num}/\varepsilon_0$ is built in by construction, so vacuum cells return zero exactly under the same stencil that defines $\nabla^2$.
