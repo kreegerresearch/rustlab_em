@@ -48,31 +48,22 @@ x_hi    = 85;            # patch length 50 cells = 50 mm
 
 # === ε map (FR-4 substrate) ===
 eps_r_map = ones(ny, nx);
-for j = 1:nx
-  for i = y_g+1:y_top
-    eps_r_map(i, j) = 4.4;
-  end
-end
+eps_r_map(y_g+1:y_top, :) = 4.4;
 
 # === PEC mask: 1 = metal (force E_z=0 each step) ===
-pec_mask = zeros(ny, nx);
-for j = 1:nx
-  pec_mask(y_g, j) = 1;
-end
-for j = x_lo:x_hi
-  pec_mask(y_top, j) = 1;
-end
-field_mask = 1 - pec_mask;
+pec_mask           = zeros(ny, nx);
+pec_mask(y_g, :)            = 1;     # full-width ground plane
+pec_mask(y_top, x_lo:x_hi)  = 1;     # patch + feed line
+field_mask         = 1 - pec_mask;
 
 # === Lateral absorbing strips (cubic σ profile) ===
 sigma_b  = 8 * eps0 * c0 / dx;
 absorb_w = 12;
-sig_x = zeros(1, nx);
-for jj = 1:absorb_w
-  xa = (absorb_w - jj + 1) / absorb_w;
-  sig_x(jj)              = sigma_b * xa^3;
-  sig_x(nx - jj + 1)     = sigma_b * xa^3;
-end
+ramp     = (absorb_w:-1:1) / absorb_w;
+# Vector form (single-arg zeros) so the slice-assign accepts a vector RHS.
+sig_x    = zeros(nx);
+sig_x(1:absorb_w)       = sigma_b * ramp.^3;
+sig_x(nx-absorb_w+1:nx) = sigma_b * (ramp(absorb_w:-1:1)).^3;
 # Implicit-loss damping factor per column (length nx)
 damp_row = 1 ./ (1 + dt * sig_x / (2 * eps0));
 

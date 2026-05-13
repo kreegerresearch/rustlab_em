@@ -33,9 +33,9 @@ t0  = 40 * dt;
 tau = 12 * dt;
 
 # === Material: vacuum + dielectric slab ===
-eps_r = ones(1, N);
+eps_r = ones(N);
 slab_lo = 350; slab_hi = 450;
-for k = slab_lo:slab_hi; eps_r(k) = 4.0; end
+eps_r(slab_lo:slab_hi) = 4.0;
 n_slab = 2.0;
 
 # === Sources & probes ===
@@ -45,37 +45,36 @@ k_refl  = 250;                       # probe in air, also before slab
 k_trans = 500;                       # probe in air, after slab
 
 # === Fields ===
-Ey = zeros(1, N);
-Hz = zeros(1, N);                    # Hz(N) unused
+# Single-arg `zeros(N)` returns a 1-D Vector, which is what rustlab's
+# vector slice-assignment (`Hz(1:N-1) = …`) requires. The two-arg form
+# `zeros(1, N)` is a 1×N row Matrix and only accepts a scalar RHS in a
+# slice-assign — the textbook leapfrog below would not compile.
+Ey = zeros(N);
+Hz = zeros(N);                       # Hz(N) unused
 
 # Pre-compute update coefficients.
 cH  = dt / (mu0 * dx);
 cE  = dt / (eps0 * dx);
-cEr = cE ./ eps_r;                   # row vector, length N
+cEr = cE ./ eps_r;                   # length-N Vector
 
 # Records of probe-point Ey over time for R / T extraction.
-E_inc_hist   = zeros(1, n_step);
-E_refl_hist  = zeros(1, n_step);
-E_trans_hist = zeros(1, n_step);
+E_inc_hist   = zeros(n_step);
+E_refl_hist  = zeros(n_step);
+E_trans_hist = zeros(n_step);
 
 xs = (1:N) * dx;
 
 figure();
 for step = 1:n_step
-  # H update on dual cells 1..N-1; concatenate with the (unchanged)
-  # last cell so we end up with the same length-N row matrix.
-  Hz = [Hz(1:N-1) - cH * (Ey(2:N) - Ey(1:N-1)), Hz(N)];
+  # H update on dual cells 1..N-1; Hz(N) is left untouched.
+  Hz(1:N-1) = Hz(1:N-1) - cH * (Ey(2:N) - Ey(1:N-1));
 
   # E update on interior cells 2..N-1.
-  Ey = [Ey(1), Ey(2:N-1) - cEr(2:N-1) .* (Hz(2:N-1) - Hz(1:N-2)), Ey(N)];
+  Ey(2:N-1) = Ey(2:N-1) - cEr(2:N-1) .* (Hz(2:N-1) - Hz(1:N-2));
 
-  # Soft Gaussian source at k_src — additive via a delta vector keeps
-  # the assignment vector-shaped on both sides.
+  # Soft Gaussian source at k_src.
   t = step * dt;
-  src_val = exp(-((t - t0) / tau)^2);
-  src_vec = zeros(1, N);
-  src_vec(k_src) = src_val;
-  Ey = Ey + src_vec;
+  Ey(k_src) = Ey(k_src) + exp(-((t - t0) / tau)^2);
 
   # Mur first-order ABC at the two ends (S ≈ 1 → trivial copy).
   Ey(1) = Ey(2);

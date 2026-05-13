@@ -27,14 +27,14 @@ $$E_y^{n+1}(i) = E_y^n(i) - \frac{\Delta t}{\varepsilon_0\varepsilon_r(i)\Delta 
 
 **CFL stability**: $c_0\Delta t \le \Delta x/\sqrt d$ in $d$ dimensions, with $c_0 = 1/\sqrt{\mu_0\varepsilon_0}$. We typically choose a Courant number $S = c_0\Delta t/\Delta x$ at $0.7$–$0.99$ to balance dispersion error against extra time steps.
 
-A rustlab-specific note: in v0.3 we cannot slice-assign `Hz(1:N-1) = …`, so we rebuild the row matrix each step by concatenating the updated interior with the (unchanged) boundary cell. The vectorised inner update reads exactly like the textbook leapfrog formula:
+A rustlab-specific note: allocate the length-N field arrays with the **single-arg** `zeros(N)` / `ones(N)` form. That returns a 1-D Vector, which since rustlab 0.3.4 supports vector slice-assignment — letting the leapfrog read exactly like the textbook formula:
 
 ```
-Hz = [Hz(1:N-1) - cH * (Ey(2:N) - Ey(1:N-1)), Hz(N)];
-Ey = [Ey(1), Ey(2:N-1) - cEr(2:N-1) .* (Hz(2:N-1) - Hz(1:N-2)), Ey(N)];
+Hz(1:N-1) = Hz(1:N-1) - cH * (Ey(2:N) - Ey(1:N-1));
+Ey(2:N-1) = Ey(2:N-1) - cEr(2:N-1) .* (Hz(2:N-1) - Hz(1:N-2));
 ```
 
-The two `cat` calls cost $O(N)$ per step — the same scaling as the in-place update and many times faster than a hand-rolled `for k = 1:N` loop in interpreted rustlab.
+The two-arg form `zeros(1, N)` returns a 1×N row-Matrix that looks identical under `size()` but only accepts scalar RHS in a slice-assign (`A(2:4, :) = 0`), so the textbook update above would fail. Each per-step slice update touches $O(N)$ elements in place — no allocations, many times faster than a hand-rolled `for k = 1:N` loop in interpreted rustlab.
 
 ## 1-D Yee FDTD — Gaussian Pulse Through a Dielectric Slab
 
@@ -66,26 +66,23 @@ t0_v   = 40 * dt_v;
 tau_v  = 12 * dt_v;
 k_src_v= 150;
 
-eps_r_v = ones(1, N_v);
+eps_r_v = ones(N_v);
 slab_lo = 350; slab_hi = 450;
-for k = slab_lo:slab_hi; eps_r_v(k) = 4.0; end
+eps_r_v(slab_lo:slab_hi) = 4.0;
 
-Ey_v = zeros(1, N_v);
-Hz_v = zeros(1, N_v);
+Ey_v = zeros(N_v);
+Hz_v = zeros(N_v);
 cH_v  = dt_v / (mu0_v * dx_v);
 cEr_v = dt_v / (eps0_v * dx_v) ./ eps_r_v;
 
 xs_v = (1:N_v) * dx_v;
 
 for step = 1:n_step_v
-  Hz_v = [Hz_v(1:N_v-1) - cH_v * (Ey_v(2:N_v) - Ey_v(1:N_v-1)), Hz_v(N_v)];
-  Ey_v = [Ey_v(1), Ey_v(2:N_v-1) - cEr_v(2:N_v-1) .* (Hz_v(2:N_v-1) - Hz_v(1:N_v-2)), Ey_v(N_v)];
+  Hz_v(1:N_v-1) = Hz_v(1:N_v-1) - cH_v * (Ey_v(2:N_v) - Ey_v(1:N_v-1));
+  Ey_v(2:N_v-1) = Ey_v(2:N_v-1) - cEr_v(2:N_v-1) .* (Hz_v(2:N_v-1) - Hz_v(1:N_v-2));
 
   t = step * dt_v;
-  src_val = exp(-((t - t0_v) / tau_v)^2);
-  src_vec = zeros(1, N_v);
-  src_vec(k_src_v) = src_val;
-  Ey_v = Ey_v + src_vec;
+  Ey_v(k_src_v) = Ey_v(k_src_v) + exp(-((t - t0_v) / tau_v)^2);
 
   Ey_v(1) = Ey_v(2);
   Ey_v(N_v) = Ey_v(N_v - 1);
@@ -122,7 +119,7 @@ A **soft CW (continuous-wave) line source** on a single column injects a +x plan
 
 ### Example — $81\times 61$ grid, 200 steps
 
-The per-cell for-loop Yee update is intentionally readable here (one nested loop per field component). A vectorised slice-cat formulation runs roughly an order of magnitude faster — see the exercises.
+In 2-D the leapfrog reads as three sub-matrix slice-assigns — one per field component — and the bulk-loss damping factor `damp_row` is a 1-D vector along the x-axis that we broadcast across rows with `repmat`. No per-cell loops at all.
 
 ```rustlab
 clf;
@@ -149,12 +146,15 @@ inside_pec = 1 - pec_mask;
 % Absorbing strips on the x-edges via bulk loss
 sigma_b = 8 * eps0_s * c0_s / dx_s;
 absorb_w = 14;
-sig_x_s = zeros(1, nx_s);
-for jj = 1:absorb_w
-  x_lr = (absorb_w - jj + 1) / absorb_w;
-  sig_x_s(jj) = sigma_b * x_lr^3;
-  sig_x_s(nx_s - jj + 1) = sigma_b * x_lr^3;
-end
+ramp_s   = (absorb_w:-1:1) / absorb_w;
+sig_x_s  = zeros(nx_s);
+sig_x_s(1:absorb_w)             = sigma_b * ramp_s.^3;
+sig_x_s(nx_s-absorb_w+1:nx_s)   = sigma_b * (ramp_s(absorb_w:-1:1)).^3;
+
+% Damping factor depends only on x (one value per column). Build the
+% interior submatrix once and broadcast across the ny_s-2 interior rows.
+damp_row_s = 1 ./ (1 + dt_s * sig_x_s / (2 * eps0_s));
+damp_int_s = repmat(damp_row_s(2:nx_s-1), ny_s-2, 1);
 
 Ez = zeros(ny_s, nx_s);
 Hx = zeros(ny_s, nx_s);
@@ -166,27 +166,15 @@ cE_s  = dt_s / (eps0_s * dx_s);
 for step = 1:n_step_s
   t = step * dt_s;
 
-  for i = 1:ny_s-1
-    for j = 1:nx_s
-      Hx(i, j) = Hx(i, j) - cH_s * (Ez(i + 1, j) - Ez(i, j));
-    end
-  end
-  for i = 1:ny_s
-    for j = 1:nx_s-1
-      Hy(i, j) = Hy(i, j) + cH_s * (Ez(i, j + 1) - Ez(i, j));
-    end
-  end
-  for i = 2:ny_s-1
-    for j = 2:nx_s-1
-      damp = 1 / (1 + dt_s * sig_x_s(j) / (2 * eps0_s));
-      Ez(i, j) = damp * Ez(i, j) + damp * cE_s * ((Hy(i, j) - Hy(i, j-1)) - (Hx(i, j) - Hx(i-1, j)));
-    end
-  end
+  Hx(1:ny_s-1, :) = Hx(1:ny_s-1, :) - cH_s * (Ez(2:ny_s, :) - Ez(1:ny_s-1, :));
+  Hy(:, 1:nx_s-1) = Hy(:, 1:nx_s-1) + cH_s * (Ez(:, 2:nx_s) - Ez(:, 1:nx_s-1));
+
+  curlH = (Hy(2:ny_s-1, 2:nx_s-1) - Hy(2:ny_s-1, 1:nx_s-2)) ...
+        - (Hx(2:ny_s-1, 2:nx_s-1) - Hx(1:ny_s-2, 2:nx_s-1));
+  Ez(2:ny_s-1, 2:nx_s-1) = damp_int_s .* (Ez(2:ny_s-1, 2:nx_s-1) + cE_s * curlH);
 
   src_amp = sin(omega_s * t) * (1 - exp(-(t / (15 * dt_s))^2));
-  for i = 1:ny_s
-    Ez(i, j_src) = Ez(i, j_src) + src_amp;
-  end
+  Ez(:, j_src) = Ez(:, j_src) + src_amp;
 
   Ez = Ez .* inside_pec;
 
@@ -242,12 +230,12 @@ dx_d     = 1.5e-3;
 dt_d     = 0.99 * dx_d / c0_d;
 n_step_d = 2000;
 
-in_film = zeros(1, N_d);
-for k = 380:420; in_film(k) = 1.0; end
+in_film = zeros(N_d);
+in_film(380:420) = 1.0;
 
-Ey_d = zeros(1, N_d);
-Hz_d = zeros(1, N_d);
-Jp_d = zeros(1, N_d);
+Ey_d = zeros(N_d);
+Hz_d = zeros(N_d);
+Jp_d = zeros(N_d);
 cH_d  = dt_d / (mu0_d * dx_d);
 cE_d  = dt_d / (eps0_d * dx_d);
 alpha_d = (1 - gamma_d * dt_d / 2) / (1 + gamma_d * dt_d / 2);
@@ -257,20 +245,17 @@ t0_d  = 80 * dt_d;
 tau_d = 25 * dt_d;
 f_mod_d = 2.0e9;
 k_src_d = 100;
-E_back_d = zeros(1, n_step_d);
-E_fwd_d  = zeros(1, n_step_d);
+E_back_d = zeros(n_step_d);
+E_fwd_d  = zeros(n_step_d);
 
 for step = 1:n_step_d
   t = step * dt_d;
-  Hz_d = [Hz_d(1:N_d-1) - cH_d * (Ey_d(2:N_d) - Ey_d(1:N_d-1)), Hz_d(N_d)];
+  Hz_d(1:N_d-1) = Hz_d(1:N_d-1) - cH_d * (Ey_d(2:N_d) - Ey_d(1:N_d-1));
   Jp_d = alpha_d * Jp_d + beta_d * Ey_d .* in_film;
-  Ey_int = Ey_d(2:N_d-1) - cE_d * (Hz_d(2:N_d-1) - Hz_d(1:N_d-2)) - (dt_d / eps0_d) * Jp_d(2:N_d-1);
-  Ey_d = [Ey_d(1), Ey_int, Ey_d(N_d)];
+  Ey_d(2:N_d-1) = Ey_d(2:N_d-1) - cE_d * (Hz_d(2:N_d-1) - Hz_d(1:N_d-2)) - (dt_d / eps0_d) * Jp_d(2:N_d-1);
 
   src_amp = exp(-((t - t0_d) / tau_d)^2) * cos(2 * pi * f_mod_d * (t - t0_d));
-  src_vec = zeros(1, N_d);
-  src_vec(k_src_d) = src_amp;
-  Ey_d = Ey_d + src_vec;
+  Ey_d(k_src_d) = Ey_d(k_src_d) + src_amp;
   Ey_d(1) = Ey_d(2);
   Ey_d(N_d) = Ey_d(N_d - 1);
 
@@ -320,7 +305,7 @@ Run all three with `make lesson-11`, or one script at a time via `rustlab run le
 
 ## Exercises
 
-1. **Vectorised 2-D Yee.** Re-express the for-loop Yee step in `fdtd_2d_scattering` using slice + cat updates: $H_x \leftarrow \mathrm{cat}(1, H_x(1{:}n_y-1, :) - c_H(E_z(2{:}n_y, :) - E_z(1{:}n_y-1, :)), H_x(n_y, :))$ and similarly for $H_y, E_z$. Verify the field matches the reference run cell-by-cell and time the speedup.
+1. **Per-cell Yee timing.** Rewrite the vectorised 2-D Yee step as nested `for i, for j` loops (one per field component), run the same number of steps, and time both versions. The per-cell form is more transparent to the textbook update equations; the vectorised form runs roughly an order of magnitude faster in interpreted rustlab.
 2. **TF/SF zero-leak validation.** A correct total-field / scattered-field source emits the analytic incident plane wave *inside* the TF box and *zero field* outside. Build a 60×60 vacuum grid, draw a 30×30 TF box, drive its four faces with the analytic incident field at $f_0 = 1$ GHz, and verify $|E_z|$ outside the box stays below $10^{-10}$.
 3. **PML depth sweep.** Replace the bulk-loss absorbing strips in `fdtd_2d_scattering` with a proper Bérenger split-field PML of varying thickness $d \in \{4, 8, 16\}$ cells. Measure the residual reflection at a corner probe and verify the exponential improvement with $d$.
 4. **Above-$\omega_p$ Drude.** Change the source frequency in `fdtd_dispersive.rlab` to $f_{\rm src} = 5\,\text{GHz}$ ($> f_p$) and observe that the transmission ratio jumps from $\sim 0.2$ to near unity — the metal becomes a window.

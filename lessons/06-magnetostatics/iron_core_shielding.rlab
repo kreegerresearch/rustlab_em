@@ -34,14 +34,9 @@ title("Iron annulus mask (mu_r = 1000 in the ring, 1 elsewhere)");
 savefig("iron_mask.svg");
 
 # === Permeability and reluctivity maps ===
-mu_r = ones(ny2, nx2);
-for i = 1:ny2
-  for j = 1:nx2
-    if iron(i, j) > 0.5
-      mu_r(i, j) = 1000.0;
-    end
-  end
-end
+# `iron` is a 0/1 mask: 1 inside the annulus, 0 outside. Lift it to
+# μ_r ∈ {1, 1000} with a single elementwise expression.
+mu_r   = 1.0 + 999.0 * iron;
 inv_mu = 1.0 ./ mu_r;
 
 # === Source: single-cell wire at the centre ===

@@ -185,11 +185,13 @@ idx_AR_start_1  = idx_src_1 + n_air_R_1 + 1;
 idx_AR_end_1    = idx_AR_start_1 + n_AR_c_1 - 1;
 idx_sub_start_1 = idx_AR_end_1 + 1;
 
-eps_with = ones(1, N_1) * eps_air;
-eps_no   = ones(1, N_1) * eps_air;
-for ii = idx_AR_start_1:idx_AR_end_1; eps_with(ii) = eps_AR; end
-for ii = idx_sub_start_1:N_1;          eps_with(ii) = eps_sub; end
-for ii = idx_AR_start_1:N_1;           eps_no(ii)   = eps_sub; end
+% Vector form (single-arg `ones`) so the range slice-assigns below take
+% a scalar RHS directly.
+eps_with = ones(N_1) * eps_air;
+eps_no   = ones(N_1) * eps_air;
+eps_with(idx_AR_start_1:idx_AR_end_1) = eps_AR;
+eps_with(idx_sub_start_1:N_1)         = eps_sub;
+eps_no(idx_AR_start_1:N_1)            = eps_sub;
 
 xs_1 = (1:N_1) * dx_1;
 plot(xs_1 / lambda_1, eps_with, "epsilon_r(x), with AR");
@@ -350,6 +352,8 @@ $$E_z^{(m,n)}(x,y) = E_0\,\sin(m\pi x/a)\,\sin(n\pi y/b), \qquad \omega_{mn} = c
 
 Driving the cavity with a current source at off-modal-node frequency $\omega$ and reading $E_z$ at a different off-node point produces a Lorentzian peak at each $\omega_{mn}$ — height $\propto Q$, width $\propto 1/Q$, where the quality factor $Q$ is determined by losses (here, a small bulk loss tangent $\tan\delta$ that we plug into $\varepsilon = \varepsilon_r(1 - i\tan\delta)$). FDFD does this in one sparse solve per frequency.
 
+Since every frequency is an independent sparse solve, the sweep is embarrassingly parallel — we dispatch it with `parmap(@trial, 1:Nf)` instead of a serial `for kf` loop. `parmap` requires the trial body to be a pure function (no figures, no shared mutable state) and the function does not capture the surrounding workspace, so the constants get rebuilt inside.
+
 ### Example — $0.10\,\text{m}\times 0.075\,\text{m}$ cavity, $\tan\delta = 0.005$
 
 Sweep from 1 GHz to 4 GHz at 121 frequency points. The lowest five mode frequencies are 1.50, 2.00, 2.50, 3.00, 3.61 GHz — predicted by the analytic formula. The numerical sweep shows Lorentzian peaks at exactly those frequencies.
@@ -374,21 +378,32 @@ N_3 = nx_3 * ny_3;
 
 i_src = round(0.3 * ny_3); j_src = round(0.3 * nx_3);
 i_meas = round(0.7 * ny_3); j_meas = round(0.6 * nx_3);
-k_src  = (j_src - 1) * ny_3 + i_src;
-k_meas = (j_meas - 1) * ny_3 + i_meas;
+k_src  = ij2k(i_src,  j_src,  ny_3);
+k_meas = ij2k(i_meas, j_meas, ny_3);
 
 f_lo = 1.0e9; f_hi = 4.0e9; Nf_3 = 121;
 fs_3 = linspace(f_lo, f_hi, Nf_3);
-amp_3 = zeros(1, Nf_3);
-for kf = 1:Nf_3
+
+function a = resonator_trial(kf)
+  mu0_3 = 4 * pi * 1e-7;
+  eps0_3 = 8.854187817e-12;
+  c0_3 = 1 / sqrt(mu0_3 * eps0_3);
+  a_cav = 0.10; b_cav = 0.075;
+  eps_c = 1 - j * 0.005;
+  nx_3 = 81; ny_3 = 61;
+  dx_3 = a_cav / (nx_3 + 1); dy_3 = b_cav / (ny_3 + 1);
+  L_3 = laplacian_2d(nx_3, ny_3, dx_3, dy_3);
+  N_3 = nx_3 * ny_3;
+  k_src  = ij2k(round(0.3 * ny_3), round(0.3 * nx_3), ny_3);
+  k_meas = ij2k(round(0.7 * ny_3), round(0.6 * nx_3), ny_3);
+  fs_3 = linspace(1.0e9, 4.0e9, 121);
   omega_k = 2 * pi * fs_3(kf);
-  k0sq    = (omega_k / c0_3)^2;
-  A_3 = L_3 + (k0sq * eps_c) * speye(N_3);
-  b_3 = zeros(1, N_3);
-  b_3(k_src) = -j * omega_k * mu0_3;
+  A_3 = L_3 + ((omega_k / c0_3)^2 * eps_c) * speye(N_3);
+  b_3 = zeros(N_3); b_3(k_src) = -j * omega_k * mu0_3;
   E_3 = spsolve(A_3, b_3);
-  amp_3(kf) = abs(E_3(k_meas));
+  a = abs(E_3(k_meas));
 end
+amp_3 = parmap(@resonator_trial, 1:Nf_3);
 
 f10 = c0_3 / (2 * a_cav);
 f01 = c0_3 / (2 * b_cav);

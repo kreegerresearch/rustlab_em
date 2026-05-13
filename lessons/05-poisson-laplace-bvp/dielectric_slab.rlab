@@ -22,14 +22,10 @@ ysd = linspace(0, Lyd, nyd);
 [Xd, Yd] = meshgrid(xsd, ysd);
 
 # === Permittivity map ===
+# Bottom half (y < Ly/2) is the ε_r = 4 dielectric; top half is air.
 eps_map = ones(nyd, nxd);
-for i = 1:nyd
-  if ysd(i) < Lyd / 2
-    for j = 1:nxd
-      eps_map(i, j) = 4.0;
-    end
-  end
-end
+i_half  = sum(ysd < Lyd / 2);
+eps_map(1:i_half, :) = 4.0;
 
 figure();
 imagesc(eps_map, "viridis");

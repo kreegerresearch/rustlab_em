@@ -47,32 +47,47 @@ L = laplacian_2d(nx, ny, dx, dy);
 # Source at a "non-modal" cell, away from likely nodes.
 i_src = round(0.3 * ny);
 j_src = round(0.3 * nx);
-k_src = (j_src - 1) * ny + i_src;
+k_src = ij2k(i_src, j_src, ny);
 
 # Measurement at a different corner.
 i_meas = round(0.7 * ny);
 j_meas = round(0.6 * nx);
-k_meas = (j_meas - 1) * ny + i_meas;
+k_meas = ij2k(i_meas, j_meas, ny);
 
-# === Frequency sweep ===
+# === Frequency sweep (parallel) ===
+# Each frequency is an independent sparse solve. parmap dispatches the
+# trials across rayon worker threads; the lambda must be pure (no plot
+# / savefig / state mutation) and must reconstruct L, b, etc. itself
+# since rustlab functions don't capture the enclosing scope.
 f_lo = 1.0e9;
 f_hi = 4.0e9;
 Nf   = 121;
 fs   = linspace(f_lo, f_hi, Nf);
-amp  = zeros(1, Nf);
 
 # Diagonal mass: M = ε_c * I  (uniform), so the omega-dependent
 # operator is A(ω) = L + ω² μ₀ ε₀ ε_c · I = L + ω² μ₀ ε_c (after
 # absorbing ε₀ via c² = 1/(μ₀ε₀)). Equivalently A = L + (ω/c₀)² ε_c.
-for kf = 1:Nf
+function a = fdfd_trial(kf)
+  mu0  = 4 * pi * 1e-7;
+  eps0 = 8.854187817e-12;
+  c0   = 1 / sqrt(mu0 * eps0);
+  a_cav = 0.10; b_cav = 0.075;
+  tan_d = 0.005; eps_re = 1.0;
+  eps_c = eps_re - j * eps_re * tan_d;
+  nx = 81; ny = 61;
+  dx = a_cav / (nx + 1); dy = b_cav / (ny + 1);
+  N = nx * ny;
+  L = laplacian_2d(nx, ny, dx, dy);
+  k_src  = ij2k(round(0.3 * ny), round(0.3 * nx), ny);
+  k_meas = ij2k(round(0.7 * ny), round(0.6 * nx), ny);
+  fs = linspace(1.0e9, 4.0e9, 121);
   omega = 2 * pi * fs(kf);
-  k0sq  = (omega / c0)^2;
-  A = L + (k0sq * eps_c) * speye(N);
-  b = zeros(1, N);
-  b(k_src) = -j * omega * mu0;
+  A = L + ((omega / c0)^2 * eps_c) * speye(N);
+  b = zeros(N); b(k_src) = -j * omega * mu0;
   E_flat = spsolve(A, b);
-  amp(kf) = abs(E_flat(k_meas));
+  a = abs(E_flat(k_meas));
 end
+amp = parmap(@fdfd_trial, 1:Nf);
 
 # Analytic resonance frequencies for the lowest five modes
 f_10 = c0 / (2 * a_cav) * sqrt(1) / sqrt(eps_re);

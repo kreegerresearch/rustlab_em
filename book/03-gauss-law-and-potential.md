@@ -69,23 +69,19 @@ R     = 0.05;                 % sphere radius (m)
 Q     = 1e-9;                 % total charge (C)
 rs    = linspace(0.001, 0.20, 400);
 inside  = rs <= R;
-outside = rs >  R;
+outside = 1 - inside;
 
-Er = zeros(length(rs));
-for k = 1:length(rs)
-  if rs(k) <= R
-    Er(k) = ke * Q * rs(k) / (R * R * R);
-  else
-    Er(k) = ke * Q / (rs(k) * rs(k));
-  end
-end
+% Two-branch formula in one elementwise expression: each branch
+% multiplied by its 0/1 mask, summed.
+Er = (ke * Q * rs / (R * R * R))  .* inside ...
+   + (ke * Q ./ (rs .* rs))       .* outside;
 
 print(Er(1))                            % ≈ 71.9 V/m  (linear in r near origin)
 print(Er(argmin(abs(rs - R))))          % at r ≈ R:  ≈ 3586 V/m  (closed form 3595)
 ```
 
 ```text
-71.89999999999999
+71.9
 3586.1701754385963
 ```
 
@@ -103,14 +99,8 @@ ylabel("E_r (V/m)")
 Same grid, both potential branches:
 
 ```rustlab
-V_r = zeros(length(rs));
-for k = 1:length(rs)
-  if rs(k) <= R
-    V_r(k) = ke * Q * (3 * R * R - rs(k) * rs(k)) / (2 * R * R * R);
-  else
-    V_r(k) = ke * Q / rs(k);
-  end
-end
+V_r = (ke * Q * (3 * R * R - rs .* rs) / (2 * R * R * R)) .* inside ...
+    + (ke * Q ./ rs)                                       .* outside;
 
 print(V_r(1))                 % at r ≈ 0:  V = 3 k_e Q / (2R)
 print(ke * Q / R)             % surface value:  k_e Q / R
@@ -262,19 +252,12 @@ print(Q / V0)                  % independent check:  Q/V = C
 The field is a hard step (zero outside, uniform inside, zero outside again); the potential is a continuous piecewise-linear ramp.
 
 ```rustlab
-zs    = linspace(-0.005, 0.015, 401);
-Ez    = zeros(length(zs));
-Vz    = zeros(length(zs));
-for k = 1:length(zs)
-  if zs(k) > 0 && zs(k) < d
-    Ez(k) = E_in;
-    Vz(k) = V0 * (1 - zs(k) / d);
-  elseif zs(k) <= 0
-    Vz(k) = V0;
-  else
-    Vz(k) = 0;
-  end
-end
+zs     = linspace(-0.005, 0.015, 401);
+% 0/1 masks over the three z regions; assemble fields elementwise.
+in_gap = (zs > 0) .* (zs < d);
+left   = zs <= 0;
+Ez = E_in * in_gap;
+Vz = V0 * left + V0 * (1 - zs / d) .* in_gap;
 
 clf;
 hold on;

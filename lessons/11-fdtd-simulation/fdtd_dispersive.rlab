@@ -44,13 +44,15 @@ n_step  = 2000;
 
 # Metal film: cells 380..420 (40 cells, ~ 6 cm thick)
 film_lo = 380; film_hi = 420;
-in_film = zeros(1, N);
-for k = film_lo:film_hi; in_film(k) = 1.0; end
+# Single-arg `zeros(N)` returns a 1-D Vector — needed for the slice-
+# assigning leapfrog below (vector RHS into a Matrix slice is rejected).
+in_film = zeros(N);
+in_film(film_lo:film_hi) = 1.0;
 
 # === Fields ===
-Ey = zeros(1, N);
-Hz = zeros(1, N);
-Jp = zeros(1, N);     # polarisation current — non-zero only inside metal
+Ey = zeros(N);
+Hz = zeros(N);
+Jp = zeros(N);     # polarisation current — non-zero only inside metal
 
 # === Source: Gaussian pulse centred on 8 GHz ===
 # Bandwidth straddles ω_p (10 GHz) so we see transmission peak above ω_p
@@ -71,27 +73,24 @@ cE = dt / (eps0 * dx);
 ade_decay = (1 - gamma * dt / 2) / (1 + gamma * dt / 2);
 ade_drive = eps0 * omega_p^2 * dt   / (1 + gamma * dt / 2);
 
-E_back_hist = zeros(1, n_step);
-E_fwd_hist  = zeros(1, n_step);
+E_back_hist = zeros(n_step);
+E_fwd_hist  = zeros(n_step);
 
 for step = 1:n_step
   t = step * dt;
 
   # H update
-  Hz = [Hz(1:N-1) - cH * (Ey(2:N) - Ey(1:N-1)), Hz(N)];
+  Hz(1:N-1) = Hz(1:N-1) - cH * (Ey(2:N) - Ey(1:N-1));
 
   # ADE update for J_p (only inside metal — `in_film` mask zeros it elsewhere)
   Jp = ade_decay * Jp + ade_drive * Ey .* in_film;
 
-  # E update: add the standard Ampère term minus the polarisation-current term
-  Ey_int = Ey(2:N-1) - cE * (Hz(2:N-1) - Hz(1:N-2)) - (dt / eps0) * Jp(2:N-1);
-  Ey = [Ey(1), Ey_int, Ey(N)];
+  # E update: standard Ampère term minus the polarisation-current term
+  Ey(2:N-1) = Ey(2:N-1) - cE * (Hz(2:N-1) - Hz(1:N-2)) - (dt / eps0) * Jp(2:N-1);
 
   # Source: modulated Gaussian
   src_amp = exp(-((t - t0) / tau)^2) * cos(2 * pi * f_mod * (t - t0));
-  src_vec = zeros(1, N);
-  src_vec(k_src) = src_amp;
-  Ey = Ey + src_vec;
+  Ey(k_src) = Ey(k_src) + src_amp;
 
   # ABC at ends
   Ey(1) = Ey(2);

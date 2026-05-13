@@ -346,15 +346,9 @@ title("Iron annulus mask (μ_r = 1000 inside the ring, 1 elsewhere)")
 ```
 
 ```rustlab
-% Build μ_r and the reluctivity map 1/μ_r.
-mu_r = ones(ny2, nx2);
-for i = 1:ny2
-  for j = 1:nx2
-    if iron(i, j) > 0.5
-      mu_r(i, j) = 1000.0;
-    end
-  end
-end
+% Build μ_r and the reluctivity map 1/μ_r. `iron` is a 0/1 mask, so
+% μ_r ∈ {1, 1000} is one elementwise lift.
+mu_r   = 1.0 + 999.0 * iron;
 inv_mu = 1.0 ./ mu_r;
 
 % Single-cell current source at the centre.

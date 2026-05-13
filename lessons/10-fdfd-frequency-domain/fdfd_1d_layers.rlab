@@ -56,17 +56,12 @@ idx_air_ref   = idx_src + round(0.5 * lambda0 / dx);
 # If the PML region is left as ε=1, the substrate→vacuum interface at
 # the PML inner edge reflects ~ 33 % of the wave straight back through
 # the AR coating, swamping the desired transmission peak.
-eps_with_AR = ones(1, N) * eps_air;
-eps_no_AR   = ones(1, N) * eps_air;
-for ii = idx_AR_start:idx_AR_end
-  eps_with_AR(ii) = eps_AR;
-end
-for ii = idx_sub_start:N
-  eps_with_AR(ii) = eps_sub;
-end
-for ii = idx_AR_start:N
-  eps_no_AR(ii) = eps_sub;
-end
+# Use the single-arg form (Vector) so range slice-assign accepts a scalar RHS.
+eps_with_AR = ones(N) * eps_air;
+eps_no_AR   = ones(N) * eps_air;
+eps_with_AR(idx_AR_start:idx_AR_end) = eps_AR;
+eps_with_AR(idx_sub_start:N)         = eps_sub;
+eps_no_AR(idx_AR_start:N)            = eps_sub;
 
 # === Single-frequency solver ===
 function E = solve_1d(eps_x, N, dx, npml, sigma_max, omega, idx_src)

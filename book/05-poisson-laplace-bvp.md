@@ -305,13 +305,8 @@ ysd = linspace(0, Lyd, nyd);
 
 % ε_r map: lower half = 4, upper half = 1.
 eps_map = ones(nyd, nxd);
-for i = 1:nyd
-  if ysd(i) < Lyd / 2
-    for j = 1:nxd
-      eps_map(i, j) = 4.0;
-    end
-  end
-end
+i_half  = sum(ysd < Lyd / 2);
+eps_map(1:i_half, :) = 4.0;
 imagesc(eps_map, "viridis");
 title("ε_r(x, y): 4 below the interface, 1 above")
 ```

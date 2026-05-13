@@ -28,9 +28,8 @@ eps0 = 8.854187817e-12;
 c0   = 1 / sqrt(mu0 * eps0);
 
 # === Grid ===
-# Per-cell for-loop updates run in interpreted rustlab; the grid /
-# step count is sized so a single run lands well under a minute. A
-# fully vectorised cat-rebuild Yee step is the natural follow-up.
+# Sub-matrix slice-assigns vectorise the Yee step end-to-end (one
+# expression per field component); no per-cell loops.
 nx     = 81;
 ny     = 61;
 dx     = 7.5e-3;
@@ -54,17 +53,14 @@ pec_mask = disk_mask(Xg, Yg, xc, yc, R_pec);
 inside_pec = 1 - pec_mask;            # 1 outside, 0 inside
 
 # === Cheap absorbing strips on left/right via bulk loss ===
-sigma_b = 8 * eps0 * c0 / dx;
-absorb_w = 14;
-sig_x = zeros(1, nx);
-for jj = 1:absorb_w
-  x = (absorb_w - jj + 1) / absorb_w;
-  sig_x(jj) = sigma_b * x^3;
-  sig_x(nx - jj + 1) = sigma_b * x^3;
-end
-# Promote loss into a (ny, nx) map; eps becomes ε_r(1 + i σ/(ω ε₀))
-eps_r_map = ones(ny, nx);
-loss_factor = sig_x / (omega * eps0);   # row vector
+# Cubic σ ramp: σ peaks at the outermost cell and tapers to zero at the
+# inner edge of each strip. Symmetric in x.
+sigma_b   = 8 * eps0 * c0 / dx;
+absorb_w  = 14;
+ramp      = (absorb_w:-1:1) / absorb_w;
+sig_x     = zeros(nx);
+sig_x(1:absorb_w)              = sigma_b * ramp.^3;
+sig_x(nx-absorb_w+1:nx)        = sigma_b * (ramp(absorb_w:-1:1)).^3;
 
 # === Fields ===
 Ez = zeros(ny, nx);
@@ -78,35 +74,27 @@ j_src = 18;
 cH = dt / (mu0 * dx);
 cE = dt / (eps0 * dx);
 
+# Implicit-loss damping factor depends only on x (one value per column).
+# Build the interior submatrix once and broadcast across rows.
+damp_row = 1 ./ (1 + dt * sig_x / (2 * eps0));
+damp_int = repmat(damp_row(2:nx-1), ny-2, 1);
+
 figure();
 for step = 1:n_step
   t = step * dt;
 
-  # ---- H update (interior) ----
-  for i = 1:ny-1
-    for j = 1:nx
-      Hx(i, j) = Hx(i, j) - cH * (Ez(i + 1, j) - Ez(i, j));
-    end
-  end
-  for i = 1:ny
-    for j = 1:nx-1
-      Hy(i, j) = Hy(i, j) + cH * (Ez(i, j + 1) - Ez(i, j));
-    end
-  end
+  # ---- H update (vectorised) ----
+  Hx(1:ny-1, :) = Hx(1:ny-1, :) - cH * (Ez(2:ny, :) - Ez(1:ny-1, :));
+  Hy(:, 1:nx-1) = Hy(:, 1:nx-1) + cH * (Ez(:, 2:nx) - Ez(:, 1:nx-1));
 
-  # ---- E update with bulk loss in PML strips ----
-  for i = 2:ny-1
-    for j = 2:nx-1
-      damp = 1 / (1 + dt * sig_x(j) / (2 * eps0));    # implicit-loss factor
-      Ez(i, j) = damp * Ez(i, j) + damp * cE * ((Hy(i, j) - Hy(i, j - 1)) - (Hx(i, j) - Hx(i - 1, j)));
-    end
-  end
+  # ---- E update (interior, with bulk-loss damping) ----
+  curlH = (Hy(2:ny-1, 2:nx-1) - Hy(2:ny-1, 1:nx-2)) ...
+        - (Hx(2:ny-1, 2:nx-1) - Hx(1:ny-2, 2:nx-1));
+  Ez(2:ny-1, 2:nx-1) = damp_int .* (Ez(2:ny-1, 2:nx-1) + cE * curlH);
 
   # ---- CW soft line source on column j_src ----
   src_amp = sin(omega * t) * (1 - exp(-(t / (15 * dt))^2));     # ramped CW
-  for i = 1:ny
-    Ez(i, j_src) = Ez(i, j_src) + src_amp;
-  end
+  Ez(:, j_src) = Ez(:, j_src) + src_amp;
 
   # ---- PEC: force E_z = 0 inside cylinder ----
   Ez = Ez .* inside_pec;

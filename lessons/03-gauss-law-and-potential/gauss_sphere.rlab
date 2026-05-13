@@ -13,19 +13,14 @@ R  = 0.05;                    # 5 cm sphere radius
 Q  = 1e-9;                    # 1 nC total charge
 
 rs = linspace(0.001, 0.20, 400);
-Er = zeros(length(rs));
-Vr = zeros(length(rs));
-
-for k = 1:length(rs)
-  r = rs(k);
-  if r <= R
-    Er(k) = ke * Q * r / (R * R * R);
-    Vr(k) = ke * Q * (3 * R * R - r * r) / (2 * R * R * R);
-  else
-    Er(k) = ke * Q / (r * r);
-    Vr(k) = ke * Q / r;
-  end
-end
+# Piecewise-analytic vectorisation: 0/1 masks select the inside vs
+# outside branch at every grid point in one elementwise expression.
+inside  = rs <= R;
+outside = 1 - inside;
+Er = (ke * Q * rs / (R * R * R))                     .* inside ...
+   + (ke * Q ./ (rs .* rs))                          .* outside;
+Vr = (ke * Q * (3 * R * R - rs .* rs) / (2 * R^3))   .* inside ...
+   + (ke * Q ./ rs)                                  .* outside;
 
 # === Sanity checks ===
 print(Er(1))                  # ≈ 0   (linear in r near origin)
