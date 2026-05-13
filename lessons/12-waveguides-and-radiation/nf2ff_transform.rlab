@@ -1,0 +1,186 @@
+# nf2ff_transform.rlab — Near-field-to-far-field (NF→FF) transform
+# validation using a Hertzian dipole.
+#
+# Workflow:
+#   1. Pick a closed surface S enclosing all radiating sources — here a
+#      cube of half-side a centred on the dipole, sampled cell-centred
+#      so each face has M² points and no face-to-face double counting.
+#   2. Record the tangential E, H on S. In real life these come from an
+#      FDTD/FDFD run; here we use the closed-form Hertzian-dipole near
+#      field on the same surface so the validation isolates the NF→FF
+#      kernel from the solver that would feed it in production.
+#   3. Form Love's equivalent surface currents J_s = n̂ × H and
+#      M_s = -n̂ × E.
+#   4. For each far-field direction r̂(θ, φ), evaluate the radiation
+#      integral
+#        F(r̂) = ∫_S (η₀ J_s + r̂ × M_s) e^{-i k r̂·r'} dS'
+#      and project onto the plane ⊥ r̂. The amplitude |F⊥| ∝ |E_ff|.
+#   5. Compare to the textbook Hertzian-dipole pattern |F(θ)| ∝ sin θ.
+#
+# This is the unit test for the transform that Lesson 14's capstone
+# applies to a microstrip patch antenna's near field.
+#
+# Reference: ../../notebooks/12-waveguides-and-radiation.md.
+
+mu0  = 4 * pi * 1e-7;
+eps0 = 8.854187817e-12;
+c0   = 1 / sqrt(mu0 * eps0);
+eta0 = sqrt(mu0 / eps0);
+
+# === Dipole + frequency ===
+f0     = 1.0e9;
+omega  = 2 * pi * f0;
+lambda = c0 / f0;
+k      = 2 * pi / lambda;
+I0_dl  = 1.0;                # current-moment normalisation (A·m)
+
+# === Cubic Huygens surface ===
+# Half-side a = λ/4 puts S well inside the near zone (kr ≈ π/2 at the
+# face centres), so the 1/(kr)² and 1/(kr)³ terms of the Hertzian field
+# are non-negligible — a strong test that the integral picks out the
+# correct asymptotic far-field pattern.
+a   = lambda / 4;
+M   = 21;
+du  = 2 * a / M;
+us  = linspace(-a + du / 2, a - du / 2, M);
+dA  = du * du;
+
+# Cell-centred meshgrid for each face; flatten to length-M² row Matrix.
+[U, V]    = meshgrid(us, us);
+U_flat    = reshape(U, 1, M * M);
+V_flat    = reshape(V, 1, M * M);
+ones_face = ones(1, M * M);
+zero_face = zeros(1, M * M);
+ap        = +a * ones_face;
+an        = -a * ones_face;
+
+# Stack the six faces into length-6M² surface-point and normal arrays.
+# Order:                   +x         -x         +y         -y         +z         -z
+xs   = [ap,        an,        U_flat,    U_flat,    U_flat,    U_flat];
+ys   = [U_flat,    U_flat,    ap,        an,        V_flat,    V_flat];
+zs_s = [V_flat,    V_flat,    V_flat,    V_flat,    ap,        an];
+nxs  = [ones_face, -ones_face, zero_face, zero_face, zero_face, zero_face];
+nys  = [zero_face, zero_face,  ones_face, -ones_face, zero_face, zero_face];
+nzs  = [zero_face, zero_face,  zero_face, zero_face,  ones_face, -ones_face];
+
+# === Analytic Hertzian-dipole near field at a set of points ===
+# Returns Cartesian (Ex, Ey, Ez, Hx, Hy, Hz) for a ẑ-oriented dipole.
+function [Ex, Ey, Ez, Hx, Hy, Hz] = hertzian_xyz(X, Y, Z, k, eta0, I0_dl)
+  rxy   = sqrt(X .* X + Y .* Y);
+  r     = sqrt(rxy .* rxy + Z .* Z);
+  # ε guards points on the z-axis (rxy = 0) — sin θ = 0 there so any
+  # cos φ / sin φ contribution is multiplied by zero anyway.
+  rxy_s = rxy + 1e-30;
+  cos_t = Z ./ r;
+  sin_t = rxy ./ r;
+  cos_p = X ./ rxy_s;
+  sin_p = Y ./ rxy_s;
+  kr    = k * r;
+  ph    = exp(j * kr);
+  # Spherical components (Balanis Eqs. 4-26): full near+far form.
+  Er  = (eta0 * k * I0_dl / (2 * pi))    * cos_t .* (1 ./ (kr .* kr) - j ./ (kr .^ 3)) .* ph;
+  Eth = (j * eta0 * k * I0_dl / (4 * pi)) * sin_t .* (1 ./ kr - j ./ (kr .* kr) - 1 ./ (kr .^ 3)) .* ph;
+  Hph = (j * k * I0_dl / (4 * pi))        * sin_t .* (1 ./ kr - j ./ (kr .* kr)) .* ph;
+  # Spherical → Cartesian (E_φ = H_r = H_θ = 0 for a ẑ dipole).
+  Ex = Er .* sin_t .* cos_p + Eth .* cos_t .* cos_p;
+  Ey = Er .* sin_t .* sin_p + Eth .* cos_t .* sin_p;
+  Ez = Er .* cos_t          - Eth .* sin_t;
+  Hx = -Hph .* sin_p;
+  Hy =  Hph .* cos_p;
+  Hz =  0 * Hph;             # zero, same shape as Hph
+end
+
+[Ex_s, Ey_s, Ez_s, Hx_s, Hy_s, Hz_s] = hertzian_xyz(xs, ys, zs_s, k, eta0, I0_dl);
+
+# === Equivalent surface currents (Love's principle) ===
+# J_s = n̂ × H,  M_s = -n̂ × E.
+Jx_s =   nys .* Hz_s - nzs .* Hy_s;
+Jy_s =   nzs .* Hx_s - nxs .* Hz_s;
+Jz_s =   nxs .* Hy_s - nys .* Hx_s;
+Mx_s = -(nys .* Ez_s - nzs .* Ey_s);
+My_s = -(nzs .* Ex_s - nxs .* Ez_s);
+Mz_s = -(nxs .* Ey_s - nys .* Ex_s);
+
+# === Surface integral at one far-field direction ===
+# Returns |F⊥(r̂)|, the magnitude of the radiation integral projected
+# onto the plane perpendicular to r̂.
+function amp = ff_amp(rx, ry, rz, xs, ys, zs_s, Jx_s, Jy_s, Jz_s, Mx_s, My_s, Mz_s, eta0, k, dA)
+  # F = η₀ J + r̂ × M
+  Fx = eta0 * Jx_s + (ry * Mz_s - rz * My_s);
+  Fy = eta0 * Jy_s + (rz * Mx_s - rx * Mz_s);
+  Fz = eta0 * Jz_s + (rx * My_s - ry * Mx_s);
+  # F⊥ = F − (F · r̂) r̂
+  F_dot_r = Fx * rx + Fy * ry + Fz * rz;
+  Fpx = Fx - F_dot_r * rx;
+  Fpy = Fy - F_dot_r * ry;
+  Fpz = Fz - F_dot_r * rz;
+  # Phase factor e^{-i k r̂·r'}
+  phase = exp(-j * k * (rx * xs + ry * ys + rz * zs_s));
+  Ix = sum(Fpx .* phase) * dA;
+  Iy = sum(Fpy .* phase) * dA;
+  Iz = sum(Fpz .* phase) * dA;
+  amp = sqrt(abs(Ix) ^ 2 + abs(Iy) ^ 2 + abs(Iz) ^ 2);
+end
+
+# === θ-cut at φ = 0 (E-plane) ===
+N_th  = 51;
+ths   = linspace(0, pi, N_th);
+E_ff  = zeros(N_th);
+for kt = 1:N_th
+  th = ths(kt);
+  rx = sin(th);
+  ry = 0;
+  rz = cos(th);
+  E_ff(kt) = ff_amp(rx, ry, rz, xs, ys, zs_s, ...
+                    Jx_s, Jy_s, Jz_s, Mx_s, My_s, Mz_s, eta0, k, dA);
+end
+
+# Normalise and compare to analytic sin θ.
+E_ff_norm = real(E_ff) / max(real(E_ff));
+analytic  = sin(ths);
+err       = max(abs(E_ff_norm - analytic));
+print(err)             # ≪ 1 — sin-shape recovered
+
+# === φ-cut at θ = π/2 (H-plane sanity check) ===
+# For a ẑ dipole the pattern is φ-independent on the equator. Spread
+# is a single-number check on the integral's rotational symmetry.
+N_ph  = 37;
+phs   = linspace(0, 2 * pi, N_ph);
+E_ph  = zeros(N_ph);
+for kp = 1:N_ph
+  ph = phs(kp);
+  rx = cos(ph);
+  ry = sin(ph);
+  rz = 0;
+  E_ph(kp) = ff_amp(rx, ry, rz, xs, ys, zs_s, ...
+                    Jx_s, Jy_s, Jz_s, Mx_s, My_s, Mz_s, eta0, k, dA);
+end
+phi_spread = (max(real(E_ph)) - min(real(E_ph))) / mean(real(E_ph));
+print(phi_spread)      # ≪ 1 — equatorial cut should be flat
+
+# === Plots ===
+figure();
+hold on;
+plot(ths * 180 / pi, E_ff_norm, "NF→FF integral (normalised)");
+plot(ths * 180 / pi, analytic,  "analytic sin(theta)");
+hold off;
+xlabel("theta  (deg)");
+ylabel("|E_ff| / max");
+title("E-plane pattern: NF→FF surface integral vs Hertzian sin(theta)");
+legend("NF→FF integral", "analytic sin(theta)");
+savefig("nf2ff_compare.svg");
+
+figure();
+# Symmetrise to [0, 2π] for a closed polar trace.
+ths2     = [ths, ths + pi];
+E_ff2    = [E_ff_norm, E_ff_norm(N_th:-1:1)];
+polar(ths2, E_ff2, "NF→FF |E_ff(theta)|");
+title("NF→FF polar pattern from a closed cube surface");
+savefig("nf2ff_polar.svg");
+
+figure();
+plot(phs * 180 / pi, real(E_ph) / max(real(E_ph)), "|E_ff(phi)| at theta = pi/2");
+xlabel("phi  (deg)");
+ylabel("|E_ff| / max");
+title("H-plane sanity: equatorial cut should be uniform");
+savefig("nf2ff_equator.svg");

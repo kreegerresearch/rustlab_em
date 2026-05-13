@@ -381,7 +381,7 @@ so a single FDTD or FDFD run in a small box gives the full 3D radiation pattern.
 - `cavity_resonances.rlab` — 2D rectangular cavity eigenmodes on a grid; compare to the analytic $\omega_{mn} = c\pi\sqrt{(m/a)^2+(n/b)^2}$. Add a small dielectric perturbation and show the frequency shift matches first-order perturbation theory.
 - `hertzian_dipole.rlab` — far-field pattern $\sin\theta$; plot as a polar diagram and a 3D torus; compute the total radiated power.
 - `half_wave_dipole.rlab` — numerically integrate over a sinusoidal current distribution $I(z) = I_0\cos(kz)$ for $|z| < \lambda/4$; compare the slightly narrower pattern to the Hertzian result.
-- `nf2ff_transform.rlab` — wrap a small FDTD run of a Hertzian dipole inside an imaginary closed surface; record $\vec E_{\rm tan}$, $\vec H_{\rm tan}$ on the surface; apply the surface integral to produce the 3D far-field pattern; compare to the analytic $\sin\theta$ pattern. Validates the transform that Lesson 14 uses on a real antenna.
+- `nf2ff_transform.rlab` — *(shipped)* validate Love's equivalence-principle surface integral by populating a cubic Huygens surface with the analytic Hertzian-dipole near field and recovering $\sin\theta$. Lesson 14 reuses the kernel on a real FDTD-generated near field; exercise #5 of L12 asks the student to swap the analytic field for an FDTD run.
 
 ---
 
