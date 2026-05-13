@@ -33,7 +33,7 @@ valid at every point. The minus sign is **Lenz's law**: the induced current's di
 
 A circular loop of radius $R = 5$ cm sits with its axis along $\hat z$, in a uniform externally-imposed field $B_z(t) = B_0\sin(\omega t)$ at frequency $f = 60$ Hz, $B_0 = 0.1$ T. The flux is $\Phi(t) = \pi R^2 B_0 \sin(\omega t)$ and the EMF is the negative derivative:
 
-$$\varepsilon(t) = -\pi R^2 B_0 \omega\\,\cos(\omega t).$$
+$$\varepsilon(t) = -\pi R^2 B_0 \omega\,\cos(\omega t).$$
 
 ```rustlab
 clf;
@@ -76,15 +76,15 @@ The EMF leads the flux by $\pi/2$ (cosine vs sine) — the EMF is largest at the
 
 When current $I_1$ in loop 1 produces a magnetic field, some of that flux threads loop 2. The **mutual inductance** $M_{12}$ is the geometric ratio
 
-$$M_{12} = \frac{\Phi_{2 \leftarrow 1}}{I_1}, \qquad \Phi_{2 \leftarrow 1} = \int_{\text{disk}_2}\\!\vec B_1\cdot d\vec A_2.$$
+$$M_{12} = \frac{\Phi_{2 \leftarrow 1}}{I_1}, \qquad \Phi_{2 \leftarrow 1} = \int_{\text{disk}_2}\!\vec B_1\cdot d\vec A_2.$$
 
 Reciprocity gives $M_{12} = M_{21}$ for any pair of loops. Once $M$ is known, Faraday's law on loop 2 gives the induced EMF:
 
-$$\varepsilon_2 = -M\\,\frac{dI_1}{dt}.$$
+$$\varepsilon_2 = -M\,\frac{dI_1}{dt}.$$
 
 This is the entire physics of an air-core transformer at low frequency. The numerical recipe is to run a Lesson-06-style Biot-Savart calculation for $B_z$ from loop 1 on a meshgrid covering loop 2's disk, then sum cell areas to get $\Phi$. For two **concentric coplanar** loops in the $xy$-plane (radii $a < b$, current $I$ in the outer loop), the small-$a/b$ limit gives the analytic check
 
-$$M \approx \frac{\mu_0\\,\pi a^2}{2 b}, \qquad a \ll b,$$
+$$M \approx \frac{\mu_0\,\pi a^2}{2 b}, \qquad a \ll b,$$
 
 since the central field of the outer loop is uniform over a small inner-loop disk at $B_z(0) = \mu_0 I/(2 b)$.
 
@@ -170,21 +170,21 @@ A thin conducting plate (thickness $t \ll$ plate dimensions, conductivity $\sigm
 
 - Ohm's law in the plate: $\vec J = \sigma\vec E_{\rm in}$,
 - Charge conservation: $\nabla\cdot\vec J = 0$,
-- Faraday's law: $\nabla\times\vec E_{\rm in} = -\partial\vec B/\partial t = -\dot B_z\\,\hat z$.
+- Faraday's law: $\nabla\times\vec E_{\rm in} = -\partial\vec B/\partial t = -\dot B_z\,\hat z$.
 
 Because $\vec J$ is divergence-free in the plane, write it as the curl of a **stream function** $\psi(x, y)$,
 
-$$\vec J = \hat z\times\nabla\psi = \left(\frac{\partial\psi}{\partial y},\\;-\frac{\partial\psi}{\partial x}\right),$$
+$$\vec J = \hat z\times\nabla\psi = \left(\frac{\partial\psi}{\partial y},\;-\frac{\partial\psi}{\partial x}\right),$$
 
-so the divergence-free condition is automatic. Substitute into $\nabla\times\vec E_{\rm in} = -\dot B_z\\,\hat z$ via $\vec E_{\rm in} = \vec J/\sigma$:
+so the divergence-free condition is automatic. Substitute into $\nabla\times\vec E_{\rm in} = -\dot B_z\,\hat z$ via $\vec E_{\rm in} = \vec J/\sigma$:
 
-$$\nabla^2\psi = -\sigma\\,\dot B_z.$$
+$$\nabla^2\psi = -\sigma\,\dot B_z.$$
 
 For a uniform $\dot B_z$ this is a **Poisson equation with constant source** — exactly the kind of problem Lessons 05 and 06 already solve. Boundary condition: no current crosses the plate edge ($\vec J\cdot\hat n = 0$), which translates to $\psi = $ const on the boundary; setting that constant to zero is conventional. Once $\psi$ is solved, $\vec J$ falls out as a 2-D curl.
 
 For a circular plate of radius $R$, the radially symmetric solution is
 
-$$\psi(r) = \frac{\sigma\dot B_z}{4}\bigl(R^2 - r^2\bigr),\qquad J_\varphi = -\frac{\sigma\dot B_z}{2}\\,r,$$
+$$\psi(r) = \frac{\sigma\dot B_z}{4}\bigl(R^2 - r^2\bigr),\qquad J_\varphi = -\frac{\sigma\dot B_z}{2}\,r,$$
 
 so the induced current circulates in the *opposite sense* to $\dot B_z$ — Lenz's law literal: a positive $\dot B_z$ drives a clockwise current that produces a $-\hat z$ field, partially cancelling the imposed change.
 
@@ -264,7 +264,7 @@ ylabel("y (m)")
 
 ![plot 5](plots/07-faraday-induction/plot-5.svg)
 
-The quiver field circulates clockwise inside the plate — consistent with Lenz's law for a positive $\dot B_z$. Sample the current magnitude along a radius and compare to the analytic $J_\varphi(r) = \sigma\dot B_z\\,r/2$.
+The quiver field circulates clockwise inside the plate — consistent with Lenz's law for a positive $\dot B_z$. Sample the current magnitude along a radius and compare to the analytic $J_\varphi(r) = \sigma\dot B_z\,r/2$.
 
 ```rustlab
 % Sample |J| along the +x axis at i = ny3/2; compare against the analytic
@@ -283,7 +283,7 @@ print(real(Jmag(i_c, nx3 / 2 + 1)))                            % near centre
 40606.13198313814
 ```
 
-The numerical $|J|$ at $r = 0.7\\,R$ matches the analytic $\sigma\dot B_z r/2$ within a few percent; near $r = 0$ both go to zero. The eddy-current pattern this produces — circular flow lines, current density growing linearly outward — is the same one industrial-induction-heating cookers exploit (a strong $\dot B$ from a coil drives huge $J$ in the steel pan, which dissipates as $\int|\vec J|^2/\sigma$). The drift of these eddies into a conductor is also why **transformer cores must be laminated**: replacing solid iron with thin insulated sheets confines the eddy stream-function support to each lamination's small disk, killing $\propto R^4$ eddy losses to a manageable level.
+The numerical $|J|$ at $r = 0.7\,R$ matches the analytic $\sigma\dot B_z r/2$ within a few percent; near $r = 0$ both go to zero. The eddy-current pattern this produces — circular flow lines, current density growing linearly outward — is the same one industrial-induction-heating cookers exploit (a strong $\dot B$ from a coil drives huge $J$ in the steel pan, which dissipates as $\int|\vec J|^2/\sigma$). The drift of these eddies into a conductor is also why **transformer cores must be laminated**: replacing solid iron with thin insulated sheets confines the eddy stream-function support to each lamination's small disk, killing $\propto R^4$ eddy losses to a manageable level.
 
 ## Standalone Scripts
 
@@ -308,11 +308,11 @@ Run all three with `make lesson-07`, or one at a time via `rustlab run lessons/0
 
 ## Exercises
 
-1. **Slowly varying linear ramp.** Replace the sinusoidal $B(t)$ with a piecewise-linear ramp $B(t) = B_0\\,t/\tau$ for $0 \le t \le \tau$, $B_0$ thereafter. Plot $\Phi(t)$ and $\varepsilon(t)$ and verify $\varepsilon$ is constant during the ramp and zero afterwards.
+1. **Slowly varying linear ramp.** Replace the sinusoidal $B(t)$ with a piecewise-linear ramp $B(t) = B_0\,t/\tau$ for $0 \le t \le \tau$, $B_0$ thereafter. Plot $\Phi(t)$ and $\varepsilon(t)$ and verify $\varepsilon$ is constant during the ramp and zero afterwards.
 2. **Reciprocity check.** In the mutual-inductance example, swap the roles: drive the *inner* loop with $I_2 = 1$ A and integrate $B_z$ from it over the *outer* loop's disk. Verify $M_{21} = M_{12}$ to a few percent.
-3. **Self-inductance via energy.** Compute the self-inductance of a single loop of radius $R$ via the energy formulation $L = 2 U_B/I^2$ where $U_B = (1/2\mu_0)\int|\vec B|^2\\,dV$ and $\vec B$ is the loop's own field. The integral is logarithmically divergent at the wire's surface, so add a wire-radius cutoff $a \ll R$ and verify $L \approx \mu_0 R[\ln(8R/a) - 2]$ (the textbook formula).
+3. **Self-inductance via energy.** Compute the self-inductance of a single loop of radius $R$ via the energy formulation $L = 2 U_B/I^2$ where $U_B = (1/2\mu_0)\int|\vec B|^2\,dV$ and $\vec B$ is the loop's own field. The integral is logarithmically divergent at the wire's surface, so add a wire-radius cutoff $a \ll R$ and verify $L \approx \mu_0 R[\ln(8R/a) - 2]$ (the textbook formula).
 4. **Square plate eddy currents.** Replace the circular plate with a square plate of side $L = 0.10$ m (use `rect_mask`) and re-solve. Verify the eddy stream lines now match the square's symmetry (four 45° symmetry axes), and that $J$ pinches at the corners — the same effect the corner singularity from Lesson 05 produced for $V$.
-5. **Two-region plate.** Cut the circular plate into two halves with an insulating thin strip down the middle. Pin $\psi = 0$ on both the outer boundary *and* the strip. Show that the two halves develop independent eddy systems, and compute the total dissipated power as $P = (1/\sigma)\int|\vec J|^2\\,dA$ for both the cut and uncut cases — quantifying the "lamination wins" intuition.
+5. **Two-region plate.** Cut the circular plate into two halves with an insulating thin strip down the middle. Pin $\psi = 0$ on both the outer boundary *and* the strip. Show that the two halves develop independent eddy systems, and compute the total dissipated power as $P = (1/\sigma)\int|\vec J|^2\,dA$ for both the cut and uncut cases — quantifying the "lamination wins" intuition.
 
 ## What's next
 

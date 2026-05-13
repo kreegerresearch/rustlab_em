@@ -8,7 +8,7 @@ Lesson 02 added charges one by one. Most real distributions have so many charges
 
 - State Gauss's law in both integral $\oint\vec E\cdot d\vec A = Q_{\rm enc}/\varepsilon_0$ and differential $\nabla\cdot\vec E = \rho/\varepsilon_0$ forms
 - Use spherical, cylindrical, and planar symmetry to derive $\vec E$ from charge distributions in closed form
-- Compute $V(\vec r) = (4\pi\varepsilon_0)^{-1}\\!\sum_i q_i/|\vec r - \vec r_i|$ on a grid and recover $\vec E = -\nabla V$ numerically
+- Compute $V(\vec r) = (4\pi\varepsilon_0)^{-1}\!\sum_i q_i/|\vec r - \vec r_i|$ on a grid and recover $\vec E = -\nabla V$ numerically
 - Plot equipotential contours overlaid on the field, and recognize that field lines cross equipotentials at right angles
 
 ## Background
@@ -47,9 +47,9 @@ Take a ball of radius $R$ with uniform volume charge density $\rho_0$, total cha
 
 $$\oint\vec E\cdot d\vec A = E_r(r)\cdot 4\pi r^2 = \frac{Q_{\rm enc}(r)}{\varepsilon_0}.$$
 
-Inside ($r < R$), $Q_{\rm enc}(r) = Q\\,(r/R)^3$; outside, $Q_{\rm enc} = Q$. So
+Inside ($r < R$), $Q_{\rm enc}(r) = Q\,(r/R)^3$; outside, $Q_{\rm enc} = Q$. So
 
-$$E_r(r) = \begin{cases}\dfrac{k_e Q\\,r}{R^3} & r \le R \\[6pt] \dfrac{k_e Q}{r^2} & r \ge R \end{cases}$$
+$$E_r(r) = \begin{cases}\dfrac{k_e Q\,r}{R^3} & r \le R \\[6pt] \dfrac{k_e Q}{r^2} & r \ge R \end{cases}$$
 
 with $k_e = 1/(4\pi\varepsilon_0)$. The field grows *linearly* inside the ball — the only way the divergence theorem can match a uniform interior $\rho$ — and falls off as $1/r^2$ outside, indistinguishable from a point charge at the center.
 
@@ -136,17 +136,17 @@ The interior parabola joins the exterior $1/r$ branch smoothly — both the valu
 
 ### Theory
 
-For a dipole $\vec p = q d\\,\hat x$ in vacuum the potential is one scalar function
+For a dipole $\vec p = q d\,\hat x$ in vacuum the potential is one scalar function
 
-$$V_{\rm dip}(\vec r) = \frac{1}{4\pi\varepsilon_0}\frac{\vec p\cdot\hat r}{r^2} = \frac{k_e p\\,\cos\theta}{r^2},$$
+$$V_{\rm dip}(\vec r) = \frac{1}{4\pi\varepsilon_0}\frac{\vec p\cdot\hat r}{r^2} = \frac{k_e p\,\cos\theta}{r^2},$$
 
 or in 2-D Cartesian coordinates
 
-$$V_{\rm dip}(x, y) = \frac{k_e\\,p\\,x}{(x^2 + y^2)^{3/2}}.$$
+$$V_{\rm dip}(x, y) = \frac{k_e\,p\,x}{(x^2 + y^2)^{3/2}}.$$
 
 Differentiating and using $\vec E = -\nabla V$ recovers the far-field formula from Lesson 02:
 
-$$E_x = k_e p\\,\frac{2x^2 - y^2}{r^5},\qquad E_y = k_e p\\,\frac{3xy}{r^5}.$$
+$$E_x = k_e p\,\frac{2x^2 - y^2}{r^5},\qquad E_y = k_e p\,\frac{3xy}{r^5}.$$
 
 A scalar PDE, a vector field for free.
 
@@ -221,11 +221,11 @@ $$E_z = \frac{\sigma}{\varepsilon_0},\qquad 0 < z < d,$$
 
 with $E = 0$ outside (both plates' fields cancel there). The potential drops linearly across the gap:
 
-$$V(z) = V_0\Bigl(1 - \frac{z}{d}\Bigr),\qquad V_0 = E_z\\,d = \frac{\sigma d}{\varepsilon_0}.$$
+$$V(z) = V_0\Bigl(1 - \frac{z}{d}\Bigr),\qquad V_0 = E_z\,d = \frac{\sigma d}{\varepsilon_0}.$$
 
 The capacitance follows from $Q = CV_0$ with $Q = \sigma A$:
 
-$$\boxed{\\,C = \frac{\varepsilon_0\\,A}{d}.\\,}$$
+$$\boxed{\,C = \frac{\varepsilon_0\,A}{d}.\,}$$
 
 This is the simplest device-level result in all of electrostatics — and the model that every other capacitor (coax, microstrip, fringe-corrected plates) refines. Lesson 05 will solve the same geometry with the finite-element machinery to recover the same $C$ inclusive of fringing.
 
@@ -321,7 +321,7 @@ print(real(divE(40, 30)))      % expect a small finite stencil-error value (V/m�
 -106873.65130626428
 ```
 
-The numerical value is *not* particularly small in absolute units (V/m² values in the $10^4$–$10^5$ range are typical here) — the central-difference stencil sees the steep $1/r^3$ dipole falloff and the leading truncation error is of order $\Delta^2\\,\partial^3 E/\partial x^3$, which is sizeable when $|\vec E|/\Delta^2$ is large. Lesson 05 fixes this by solving for $V$ on a grid using the finite-difference Laplacian directly, where the discretization is *consistent with the operator*: the algebraic identity $\nabla^2 V_{\rm num} = -\rho_{\rm num}/\varepsilon_0$ is built in by construction, so vacuum cells return zero exactly under the same stencil that defines $\nabla^2$.
+The numerical value is *not* particularly small in absolute units (V/m² values in the $10^4$–$10^5$ range are typical here) — the central-difference stencil sees the steep $1/r^3$ dipole falloff and the leading truncation error is of order $\Delta^2\,\partial^3 E/\partial x^3$, which is sizeable when $|\vec E|/\Delta^2$ is large. Lesson 05 fixes this by solving for $V$ on a grid using the finite-difference Laplacian directly, where the discretization is *consistent with the operator*: the algebraic identity $\nabla^2 V_{\rm num} = -\rho_{\rm num}/\varepsilon_0$ is built in by construction, so vacuum cells return zero exactly under the same stencil that defines $\nabla^2$.
 
 ## Standalone Scripts
 
@@ -353,7 +353,7 @@ Run all three with `make lesson-03`, or one at a time via `rustlab run lessons/0
 ## Exercises
 
 1. **Spherical shell.** Replace the uniformly charged ball with a thin shell at radius $R$ carrying total charge $Q$. Predict $E_r(r)$ and $V(r)$ from Gauss's law (zero inside, point-charge outside, $V$ constant inside) and plot both.
-2. **Infinite line of charge.** Use cylindrical Gauss to derive $E_\rho = \lambda/(2\pi\varepsilon_0\rho)$. Choose $\lambda = 10^{-9}$ C/m and plot $E_\rho(\rho)$ on $\rho \in [1\\,\text{mm}, 10\\,\text{cm}]$. Compare against the finite-line result from Lesson 02 Exercise 3 in the limit $L \to \infty$.
+2. **Infinite line of charge.** Use cylindrical Gauss to derive $E_\rho = \lambda/(2\pi\varepsilon_0\rho)$. Choose $\lambda = 10^{-9}$ C/m and plot $E_\rho(\rho)$ on $\rho \in [1\,\text{mm}, 10\,\text{cm}]$. Compare against the finite-line result from Lesson 02 Exercise 3 in the limit $L \to \infty$.
 3. **Capacitance of a coaxial cable.** Use Gauss's law in cylindrical symmetry to derive $C' = 2\pi\varepsilon_0/\ln(b/a)$ per unit length for a coax with inner radius $a$ and outer $b$. Tabulate $C'$ for $b/a = 2, 5, 10$.
 4. **Dielectric-filled capacitor.** A linear dielectric of permittivity $\varepsilon = \varepsilon_r\varepsilon_0$ replaces vacuum between the plates. Derive $C = \varepsilon_r\varepsilon_0 A/d$ and explain why both $\vec E$ and $V_0$ drop by a factor $\varepsilon_r$ at fixed $Q$.
 5. **Direct integration of $V$.** Build $V$ on the Lesson 02 grid by superposing $V_i = k_e q_i / |\vec r - \vec r_i|$ for the dipole, then call `gradient` and verify $\vec E = -\nabla V$ matches the direct superposition. (We did this for the *exact* dipole formula above; this exercise replaces that with the actual two-charge sum.)

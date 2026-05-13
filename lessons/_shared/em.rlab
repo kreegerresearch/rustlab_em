@@ -48,41 +48,34 @@
 
 # ---------------------------------------------------------------------
 function sigma = pml_sigma_profile(N, npml, sigma_max)
-  sigma = zeros(N, 1);
   if npml < 1
+    sigma = zeros(1, N);
     return;
   end
-  for ii = 1:N
-    if ii <= npml
-      x = (npml - ii + 1) / npml;     # primal cell, distance from inner edge
-      sigma(ii) = sigma_max * x^3;
-    elseif ii > N - npml
-      x = (ii - (N - npml)) / npml;
-      sigma(ii) = sigma_max * x^3;
-    end
-  end
+  # Vectorised: x_l is the normalised distance from the inner edge of
+  # the left PML (positive inside, negative elsewhere), x_r is the
+  # same for the right PML. The clip-to-zero trick (v + abs(v))/2
+  # plays the role of max(v, 0), and only one of x_l / x_r is positive
+  # for any cell, so the two cubes never overlap.
+  ii = 1:N;
+  x_l = (npml - ii + 1) / npml;
+  x_r = (ii - (N - npml)) / npml;
+  sigma = sigma_max * (((x_l + abs(x_l)) / 2) .^ 3 + ((x_r + abs(x_r)) / 2) .^ 3);
 end
 
 # ---------------------------------------------------------------------
 function sigma_h = pml_sigma_profile_h(N, npml, sigma_max)
-  # σ at face between cell ii and ii+1, length N (the last entry is
-  # unused but kept for index alignment).
-  sigma_h = zeros(N, 1);
+  # σ at the face between cells ii and ii+1, length N (the last entry
+  # is unused but kept for index alignment). Same cubic profile as the
+  # primal grid, sampled at a +0.5 cell offset.
   if npml < 1
+    sigma_h = zeros(1, N);
     return;
   end
-  for ii = 1:N
-    # Face position (between cells ii and ii+1) is at +0.5.
-    if ii <= npml
-      x = (npml - ii + 0.5) / npml;
-      if x > 0
-        sigma_h(ii) = sigma_max * x^3;
-      end
-    elseif ii > N - npml
-      x = (ii - (N - npml) + 0.5) / npml;
-      sigma_h(ii) = sigma_max * x^3;
-    end
-  end
+  ii = 1:N;
+  x_l = (npml - ii + 0.5) / npml;
+  x_r = (ii - (N - npml) + 0.5) / npml;
+  sigma_h = sigma_max * (((x_l + abs(x_l)) / 2) .^ 3 + ((x_r + abs(x_r)) / 2) .^ 3);
 end
 
 # ---------------------------------------------------------------------

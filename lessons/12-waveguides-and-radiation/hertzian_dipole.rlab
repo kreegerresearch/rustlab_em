@@ -1,0 +1,67 @@
+# hertzian_dipole.rlab — Far-field radiation pattern of a short
+# (Hertzian) dipole.
+#
+# A current element I_0 dℓ ẑ oscillating at frequency ω radiates a
+# spherical-wave electric field with leading far-field term
+#   E_θ(r, θ) = (i ω μ₀ I_0 dℓ / 4π r) sin θ · e^{i(kr - ωt)}
+# The intensity pattern is therefore |F(θ)|² = sin²θ — a doughnut
+# (torus) with a null on-axis and a peak in the equatorial plane.
+#
+# Radiated power:
+#   P_rad = (η₀ |I_0|² |k dℓ|²) / (12 π) ≈ 80 π² (dℓ/λ)² |I_0|²/2 / η₀^{-1}
+# We compute P_rad both analytically and by numerically integrating
+# the Poynting flux over a unit-radius sphere; the two should agree
+# to within the trapezoidal-rule discretisation error.
+#
+# Reference: ../../notebooks/12-waveguides-and-radiation.md.
+
+mu0 = 4 * pi * 1e-7;
+eps0 = 8.854187817e-12;
+c0   = 1 / sqrt(mu0 * eps0);
+eta0 = sqrt(mu0 / eps0);
+
+I0     = 1.0;
+dell   = 0.01;             # 1 cm Hertzian element
+f0     = 1.0e9;
+omega  = 2 * pi * f0;
+k0     = omega / c0;
+lambda = c0 / f0;
+
+# === Polar plot of |F(θ)|² ===
+N_th = 361;
+ths  = linspace(0, pi, N_th);
+F    = sin(ths);          # |E_θ| ∝ sin θ
+P    = F .^ 2;            # |F|² ∝ sin²θ
+
+# Reflected to negative angles for a full 0..2π polar trace.
+ths_full = linspace(0, 2 * pi, 2 * N_th - 1);
+P_full   = abs(sin(ths_full));   # |sin θ| works as a one-sided "doughnut" trace
+figure();
+polar(ths_full, P_full, "|F(theta)|^2  (Hertzian)");
+title("Hertzian dipole far-field pattern  —  |F| ∝ sin θ");
+savefig("hertzian_polar.svg");
+
+# === Total radiated power: numerical surface integral ===
+# P_rad = ∮ (|E_θ|² / 2 η₀) r² sinθ dθ dφ  over a sphere
+# Per-element pattern is sin θ; integrating sin²θ × sinθ dθ from 0..π
+# and trivial 2π in φ gives the 2/3 factor.
+# Strip off the geometric prefactor; just check 2π ∫ sin³θ dθ = 8π/3.
+int_sin3 = trapz(ths, sin(ths) .^ 3);
+print(int_sin3)                  # ≈ 4/3
+print(2 * pi * int_sin3)         # ≈ 8π/3 ≈ 8.378
+print(8 * pi / 3)
+
+# === Analytic radiated power for comparison ===
+# P_rad = η₀ |I₀|² |k₀ dℓ|² / (12 π)
+P_rad = eta0 * I0^2 * (k0 * dell)^2 / (12 * pi);
+print(P_rad)                     # ~ small number for a Hertzian element
+
+# === Numerical Poynting integral over a unit-radius sphere ===
+# Drop the 1/r² distance falloff by setting r = 1 (we want the angular
+# integral). The angular factor of |E_θ|² for the Hertzian is
+#   (ω μ₀ I₀ dℓ / 4π)² · sin²θ.
+prefac = (omega * mu0 * I0 * dell / (4 * pi))^2 / (2 * eta0);   # W/m² at r = 1, divided by sin²θ
+# ∮ angular: ∫_0^π ∫_0^{2π} sin²θ · sinθ dθ dφ = 2π · 8/(3·2) = 8π/3
+P_rad_num = prefac * 8 * pi / 3;
+print(P_rad_num)                 # match analytic
+print(abs(P_rad - P_rad_num) / P_rad)

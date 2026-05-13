@@ -1,0 +1,71 @@
+# cavity_resonances.rlab — TM eigenmodes of a closed 2-D rectangular
+# cavity via `eigs`.
+#
+# Physics: closed metal box a × b with PEC walls supports a discrete
+# spectrum of TM modes E_z(x, y) = E_0 sin(m π x / a) sin(n π y / b)
+# with resonant frequencies
+#   ω_{mn} = c π sqrt((m/a)² + (n/b)²)   (m, n ≥ 1).
+# This is identical in form to Lesson 12's waveguide cutoff problem
+# — both reduce to -∇²_⊥ φ = k_c² φ with Dirichlet on the boundary —
+# but the physical interpretation differs:
+#   waveguide: f_c is the *cutoff* below which the mode evanesces;
+#   cavity:    f_{mn} is the *resonant* frequency of a standing wave.
+#
+# Lesson 10's `fdfd_resonator.rlab` reached the same answer by sweeping
+# frequency through a sparse Helmholtz solve and watching for peaks.
+# Here we solve the eigenvalue problem *directly* — one `eigs` call —
+# which is far cleaner and gives the modes as well as the frequencies.
+#
+# Reference: ../../notebooks/12-waveguides-and-radiation.md.
+
+mu0  = 4 * pi * 1e-7;
+eps0 = 8.854187817e-12;
+c0   = 1 / sqrt(mu0 * eps0);
+
+# === Cavity ===
+a_cav = 0.10;
+b_cav = 0.075;
+
+# === Grid ===
+nx = 51;
+ny = 41;
+dx = a_cav / (nx + 1);
+dy = b_cav / (ny + 1);
+
+# === Eigenproblem ===
+L = -1 * laplacian_2d(nx, ny, dx, dy);
+[V, D] = eigs(L, 20, "sm");
+
+# === Compare to analytic resonances ===
+# Lanczos may "skip" a closely-clustered mode (TM_{22} sits near
+# TM_{31} for this geometry) without implicit restart. For the first
+# 4 well-separated modes the labels are unambiguous.
+mn_pairs = [1, 1; 2, 1; 1, 2; 3, 1];
+n_modes = 4;
+print("--- Cavity resonance comparison (GHz) ---")
+for k = 1:n_modes
+  m = mn_pairs(k, 1);
+  n = mn_pairs(k, 2);
+  f_num = c0 * sqrt(real(D(k))) / (2 * pi);
+  f_ana = c0 / 2 * sqrt((m / a_cav)^2 + (n / b_cav)^2);
+  err = abs(f_num - f_ana) / f_ana;
+  print(m)
+  print(n)
+  print(f_num / 1e9)
+  print(f_ana / 1e9)
+  print(err)
+end
+
+# === Plot mode patterns ===
+for k = 1:4
+  mode = real(V(:, k));
+  M = reshape(mode, ny, nx);
+  figure();
+  imagesc(M, "viridis");
+  m = mn_pairs(k, 1);
+  n = mn_pairs(k, 2);
+  title(sprintf("Cavity TM_{%d%d}  —  f = %.3f GHz", m, n, c0 * sqrt(real(D(k))) / (2 * pi) / 1e9));
+  xlabel("x cell");
+  ylabel("y cell");
+  savefig(sprintf("cavity_mode_%d.svg", k));
+end

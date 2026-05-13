@@ -20,10 +20,10 @@ The curriculum targets a "mini Ansys" endpoint: given arbitrary geometry plus ma
 | 08 | Maxwell's Equations | Drafted |
 | 09 | EM Wave Equation & Plane Waves | Drafted |
 | 10 | FDFD — Frequency-Domain Maxwell Solver | Drafted |
-| 11 | FDTD — Time-Domain, Dispersive Materials, PML | Planned |
-| 12 | Waveguides, Cavity Eigenmodes & Radiation | Planned |
-| 13 | Transmission Lines, S-Parameters & Antennas | Planned |
-| 14 | Capstone — End-to-End Device Simulation | Planned |
+| 11 | FDTD — Time-Domain, Dispersive Materials, PML | Drafted |
+| 12 | Waveguides, Cavity Eigenmodes & Radiation | Drafted |
+| 13 | Transmission Lines, S-Parameters & Antennas | Drafted |
+| 14 | Capstone — End-to-End Device Simulation | Drafted |
 
 **Build order:** The curriculum is strictly sequential. Lesson 04 (geometry/material toolkit) is the first pivot — every downstream solver consumes the arrays it produces. Lesson 05 is the first numerical PDE (static). Lessons 10 and 11 are the two full-wave PDE solvers. Lesson 14 reuses every tool the course has built.
 

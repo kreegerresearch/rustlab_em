@@ -2,7 +2,7 @@
 
 # Lesson 10: FDFD — Frequency-Domain Maxwell Solver
 
-The four full-wave equations from Lesson 09 — $\nabla\cdot\vec D=\rho$, $\nabla\cdot\vec B=0$, $\nabla\times\vec E=-\partial_t\vec B$, $\nabla\times\vec H=\vec J+\partial_t\vec D$ — describe propagation, polarisation, scattering, and resonance for **all** electromagnetic systems. For the broad class of problems that ask a single-frequency question — "drive port 1 at 2.45 GHz, what is $S_{11}$ and the field pattern?" — running a time-domain solver to steady state is wasteful. Substituting $\partial_t\to-i\omega$ collapses the whole system into a *single complex-valued sparse linear system* $A(\omega)\\,\vec E = \vec b(\omega)$, handed straight to `spsolve`. This is the **frequency-domain finite-difference (FDFD)** method, the same engine that runs much of commercial electromagnetic simulation. This lesson assembles the operator, validates the **stretched-coordinate PML** that lets the discrete domain pretend to be infinite, and walks through three canonical geometries: a 1-D stratified anti-reflection coating, a 2-D dielectric scatterer, and a closed cavity whose modes appear as Lorentzian peaks in a frequency sweep.
+The four full-wave equations from Lesson 09 — $\nabla\cdot\vec D=\rho$, $\nabla\cdot\vec B=0$, $\nabla\times\vec E=-\partial_t\vec B$, $\nabla\times\vec H=\vec J+\partial_t\vec D$ — describe propagation, polarisation, scattering, and resonance for **all** electromagnetic systems. For the broad class of problems that ask a single-frequency question — "drive port 1 at 2.45 GHz, what is $S_{11}$ and the field pattern?" — running a time-domain solver to steady state is wasteful. Substituting $\partial_t\to-i\omega$ collapses the whole system into a *single complex-valued sparse linear system* $A(\omega)\,\vec E = \vec b(\omega)$, handed straight to `spsolve`. This is the **frequency-domain finite-difference (FDFD)** method, the same engine that runs much of commercial electromagnetic simulation. This lesson assembles the operator, validates the **stretched-coordinate PML** that lets the discrete domain pretend to be infinite, and walks through three canonical geometries: a 1-D stratified anti-reflection coating, a 2-D dielectric scatterer, and a closed cavity whose modes appear as Lorentzian peaks in a frequency sweep.
 
 ## Learning Objectives
 
@@ -19,17 +19,17 @@ Lessons 04 (geometry/material maps), 05 (sparse Poisson + `laplacian_2d`), 08 (M
 
 ## From Time-Harmonic Maxwell to FDFD
 
-A time-harmonic field is one whose temporal dependence is purely sinusoidal, $\vec E(\vec r, t) = \mathrm{Re}[\vec E(\vec r)\\,e^{-i\omega t}]$, where $\vec E(\vec r)$ is now a **complex phasor** that encodes both magnitude and phase. The substitution $\partial/\partial t \to -i\omega$ converts Maxwell's first-order equations into
+A time-harmonic field is one whose temporal dependence is purely sinusoidal, $\vec E(\vec r, t) = \mathrm{Re}[\vec E(\vec r)\,e^{-i\omega t}]$, where $\vec E(\vec r)$ is now a **complex phasor** that encodes both magnitude and phase. The substitution $\partial/\partial t \to -i\omega$ converts Maxwell's first-order equations into
 
 $$\nabla\times\vec E = i\omega\mu\vec H, \qquad \nabla\times\vec H = -i\omega\varepsilon\vec E + \vec J.$$
 
 Eliminating $\vec H$ via the first equation and substituting into the second gives the second-order **vector wave equation**
 
-$$\nabla\times\\!\bigl(\mu^{-1}\nabla\times\vec E\bigr) - \omega^2\varepsilon\vec E = i\omega\vec J.$$
+$$\nabla\times\!\bigl(\mu^{-1}\nabla\times\vec E\bigr) - \omega^2\varepsilon\vec E = i\omega\vec J.$$
 
 For 2-D problems with $\vec J = J_z\hat z$ and translational invariance in $\hat z$ (the **TMz** polarisation: only $E_z$, $H_x$, $H_y$ are non-zero), the curl-curl reduces to a scalar Laplacian and the whole system collapses to a single scalar **Helmholtz equation**:
 
-$$\nabla^2 E_z + \omega^2\mu_0\varepsilon(x,y)\\,E_z = -i\omega\mu_0\\,J_z(x,y).$$
+$$\nabla^2 E_z + \omega^2\mu_0\varepsilon(x,y)\,E_z = -i\omega\mu_0\,J_z(x,y).$$
 
 (For TEz polarisation — only $H_z$ non-zero — the same scalar form applies to $H_z$ with $\varepsilon\leftrightarrow\mu$.) Discretising the Laplacian on a uniform grid with the standard 5-point stencil produces a sparse complex-valued matrix $A(\omega)$ that is
 
@@ -45,21 +45,21 @@ That single sparse linear system is FDFD. Everything else in this lesson is abou
 
 A finite computational domain with hard Dirichlet ($E_z = 0$) walls behaves like a closed cavity — every outgoing wave reflects from the walls and superposes back into the field, drowning the desired free-space radiation pattern. The **Perfectly Matched Layer** (PML), introduced by Bérenger in 1994 and recast in the elegant **stretched-coordinate** form by Chew and Weedon, surrounds the domain with a thin absorbing region where the spatial derivatives are formally complex-stretched:
 
-$$\frac{\partial}{\partial x} \to \frac{1}{s_x(x)}\\,\frac{\partial}{\partial x}, \qquad s_x(x) = 1 + \frac{i\\,\sigma_x(x)}{\omega\\,\varepsilon_0}.$$
+$$\frac{\partial}{\partial x} \to \frac{1}{s_x(x)}\,\frac{\partial}{\partial x}, \qquad s_x(x) = 1 + \frac{i\,\sigma_x(x)}{\omega\,\varepsilon_0}.$$
 
-Inside the PML, $\sigma_x > 0$ gives $s_x$ a positive imaginary part. An outgoing plane wave $E_z\propto e^{ik_xx}$ with $k_x > 0$ becomes $e^{ik_x\\,\tilde x}$ where $\tilde x = \int s_x(x)\\,dx$, so it picks up an exponentially decaying real factor $e^{-k_x\\,\sigma_x\\,x/(\omega\varepsilon_0)}$. The crucial property of SC-PML is that there is *no impedance mismatch* between the interior and the PML when both use the same $\varepsilon$ and $\mu$: the stretching factor cancels in the reflection coefficient. The textbook cubic-polynomial $\sigma$ profile
+Inside the PML, $\sigma_x > 0$ gives $s_x$ a positive imaginary part. An outgoing plane wave $E_z\propto e^{ik_xx}$ with $k_x > 0$ becomes $e^{ik_x\,\tilde x}$ where $\tilde x = \int s_x(x)\,dx$, so it picks up an exponentially decaying real factor $e^{-k_x\,\sigma_x\,x/(\omega\varepsilon_0)}$. The crucial property of SC-PML is that there is *no impedance mismatch* between the interior and the PML when both use the same $\varepsilon$ and $\mu$: the stretching factor cancels in the reflection coefficient. The textbook cubic-polynomial $\sigma$ profile
 
-$$\sigma(d) = \sigma_{\max}\\,(d/d_{\rm PML})^3, \qquad \sigma_{\max} = \frac{(m+1)\\,\varepsilon_0\\,c_0}{2\\,\Delta x}\\;\text{(typical, with }m=3)$$
+$$\sigma(d) = \sigma_{\max}\,(d/d_{\rm PML})^3, \qquad \sigma_{\max} = \frac{(m+1)\,\varepsilon_0\,c_0}{2\,\Delta x}\;\text{(typical, with }m=3)$$
 
 ramps gently from zero at the PML inner edge to $\sigma_{\max}$ at the outer edge, suppressing the discrete reflection at the inner edge to ~ 60–80 dB depending on PML thickness.
 
 **Face-centred discretisation matters.** A naïve approach uses the same $s_x(x_i)$ for both the diagonal and off-diagonal stencil entries:
 
-$$A_{i,i\pm1}\\;\stackrel{?}{=}\\;\frac{1}{[s_x(x_i)\\,\Delta x]^2}\quad\text{(wrong)}$$
+$$A_{i,i\pm1}\;\stackrel{?}{=}\;\frac{1}{[s_x(x_i)\,\Delta x]^2}\quad\text{(wrong)}$$
 
-This produces a residual $\sim 100\\,\%$-amplitude reflection at the PML inner edge in our 1-D test below — the field carries an enormous standing-wave ripple even with a 20-cell PML. The textbook formulation instead places one $s_x$ at the **primal** cell centre (where $E_z$ lives) and the other at the **dual** cell face (where $H$ lives, between cells $i$ and $i+1$):
+This produces a residual $\sim 100\,\%$-amplitude reflection at the PML inner edge in our 1-D test below — the field carries an enormous standing-wave ripple even with a 20-cell PML. The textbook formulation instead places one $s_x$ at the **primal** cell centre (where $E_z$ lives) and the other at the **dual** cell face (where $H$ lives, between cells $i$ and $i+1$):
 
-$$A_{i,i+1} = \frac{1}{s_E(x_i)\\,s_H(x_i + \tfrac12\Delta x)\\,\Delta x^2}, \qquad A_{i,i} = -A_{i,i+1} - A_{i,i-1} + k_0^2\\,\varepsilon(x_i).$$
+$$A_{i,i+1} = \frac{1}{s_E(x_i)\,s_H(x_i + \tfrac12\Delta x)\,\Delta x^2}, \qquad A_{i,i} = -A_{i,i+1} - A_{i,i-1} + k_0^2\,\varepsilon(x_i).$$
 
 With proper face-centring the same 20-cell PML drops residual reflection to ~ 80 dB. The fix is one extra σ profile evaluated at the half-cell offset and is what `lessons/_shared/em.rlab` gets right.
 
@@ -136,7 +136,7 @@ print((max([sN_v, sS_v, sE_v, sW_v]) - min([sN_v, sS_v, sE_v, sW_v])) / mean([sN
 ```
 
 ```text
-0.00001905843137297354
+0.000000000000013302613204762732
 ```
 
 The hard-wall image shows the cavity's rectangular mode pattern — that is *not* the response of a free point source. The PML image shows nearly perfect radial symmetry (asymmetry $< 2\times10^{-5}$, dominated by the 5-point stencil's preference for axis-aligned propagation over diagonal). SC-PML is the workhorse that lets every later FDFD demo treat the computational box as if it extends to infinity.
@@ -147,15 +147,15 @@ The hard-wall image shows the cavity's rectangular mode pattern — that is *not
 
 A 1-D stratified medium — a stack of layers each with its own $\varepsilon(x)$ — is the simplest non-trivial geometry where FDFD shines. The TMz scalar reduces further to
 
-$$\frac{d^2 E_z}{dx^2} + k_0^2\\,\varepsilon(x)\\,E_z = -i\omega\mu_0\\,J_z(x),$$
+$$\frac{d^2 E_z}{dx^2} + k_0^2\,\varepsilon(x)\,E_z = -i\omega\mu_0\,J_z(x),$$
 
-and SC-PML on both ends absorbs outgoing waves cleanly. The classic application: a **quarter-wave anti-reflection (AR) coating**. Between vacuum (index $n_1 = 1$) and a substrate of index $n_2$, a thin layer of index $n_{\rm AR} = \sqrt{n_1\\,n_2}$ and thickness $t = \lambda_0/(4\\,n_{\rm AR})$ produces two reflections at the layer's interfaces with equal magnitude $|R_1| = |R_2| = (n_{\rm AR}-1)/(n_{\rm AR}+1)$ and a phase difference of $\pi$ for a round trip through the layer at the design frequency. The two reflections destructively interfere; total reflection $\to 0$.
+and SC-PML on both ends absorbs outgoing waves cleanly. The classic application: a **quarter-wave anti-reflection (AR) coating**. Between vacuum (index $n_1 = 1$) and a substrate of index $n_2$, a thin layer of index $n_{\rm AR} = \sqrt{n_1\,n_2}$ and thickness $t = \lambda_0/(4\,n_{\rm AR})$ produces two reflections at the layer's interfaces with equal magnitude $|R_1| = |R_2| = (n_{\rm AR}-1)/(n_{\rm AR}+1)$ and a phase difference of $\pi$ for a round trip through the layer at the design frequency. The two reflections destructively interfere; total reflection $\to 0$.
 
 A subtle but critical numerical point: the substrate must extend *all the way through the right-hand PML*. If the PML region is left as $\varepsilon = 1$ (vacuum) while the substrate ends at the PML inner edge, the substrate$\to$vacuum interface inside the simulation region introduces a full Fresnel reflection that swamps the AR coating's cancellation. SC-PML works only when the absorbing layer *matches* the medium it terminates.
 
 ### Example — Quarter-wave AR coating vs uncoated substrate
 
-Two side-by-side cases at $f_0 = 5\\,\text{GHz}$: vacuum on the left, then a quarter-wave AR layer ($\varepsilon_r = 2$, thickness $\lambda_0/(4\sqrt 2)$), then a substrate ($\varepsilon_r = 4$) extending into the right PML. Compare against the same geometry without the AR layer. Measure the standing-wave **ripple** $(\max|E|-\min|E|)/\langle|E|\rangle$ in the air region between source and slab — for perfect AR the wave there is a pure travelling +x wave with zero ripple.
+Two side-by-side cases at $f_0 = 5\,\text{GHz}$: vacuum on the left, then a quarter-wave AR layer ($\varepsilon_r = 2$, thickness $\lambda_0/(4\sqrt 2)$), then a substrate ($\varepsilon_r = 4$) extending into the right PML. Compare against the same geometry without the AR layer. Measure the standing-wave **ripple** $(\max|E|-\min|E|)/\langle|E|\rangle$ in the air region between source and slab — for perfect AR the wave there is a pure travelling +x wave with zero ripple.
 
 ```rustlab
 clf;
@@ -246,8 +246,8 @@ print(ripple_noAR)       % ~ 0.64 (Fresnel R = 1/3 → VSWR = 2)
 ```
 
 ```text
-0.009499538179510459
-0.6415618940874405
+0.009464189943461977
+0.6415815498947353
 ```
 
 ```rustlab
@@ -276,7 +276,7 @@ $$E_{\rm total} = E_{\rm inc} + E_{\rm scat}.$$
 
 Substituting into the Helmholtz equation and noting that $E_{\rm inc}$ satisfies the *background* (vacuum) Helmholtz exactly, the scattered field obeys
 
-$$\bigl(\nabla^2 + k_0^2\\,\varepsilon_{\rm total}\bigr)\\,E_{\rm scat} = -k_0^2\bigl(\varepsilon_{\rm total} - \varepsilon_{\rm bg}\bigr)\\,E_{\rm inc}.$$
+$$\bigl(\nabla^2 + k_0^2\,\varepsilon_{\rm total}\bigr)\,E_{\rm scat} = -k_0^2\bigl(\varepsilon_{\rm total} - \varepsilon_{\rm bg}\bigr)\,E_{\rm inc}.$$
 
 The right-hand side is non-zero only inside the scatterer — a **polarisation current** induced by the incident field. The operator on the left is the same SC-PML-stretched Helmholtz that the previous demos used; the only change is the source term. SC-PML on all four sides absorbs the outgoing $E_{\rm scat}$ cleanly, so the scattered field looks like radiation into free space — perfect for cross-section calculations and radar-like analyses.
 
@@ -346,11 +346,11 @@ The total-field shows the classic optical signatures: a bright **lit side** on t
 
 A rectangular cavity of size $a\times b$ with PEC (perfect electric conductor) walls supports a discrete spectrum of TMz modes:
 
-$$E_z^{(m,n)}(x,y) = E_0\\,\sin(m\pi x/a)\\,\sin(n\pi y/b), \qquad \omega_{mn} = c\\,\pi\\,\sqrt{(m/a)^2 + (n/b)^2}\\;\bigl(\\,m,\\,n \ge 1\bigr).$$
+$$E_z^{(m,n)}(x,y) = E_0\,\sin(m\pi x/a)\,\sin(n\pi y/b), \qquad \omega_{mn} = c\,\pi\,\sqrt{(m/a)^2 + (n/b)^2}\;\bigl(\,m,\,n \ge 1\bigr).$$
 
 Driving the cavity with a current source at off-modal-node frequency $\omega$ and reading $E_z$ at a different off-node point produces a Lorentzian peak at each $\omega_{mn}$ — height $\propto Q$, width $\propto 1/Q$, where the quality factor $Q$ is determined by losses (here, a small bulk loss tangent $\tan\delta$ that we plug into $\varepsilon = \varepsilon_r(1 - i\tan\delta)$). FDFD does this in one sparse solve per frequency.
 
-### Example — $0.10\\,\text{m}\times 0.075\\,\text{m}$ cavity, $\tan\delta = 0.005$
+### Example — $0.10\,\text{m}\times 0.075\,\text{m}$ cavity, $\tan\delta = 0.005$
 
 Sweep from 1 GHz to 4 GHz at 121 frequency points. The lowest five mode frequencies are 1.50, 2.00, 2.50, 3.00, 3.61 GHz — predicted by the analytic formula. The numerical sweep shows Lorentzian peaks at exactly those frequencies.
 
@@ -456,18 +456,18 @@ Run the lesson with `make lesson-10`, or one script at a time via `rustlab run l
 | 1-D AR ripple at $f_0$ | ~ 1 % (only the discretisation residual) |
 | 1-D no-AR ripple at $f_0$ | ~ 0.64 ($|R|=1/3$, VSWR $= 2$) |
 | 2-D PML symmetry error (cardinal sample points) | ~ $2\times10^{-5}$ |
-| Cavity TM$_{10}$ analytic frequency | $c/(2a) \approx 1.500\\,\text{GHz}$ |
-| Cavity TM$_{11}$ analytic frequency | $c/2\\,\sqrt{a^{-2}+b^{-2}} \approx 2.499\\,\text{GHz}$ |
+| Cavity TM$_{10}$ analytic frequency | $c/(2a) \approx 1.500\,\text{GHz}$ |
+| Cavity TM$_{11}$ analytic frequency | $c/2\,\sqrt{a^{-2}+b^{-2}} \approx 2.499\,\text{GHz}$ |
 | FDFD peak frequency offset (this grid) | ~ 0.1 % |
 | Cavity peak Q | $\approx 1/\tan\delta = 200$ |
 
 ## Exercises
 
-1. **Resolution sweep on the AR demo.** Re-run `fdfd_1d_layers` at $\Delta x = \lambda/20,\\,\lambda/40,\\,\lambda/80$. Verify the AR ripple drops as $\Delta x^2$ (centred-difference truncation), and that the frequency-sweep peak narrows toward an ideal Lorentzian.
+1. **Resolution sweep on the AR demo.** Re-run `fdfd_1d_layers` at $\Delta x = \lambda/20,\,\lambda/40,\,\lambda/80$. Verify the AR ripple drops as $\Delta x^2$ (centred-difference truncation), and that the frequency-sweep peak narrows toward an ideal Lorentzian.
 2. **Bragg reflector.** Replace the AR layer with $N$ pairs of alternating ε layers (high index $\varepsilon_H$ + low index $\varepsilon_L$, each $\lambda/(4n)$ thick). Sweep frequency and verify the **stop band** centred on $f_0$ where transmission is exponentially suppressed in $N$. This is the basis of every dielectric mirror, from cheap laser pointers to telescope coatings.
 3. **PEC cylinder.** In `fdfd_2d_tmz`, replace the dielectric cylinder with a perfect electric conductor — set $\varepsilon_r$ inside the disk to a large negative imaginary number (e.g., $\varepsilon_r = 1 - 10^4 j$) so the wave decays evanescently inside. Compare the scattered field to the dielectric case.
 4. **Cavity Q from the sweep.** Fit a Lorentzian to the TM$_{11}$ peak in `fdfd_resonator`. Extract $Q$ from the FWHM and verify $Q \approx 1/\tan\delta$ (here, $\sim 200$).
-5. **Loaded cavity.** Place a small dielectric perturbation ($\varepsilon_r = 4$, radius $0.05a$) at one corner of the cavity and re-run the sweep. Identify the frequency shift on each mode and check it against first-order perturbation theory: $\Delta\omega/\omega = -\tfrac12\int_{\rm pert}(\varepsilon-1)|E|^2\\,dV / \int|E|^2\\,dV$.
+5. **Loaded cavity.** Place a small dielectric perturbation ($\varepsilon_r = 4$, radius $0.05a$) at one corner of the cavity and re-run the sweep. Identify the frequency shift on each mode and check it against first-order perturbation theory: $\Delta\omega/\omega = -\tfrac12\int_{\rm pert}(\varepsilon-1)|E|^2\,dV / \int|E|^2\,dV$.
 
 ## What's next
 

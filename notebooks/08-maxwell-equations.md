@@ -257,15 +257,12 @@ ys_c = linspace(-1.2 * b_out, 1.2 * b_out, N_co);
 [Xc, Yc] = meshgrid(xs_c, ys_c);
 Rc = sqrt(Xc .* Xc + Yc .* Yc);
 
-Sz = zeros(N_co, N_co);
-for i = 1:N_co
-  for j = 1:N_co
-    r = Rc(i, j);
-    if r >= a_in && r <= b_out
-      Sz(i, j) = V_co * I_co / (2 * pi * r * r * log(b_out / a_in));
-    end
-  end
-end
+% Vectorised annulus mask via disk_mask difference, plus safe divide.
+inner_c = disk_mask(Xc, Yc, 0, 0, a_in);
+outer_c = disk_mask(Xc, Yc, 0, 0, b_out);
+ann_c   = outer_c - inner_c;
+Rc_safe = Rc + (1 - ann_c);
+Sz = ann_c * (V_co * I_co / (2 * pi * log(b_out / a_in))) ./ (Rc_safe .^ 2);
 
 imagesc(Sz, "viridis");
 title("S_z(x, y) in the coax dielectric  (W/m²)");

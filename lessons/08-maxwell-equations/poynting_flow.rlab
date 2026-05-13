@@ -37,17 +37,15 @@ ys = linspace(-1.2 * b, 1.2 * b, N);
 [Xg, Yg] = meshgrid(xs, ys);
 Rg = sqrt(Xg .* Xg + Yg .* Yg);
 
-# Pre-allocate; fill only the dielectric annulus to avoid singular 1/r
-# at the origin and to suppress noise outside the cable.
-Sz = zeros(N, N);
-for i = 1:N
-  for j = 1:N
-    r = Rg(i, j);
-    if r >= a && r <= b
-      Sz(i, j) = V * Iax / (2 * pi * r * r * log(b / a));
-    end
-  end
-end
+# Vectorised: build the dielectric annulus as a (b-disk) − (a-disk)
+# rasterisation and divide by Rg² safely outside it. The `+ (1-ann)`
+# trick replaces zeros in Rg² with ones so the off-annulus cells
+# never form a 0/0 and the mask zeros them out cleanly anyway.
+inner = disk_mask(Xg, Yg, 0, 0, a);
+outer = disk_mask(Xg, Yg, 0, 0, b);
+ann   = outer - inner;
+Rg_safe = Rg + (1 - ann);
+Sz = ann * (V * Iax / (2 * pi * log(b / a))) ./ (Rg_safe .^ 2);
 
 figure();
 imagesc(Sz, "viridis");

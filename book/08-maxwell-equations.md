@@ -2,7 +2,7 @@
 
 # Lesson 08: Maxwell's Equations — The Complete Set
 
-The first seven lessons assembled the four laws of classical electromagnetism one at a time: Coulomb (Lesson 02) gave $\nabla\cdot\vec E = \rho/\varepsilon_0$, Gauss for magnetism (Lesson 06) gave $\nabla\cdot\vec B = 0$, Faraday (Lesson 07) gave $\nabla\times\vec E = -\partial\vec B/\partial t$, and Ampère (Lesson 06) — *uncorrected* — gave $\nabla\times\vec B = \mu_0\vec J$. That last one is wrong, in a quietly catastrophic way: it is inconsistent with charge conservation the moment $\rho$ varies in time. Maxwell's fix was to add a single term — the **displacement current** $\mu_0\varepsilon_0\\,\partial\vec E/\partial t$ — to Ampère's law. Once that term is in place the four equations become self-consistent, predict electromagnetic waves, and admit a clean energy-conservation theorem (Poynting's). This lesson verifies all three of those statements numerically.
+The first seven lessons assembled the four laws of classical electromagnetism one at a time: Coulomb (Lesson 02) gave $\nabla\cdot\vec E = \rho/\varepsilon_0$, Gauss for magnetism (Lesson 06) gave $\nabla\cdot\vec B = 0$, Faraday (Lesson 07) gave $\nabla\times\vec E = -\partial\vec B/\partial t$, and Ampère (Lesson 06) — *uncorrected* — gave $\nabla\times\vec B = \mu_0\vec J$. That last one is wrong, in a quietly catastrophic way: it is inconsistent with charge conservation the moment $\rho$ varies in time. Maxwell's fix was to add a single term — the **displacement current** $\mu_0\varepsilon_0\,\partial\vec E/\partial t$ — to Ampère's law. Once that term is in place the four equations become self-consistent, predict electromagnetic waves, and admit a clean energy-conservation theorem (Poynting's). This lesson verifies all three of those statements numerically.
 
 ## Learning Objectives
 
@@ -20,20 +20,20 @@ Lessons 01 (curl, divergence theorem), 02–03 (Gauss's law, $\vec E$, $V$), 06 
 The differential form of Maxwell's equations, in SI units, in a medium with permittivity $\varepsilon$, permeability $\mu$, free charge density $\rho$, and free current density $\vec J$:
 
 $$
-\boxed{\\;\\;
+\boxed{\;\;
 \begin{aligned}
 \nabla\cdot\vec D &= \rho        & \quad\text{(Gauss for }\vec E\text{)}\\
 \nabla\cdot\vec B &= 0           & \quad\text{(Gauss for }\vec B\text{)}\\
 \nabla\times\vec E &= -\frac{\partial\vec B}{\partial t} & \quad\text{(Faraday)}\\
 \nabla\times\vec H &= \vec J + \frac{\partial\vec D}{\partial t} & \quad\text{(Ampère–Maxwell)}
-\end{aligned}\\;\\;}
+\end{aligned}\;\;}
 $$
 
 with the constitutive relations $\vec D = \varepsilon\vec E$ and $\vec B = \mu\vec H$ (linear, isotropic, dispersionless materials). In vacuum $\varepsilon = \varepsilon_0$, $\mu = \mu_0$, and the integral form follows from the divergence theorem and Stokes' theorem applied to each:
 
 $$
 \oint_{\partial V}\vec D\cdot d\vec A = Q_{\rm enc}, \qquad
-\oint_C \vec H\cdot d\vec\ell = I_{\rm enc} + \frac{d}{dt}\\!\int_S \vec D\cdot d\vec A.
+\oint_C \vec H\cdot d\vec\ell = I_{\rm enc} + \frac{d}{dt}\!\int_S \vec D\cdot d\vec A.
 $$
 
 The single new piece relative to the static (Lessons 02, 06) and the slow-time (Lesson 07) curricula is the displacement current $\partial\vec D/\partial t$ in Ampère's law. Two lines of algebra show why it must be there.
@@ -52,7 +52,7 @@ The cleanest way to see this is to think about the two Ampère-law surfaces one 
 
 ### Example — Sinusoidally driven capacitor
 
-Drive a parallel-plate capacitor (plate area $A = 1\\,\text{cm}^2$, gap $d = 1\\,\text{mm}$) with $I(t) = I_0\cos(\omega t)$, $I_0 = 1\\,\text{mA}$, $f = 1\\,\text{MHz}$. The accumulated charge is $Q(t) = (I_0/\omega)\sin(\omega t)$, and the gap field is $E(t) = Q(t)/(A\varepsilon_0)$. Compute the displacement current $I_{\rm disp}(t) = \varepsilon_0 A\\,\partial E/\partial t$ and overlay it on the conduction current $I(t)$ — they must coincide at every instant.
+Drive a parallel-plate capacitor (plate area $A = 1\,\text{cm}^2$, gap $d = 1\,\text{mm}$) with $I(t) = I_0\cos(\omega t)$, $I_0 = 1\,\text{mA}$, $f = 1\,\text{MHz}$. The accumulated charge is $Q(t) = (I_0/\omega)\sin(\omega t)$, and the gap field is $E(t) = Q(t)/(A\varepsilon_0)$. Compute the displacement current $I_{\rm disp}(t) = \varepsilon_0 A\,\partial E/\partial t$ and overlay it on the conduction current $I(t)$ — they must coincide at every instant.
 
 ```rustlab
 clf;
@@ -140,7 +140,7 @@ legend("I_cond", "I_disp", "I_total")
 
 ![plot 2](plots/08-maxwell-equations/plot-2.svg)
 
-The total-current trace is a horizontal line at $1\\,\text{mA}$ across the entire stack — wire, gap, wire — independent of $z$. That horizontal line is what Ampère's law sees no matter which surface is attached to a loop around the circuit.
+The total-current trace is a horizontal line at $1\,\text{mA}$ across the entire stack — wire, gap, wire — independent of $z$. That horizontal line is what Ampère's law sees no matter which surface is attached to a loop around the circuit.
 
 ## Maxwell's Equations as a Closed System
 
@@ -149,22 +149,22 @@ The total-current trace is a horizontal line at $1\\,\text{mA}$ across the entir
 With the displacement current in place, the four equations form a closed first-order system in $\vec E$ and $\vec B$:
 
 $$
-\nabla\cdot\vec E = \rho/\varepsilon_0, \quad \nabla\cdot\vec B = 0, \quad \nabla\times\vec E = -\partial_t\vec B, \quad \nabla\times\vec B = \mu_0\vec J + \mu_0\varepsilon_0\\,\partial_t\vec E.
+\nabla\cdot\vec E = \rho/\varepsilon_0, \quad \nabla\cdot\vec B = 0, \quad \nabla\times\vec E = -\partial_t\vec B, \quad \nabla\times\vec B = \mu_0\vec J + \mu_0\varepsilon_0\,\partial_t\vec E.
 $$
 
 Two consequences fall out immediately. First, in source-free regions ($\rho = 0$, $\vec J = 0$) every Cartesian component of $\vec E$ and $\vec B$ satisfies the **wave equation**:
 
-$$\nabla^2\vec E - \mu_0\varepsilon_0\\,\frac{\partial^2\vec E}{\partial t^2} = 0,$$
+$$\nabla^2\vec E - \mu_0\varepsilon_0\,\frac{\partial^2\vec E}{\partial t^2} = 0,$$
 
-with phase speed $c = 1/\sqrt{\mu_0\varepsilon_0} \approx 2.998\times10^8\\,\text{m/s}$. Lesson 09 picks the wave equation up from here. Second, the simplest non-trivial solution is the linearly polarised plane wave
+with phase speed $c = 1/\sqrt{\mu_0\varepsilon_0} \approx 2.998\times10^8\,\text{m/s}$. Lesson 09 picks the wave equation up from here. Second, the simplest non-trivial solution is the linearly polarised plane wave
 
-$$\vec E(\vec r, t) = E_0\\,\hat y\cos(k x - \omega t), \qquad \vec B(\vec r, t) = (E_0/c)\\,\hat z\cos(k x - \omega t),\qquad \omega = c k.$$
+$$\vec E(\vec r, t) = E_0\,\hat y\cos(k x - \omega t), \qquad \vec B(\vec r, t) = (E_0/c)\,\hat z\cos(k x - \omega t),\qquad \omega = c k.$$
 
 The two transverse components $E_y$ and $B_z$ are tied together: $\vec E\perp\vec B\perp\hat k$, $|E|/|B| = c$, and the two cosines share a phase. Substituting into the four Maxwell equations one verifies they are exactly satisfied. We do that *numerically* below by sampling the analytic solution on a discrete grid and computing the residual of each equation with centred differences — the residuals must vanish in the continuum limit, with second-order convergence.
 
 ### Example — Plane wave on an (x, t) grid
 
-Build $E_y(x,t)$ and $B_z(x,t)$ on a 2-D grid covering one wavelength × one period, and compute $\partial/\partial x$ and $\partial/\partial t$ with `gradient`. The two non-trivial residuals (Faraday's $\partial E_y/\partial x + \partial B_z/\partial t$ and Ampère's $-\partial B_z/\partial x - \mu_0\varepsilon_0\\,\partial E_y/\partial t$) should be small *and* of equal size — indeed they are, because the plane-wave dispersion relation $\omega = c k$ makes the truncation errors of the two equations identical at every grid point.
+Build $E_y(x,t)$ and $B_z(x,t)$ on a 2-D grid covering one wavelength × one period, and compute $\partial/\partial x$ and $\partial/\partial t$ with `gradient`. The two non-trivial residuals (Faraday's $\partial E_y/\partial x + \partial B_z/\partial t$ and Ampère's $-\partial B_z/\partial x - \mu_0\varepsilon_0\,\partial E_y/\partial t$) should be small *and* of equal size — indeed they are, because the plane-wave dispersion relation $\omega = c k$ makes the truncation errors of the two equations identical at every grid point.
 
 ```rustlab
 clf;
@@ -249,17 +249,17 @@ The interpretation is local energy conservation: the energy density $u$ in a reg
 
 The textbook example that first drove the point home historically is the **DC coaxial cable**: even at DC, where there is no time variation at all, energy flows from the source to the load through the *dielectric* between the conductors, not through the wires. The integrated Poynting flux through any cross-section of the dielectric annulus equals the circuit power $V I$. Setting up the geometry as inner radius $a$, outer radius $b$, voltage $V$ between conductors, current $I$ down the axis,
 
-$$\vec E = \frac{V}{r\ln(b/a)}\\,\hat r, \qquad \vec H = \frac{I}{2\pi r}\\,\hat\varphi, \qquad \vec S = \frac{V I}{2\pi r^2\ln(b/a)}\\,\hat z.$$
+$$\vec E = \frac{V}{r\ln(b/a)}\,\hat r, \qquad \vec H = \frac{I}{2\pi r}\,\hat\varphi, \qquad \vec S = \frac{V I}{2\pi r^2\ln(b/a)}\,\hat z.$$
 
 The integrated flux through any annular slice $a < r < b$ is
 
-$$\int_a^b S_z(r)\\,2\pi r\\,dr = \frac{V I}{\ln(b/a)}\int_a^b \frac{dr}{r} = V I,$$
+$$\int_a^b S_z(r)\,2\pi r\,dr = \frac{V I}{\ln(b/a)}\int_a^b \frac{dr}{r} = V I,$$
 
 independent of where along the cable we slice. The energy is delivered from source to load by the field in the dielectric; the wires only *guide* the field. (Inside a real, non-superconducting wire there is a small inward radial $\vec S$ that feeds the resistive loss $I^2R$; in a perfect conductor that piece vanishes and 100% of the flux runs in the dielectric.)
 
 ### Example — Coaxial cable carrying DC power
 
-Inner radius $a = 1\\,\text{mm}$, outer $b = 4\\,\text{mm}$, $V = 10\\,\text{V}$, $I = 1\\,\text{A}$. Predicted circuit power: $V I = 10\\,\text{W}$. Compute $S_z(r)$ and check the integrated flux to a few parts per million.
+Inner radius $a = 1\,\text{mm}$, outer $b = 4\,\text{mm}$, $V = 10\,\text{V}$, $I = 1\,\text{A}$. Predicted circuit power: $V I = 10\,\text{W}$. Compute $S_z(r)$ and check the integrated flux to a few parts per million.
 
 ```rustlab
 clf;
@@ -276,15 +276,12 @@ ys_c = linspace(-1.2 * b_out, 1.2 * b_out, N_co);
 [Xc, Yc] = meshgrid(xs_c, ys_c);
 Rc = sqrt(Xc .* Xc + Yc .* Yc);
 
-Sz = zeros(N_co, N_co);
-for i = 1:N_co
-  for j = 1:N_co
-    r = Rc(i, j);
-    if r >= a_in && r <= b_out
-      Sz(i, j) = V_co * I_co / (2 * pi * r * r * log(b_out / a_in));
-    end
-  end
-end
+% Vectorised annulus mask via disk_mask difference, plus safe divide.
+inner_c = disk_mask(Xc, Yc, 0, 0, a_in);
+outer_c = disk_mask(Xc, Yc, 0, 0, b_out);
+ann_c   = outer_c - inner_c;
+Rc_safe = Rc + (1 - ann_c);
+Sz = ann_c * (V_co * I_co / (2 * pi * log(b_out / a_in))) ./ (Rc_safe .^ 2);
 
 imagesc(Sz, "viridis");
 title("S_z(x, y) in the coax dielectric  (W/m²)");
@@ -334,12 +331,12 @@ Run all three with `make lesson-08`, or one at a time via `rustlab run lessons/0
 
 | Quantity | Expected Value |
 |---|---|
-| Capacitor capacitance ($A=1\\,\text{cm}^2$, $d=1\\,\text{mm}$) | $\varepsilon_0 A/d \approx 8.85\times10^{-13}\\,\text{F}$ |
-| $\max\\|I_{\rm wire}-I_{\rm disp}\\|/I_0$ at $N_t = 401$, $f = 1\\,\text{MHz}$ | $\sim 1.6\times10^{-4}$ (truncation only) |
+| Capacitor capacitance ($A=1\,\text{cm}^2$, $d=1\,\text{mm}$) | $\varepsilon_0 A/d \approx 8.85\times10^{-13}\,\text{F}$ |
+| $\max\|I_{\rm wire}-I_{\rm disp}\|/I_0$ at $N_t = 401$, $f = 1\,\text{MHz}$ | $\sim 1.6\times10^{-4}$ (truncation only) |
 | Faraday residual / peak at $N = 81$ | $\sim 3\times10^{-3}$ |
 | Ampère residual / peak at $N = 81$ | identical to Faraday (plane-wave dispersion ties them) |
 | Convergence ratio $N \to 2N$ | $\approx 4$ (second-order centred differences) |
-| Coax integrated Poynting flux ($V=10\\,\text{V}$, $I=1\\,\text{A}$) | $V I = 10\\,\text{W}$ |
+| Coax integrated Poynting flux ($V=10\,\text{V}$, $I=1\,\text{A}$) | $V I = 10\,\text{W}$ |
 | Numerical $P_{\rm int}$ vs $V I$ | $\sim 3\times10^{-6}$ relative error at $N_r = 401$ |
 
 ## Exercises
@@ -347,10 +344,10 @@ Run all three with `make lesson-08`, or one at a time via `rustlab run lessons/0
 1. **Bare Ampère breaks down.** Re-run the capacitor example but compute only the conduction-current Ampère integral on a loop that links the wire — ignore the displacement current entirely. Show that the same loop, with a second surface drawn through the gap, gives zero enclosed current. Conclude that without $\partial\vec D/\partial t$ there is no consistent definition of "the current through this loop."
 2. **Sourceless Maxwell residuals as a stencil benchmark.** In `maxwell_consistency.rlab` replace the analytic plane wave with a *standing* wave $E_y(x,t) = E_0\sin(k x)\cos(\omega t)$, $B_z = -(E_0/c)\cos(k x)\sin(\omega t)$. Verify the Faraday and Ampère residuals still vanish to truncation order, and that the standing wave is just the superposition of two counter-propagating plane waves.
 3. **Energy conservation along the cable.** Cut the coaxial cable's dielectric into thin axial slabs; compute $\partial u/\partial t$ in each (zero, since DC) and the difference of $\int\vec S\cdot d\vec A$ on the two end caps. Verify the difference is zero — Poynting's theorem at DC reduces to $\nabla\cdot\vec S = 0$ in the dielectric.
-4. **Lossy coax.** Add a small uniform conductivity $\sigma_d$ to the dielectric. Compute $\int\vec J\cdot\vec E\\,dV$ in the annulus and verify it equals the *difference* between the input-end and output-end Poynting fluxes — the missing power dissipates as heat. (Numerical: pick $\sigma_d$ small enough that $E_r$ and $H_\varphi$ are still well approximated by their lossless forms, and integrate over a finite cable length.)
+4. **Lossy coax.** Add a small uniform conductivity $\sigma_d$ to the dielectric. Compute $\int\vec J\cdot\vec E\,dV$ in the annulus and verify it equals the *difference* between the input-end and output-end Poynting fluxes — the missing power dissipates as heat. (Numerical: pick $\sigma_d$ small enough that $E_r$ and $H_\varphi$ are still well approximated by their lossless forms, and integrate over a finite cable length.)
 5. **Wave on a 2-D grid.** Build the same plane wave but on a 2-D $(x,y)$ snapshot at a fixed $t$, with $E_y(x,y) = E_0\cos(k_x x + k_y y)$ and propagation direction $\hat k = (k_x, k_y)/k$. Verify $\vec E\perp\vec k$ and $\vec B = \hat k\times\vec E/c$ component by component; then add a second plane wave with the *opposite* $\hat k$ and confirm the result is a 2-D standing wave with stationary nodal lines.
 
 ## What's next
 
-Lesson 09 takes the curl-curl elimination one step further: $\nabla\times(\nabla\times\vec E) = -\partial_t\nabla\times\vec B$ feeds directly into the vector wave equation $\nabla^2\vec E = \mu_0\varepsilon_0\\,\partial_t^2\vec E$ in source-free regions. Plane waves, polarisation states, dispersion relations in matter, and reflection from a perfect conductor all live there. The displacement-current term and the Poynting flux from this lesson are the two pieces of physics those derivations rest on; from Lesson 10 on, every full-wave solver discretises the same four equations on a Yee grid and time-steps them by the same logic we used here.
+Lesson 09 takes the curl-curl elimination one step further: $\nabla\times(\nabla\times\vec E) = -\partial_t\nabla\times\vec B$ feeds directly into the vector wave equation $\nabla^2\vec E = \mu_0\varepsilon_0\,\partial_t^2\vec E$ in source-free regions. Plane waves, polarisation states, dispersion relations in matter, and reflection from a perfect conductor all live there. The displacement-current term and the Poynting flux from this lesson are the two pieces of physics those derivations rest on; from Lesson 10 on, every full-wave solver discretises the same four equations on a Yee grid and time-steps them by the same logic we used here.
 
