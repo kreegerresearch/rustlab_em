@@ -304,8 +304,10 @@ Comparing the source frequency to the plasma frequency tells the story: at $f_{\
 | `fdtd_1d.rlab` | 1-D Yee FDTD pulse; vacuum + dielectric slab; animated; probes for $|t_1 t_2|$ verification |
 | `fdtd_2d_scattering.rlab` | 2-D TMz; CW line source + PEC cylinder; animated; bulk-loss absorbing strips |
 | `fdtd_dispersive.rlab` | 1-D ADE for Drude film; trapezoidal-stable $J_p$ update; FFT-based rough transmission spectrum |
+| `fdtd_tfsf_validation.rlab` | TF/SF plane-wave injection with auxiliary 1-D grid; $\|E_z\|$ outside TF box stays at machine zero ($\sim 10^{-15}$) |
+| `fdtd_pml_depth.rlab` | Bérenger split-field PML on a 2-D vacuum grid; residual reflection vs PML depth $d \in \{4, 8, 16\}$ |
 
-Run all three with `make lesson-11`, or one script at a time via `rustlab run lessons/11-fdtd-simulation/<name>.rlab`.
+Run all five with `make lesson-11`, or one script at a time via `rustlab run lessons/11-fdtd-simulation/<name>.rlab`.
 
 ## Expected Numerical Outputs Summary
 
@@ -320,8 +322,8 @@ Run all three with `make lesson-11`, or one script at a time via `rustlab run le
 ## Exercises
 
 1. **Per-cell Yee timing.** Rewrite the vectorised 2-D Yee step as nested `for i, for j` loops (one per field component), run the same number of steps, and time both versions. The per-cell form is more transparent to the textbook update equations; the vectorised form runs roughly an order of magnitude faster in interpreted rustlab.
-2. **TF/SF zero-leak validation.** A correct total-field / scattered-field source emits the analytic incident plane wave *inside* the TF box and *zero field* outside. Build a 60×60 vacuum grid, draw a 30×30 TF box, drive its four faces with the analytic incident field at $f_0 = 1$ GHz, and verify $|E_z|$ outside the box stays below $10^{-10}$.
-3. **PML depth sweep.** Replace the bulk-loss absorbing strips in `fdtd_2d_scattering` with a proper Bérenger split-field PML of varying thickness $d \in \{4, 8, 16\}$ cells. Measure the residual reflection at a corner probe and verify the exponential improvement with $d$.
+2. **TF/SF leak under broken corrections.** `fdtd_tfsf_validation.rlab` already passes the machine-zero leak test by driving the four TF/SF faces from an auxiliary 1-D Yee grid. Replace the auxiliary by an *analytic* incident-field accessor (`g_inc(t − x/c)`) and rerun: the leak should jump from $\sim 10^{-15}$ to a few $\times 10^{-3}$ — that's pure numerical-dispersion residual, the standard motivation for the auxiliary-grid trick.
+3. **PML reflection at oblique angles.** `fdtd_pml_depth.rlab` measures the residual reflection from a centred point source — equal weighting of all incidence angles. Modify it to use a directional plane-wave TF/SF source (re-using `fdtd_tfsf_validation.rlab`) and sweep the angle of incidence. Verify that the PML still suppresses reflections at grazing angles, just with a worse coefficient than at normal incidence.
 4. **Above-$\omega_p$ Drude.** Change the source frequency in `fdtd_dispersive.rlab` to $f_{\rm src} = 5\,\text{GHz}$ ($> f_p$) and observe that the transmission ratio jumps from $\sim 0.2$ to near unity — the metal becomes a window.
 5. **Slab Fabry-Perot.** In `fdtd_1d`, place a probe inside the slab ($k = 400$, halfway through). Plot its trace. Identify the etalon bounces as multiple regularly-spaced echoes, and fit their spacing to $2 n_2 d_{\rm slab}/c_0$.
 

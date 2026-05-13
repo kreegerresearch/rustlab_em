@@ -1,0 +1,64 @@
+# dipole_standing_wave.rlab — Standing-wave current on a centre-fed
+# dipole, derived as an open-ended transmission-line stub.
+#
+# Treating the two arms of a dipole as an open-ended TL stub: incident
+# current at the feed reflects at z = ±L/2 with Γ = +1 (open). The
+# steady-state superposition is a standing wave whose nodes sit at the
+# open ends:
+#   I(z) = I₀ sin[k(L/2 - |z|)],  -L/2 ≤ z ≤ +L/2
+# Special cases:
+#   L = λ/2:  k(L/2 - |z|) = π/2 - k|z|  →  I(z) = I₀ cos(kz)   (textbook)
+#   L = λ:    a standing-wave pattern with a node at the feed (z = 0)
+#             — pathological feed impedance; rarely used directly
+#   L → 0:    I(z) → I₀ k(L/2 - |z|) — triangular profile of the
+#             short ("Hertzian-with-physical-current") dipole
+#
+# This script plots the analytic standing-wave current for several L/λ
+# values and confirms the L = λ/2 case reduces to cos(kz) to machine
+# precision. Lesson 13's radiation_resistance.rlab integrates the far
+# field produced by this current to recover R_rad.
+#
+# Reference: ../../notebooks/13-transmission-lines-and-antennas.md.
+
+I0       = 1.0;
+lambda   = 1.0;                  # work in normalised λ = 1 throughout
+k        = 2 * pi / lambda;
+N_z      = 401;
+
+# === Sweep of L/λ ratios ===
+ratios  = [0.1, 0.3, 0.5, 0.7, 1.0];
+N_r     = length(ratios);
+
+figure();
+hold on;
+for kr = 1:N_r
+  L_dip = ratios(kr) * lambda;
+  zs    = linspace(-L_dip / 2, L_dip / 2, N_z);
+  I_std = I0 * sin(k * (L_dip / 2 - abs(zs)));
+  plot(zs / lambda, real(I_std));
+end
+hold off;
+xlabel("z / lambda");
+ylabel("I(z) / I_0");
+title("Centre-fed dipole standing-wave current  I(z) = I_0 sin[k(L/2 - |z|)]");
+legend("L/λ = 0.1", "L/λ = 0.3", "L/λ = 0.5", "L/λ = 0.7", "L/λ = 1.0");
+savefig("dipole_standing_currents.svg");
+
+# === Numerical check: L = λ/2 must equal cos(kz) ===
+L_half = 0.5 * lambda;
+zs_h   = linspace(-L_half / 2, L_half / 2, N_z);
+I_num  = I0 * sin(k * (L_half / 2 - abs(zs_h)));
+I_cos  = I0 * cos(k * zs_h);
+err    = max(abs(real(I_num) - real(I_cos)));
+print(err)                       # should be ≤ 1e-15
+
+# === Feed-point current magnitude vs L/λ ===
+# I(0) = I_0 sin(k L/2). Zero at L = λ (sin π = 0); peak at L = λ/2.
+ratios_fine = linspace(0.01, 2.0, 200);
+I_feed      = abs(I0 * sin(k * ratios_fine * lambda / 2));
+figure();
+plot(ratios_fine, real(I_feed), "|I(0)| / I_0");
+xlabel("L / lambda");
+ylabel("|I(z = 0)| / I_0");
+title("Feed-point current vs dipole length — zero at L = lambda");
+savefig("dipole_feed_current.svg");

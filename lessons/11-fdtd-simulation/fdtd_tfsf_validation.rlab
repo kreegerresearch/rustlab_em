@@ -1,0 +1,172 @@
+# fdtd_tfsf_validation.rlab — Total-field/scattered-field (TF/SF)
+# plane-wave injection sanity test in 2-D vacuum.
+#
+# A correct TF/SF source emits the analytic incident plane wave
+# *inside* a closed TF box and *zero* field outside. With no scatterer
+# inside the box, the scattered field is identically zero everywhere
+# and |E_z| outside the box should remain at machine-noise precision.
+#
+# Geometry (2-D TMz, +x-propagating plane wave):
+#   60 × 60 vacuum grid; TF box [i_lo..i_hi] × [j_lo..j_hi].
+#   Incident:  E_z^inc(x, t) = g(t − x/c),
+#              H_y^inc(x, t) = g(t − x/c) / η_0,
+#              H_x^inc = 0
+#   g(t) = exp(−((t − t0)/τ)²) cos(2π f_0 (t − t0))   (modulated Gaussian)
+#
+# TF/SF correction (Taflove convention). After the standard Yee step,
+# update field components that straddle the TF/SF boundary so they only
+# "see" the field type appropriate to their side:
+#   left   (j = j_lo):     E_z(i, j_lo)     -= K_E · H_y^inc(j_lo − 1/2, t^{n+1/2})
+#                          H_y(i, j_lo − 1) -= K_H · E_z^inc(j_lo, t^{n+1})
+#   right  (j = j_hi):     E_z(i, j_hi)     += K_E · H_y^inc(j_hi + 1/2, t^{n+1/2})
+#                          H_y(i, j_hi)     += K_H · E_z^inc(j_hi, t^{n+1})
+# For H_x corrections on top/bottom faces, H_x^inc = 0 for a +x wave
+# so those terms vanish — only the bookkeeping has to follow the wave.
+#
+# Reference: ../../notebooks/11-fdtd-simulation.md.
+
+mu0  = 4 * pi * 1e-7;
+eps0 = 8.854187817e-12;
+c0   = 1 / sqrt(mu0 * eps0);
+eta0 = sqrt(mu0 / eps0);
+
+# === Grid ===
+nx = 60;
+ny = 60;
+dx = 5e-3;
+dy = dx;
+# Magic time step (S = 1) along the propagation direction: zero
+# numerical dispersion for the +x wave, so TF/SF cancellation is exact
+# to round-off. Use S = 1/√2 for full 2-D stability margin.
+S_cfl = 1 / sqrt(2);
+dt    = S_cfl * dx / c0;
+n_step = 600;
+
+# === TF box (1-indexed cells; 30×30 centred) ===
+i_lo = 16; i_hi = 45;
+j_lo = 16; j_hi = 45;
+
+# === Source ===
+f0     = 1e9;
+omega  = 2 * pi * f0;
+t0     = 50 * dt;
+tau    = 14 * dt;
+E0     = 1.0;
+
+# === Fields ===
+Ez = zeros(ny, nx);
+Hx = zeros(ny, nx);
+Hy = zeros(ny, nx);
+
+# === Update coefficients ===
+K_E = dt / (eps0 * dx);
+K_H = dt / (mu0  * dx);
+
+# === Incident-field source (analytic time-domain envelope) ===
+function v = g_src(t)
+  f0   = 1e9;
+  mu0_ = 4 * pi * 1e-7;
+  eps0_ = 8.854187817e-12;
+  c0_   = 1 / sqrt(mu0_ * eps0_);
+  dt_   = (1 / sqrt(2)) * 5e-3 / c0_;
+  t0    = 50 * dt_;
+  tau   = 14 * dt_;
+  v     = exp(-((t - t0) / tau) .^ 2) .* cos(2 * pi * f0 * (t - t0));
+end
+
+# === Auxiliary 1-D FDTD ===
+# To suppress numerical-dispersion leakage at the TF/SF boundary we
+# generate the "incident" field on a 1-D Yee grid that shares the 2-D
+# grid's dx and dt. The 1-D scheme's numerical dispersion exactly
+# matches the 2-D scheme's dispersion for the +x plane wave, so the
+# TF/SF corrections cancel to machine precision. The 1-D grid is
+# co-indexed with the 2-D grid in j, with a hard E_z source at
+# j = j_src_aux = j_lo − 3 (a few cells of buffer before the box).
+j_src_aux = j_lo - 3;
+Ez_aux = zeros(nx);                 # 1-D E_z, indexed by j like 2-D
+Hy_aux = zeros(nx);                 # Hy_aux(j) is at half-cell j + 1/2
+
+# === Probes outside the TF box (should remain at machine zero) ===
+i_p_top    = i_hi + 6; j_p_top = round(0.5 * nx);
+i_p_bot    = i_lo - 6; j_p_bot = round(0.5 * nx);
+i_p_right  = round(0.5 * ny); j_p_right = j_hi + 6;
+i_p_left   = round(0.5 * ny); j_p_left  = j_lo - 6;
+
+E_top_max = 0;
+E_bot_max = 0;
+E_right_max = 0;
+E_left_max  = 0;
+
+# Sample a TF point in the centre of the box — should track the
+# analytic incident wave.
+i_tf = round((i_lo + i_hi) / 2);
+j_tf = round((j_lo + j_hi) / 2);
+E_tf_trace  = zeros(n_step);
+E_tf_inc    = zeros(n_step);
+
+for step = 1:n_step
+  # ---- Phase 1: H update (main + aux), then H corrections ----
+  # Both updates read E at t^n. Run them in parallel; THEN apply
+  # corrections that use Ez_aux at t^n (still the current value).
+  Hy_aux(1:nx-1) = Hy_aux(1:nx-1) + K_H * (Ez_aux(2:nx) - Ez_aux(1:nx-1));
+  Hx(1:ny-1, :)  = Hx(1:ny-1, :)  - K_H * (Ez(2:ny, :)   - Ez(1:ny-1, :));
+  Hy(:, 1:nx-1)  = Hy(:, 1:nx-1)  + K_H * (Ez(:, 2:nx)   - Ez(:, 1:nx-1));
+
+  # TF/SF corrections on H components (need Ez_aux at t^n).
+  Hy(i_lo:i_hi, j_lo - 1) = Hy(i_lo:i_hi, j_lo - 1) - K_H * Ez_aux(j_lo);
+  Hy(i_lo:i_hi, j_hi)     = Hy(i_lo:i_hi, j_hi)     + K_H * Ez_aux(j_hi);
+  Hx(i_lo - 1, j_lo:j_hi) = Hx(i_lo - 1, j_lo:j_hi) + K_H * Ez_aux(j_lo:j_hi);
+  Hx(i_hi,     j_lo:j_hi) = Hx(i_hi,     j_lo:j_hi) - K_H * Ez_aux(j_lo:j_hi);
+
+  # ---- Phase 2: E update (main + aux), then E corrections ----
+  Ez_aux(2:nx-1)     = Ez_aux(2:nx-1)     + K_E * (Hy_aux(2:nx-1) - Hy_aux(1:nx-2));
+  Ez_aux(j_src_aux)  = g_src(step * dt);
+  Ez(2:ny-1, 2:nx-1) = Ez(2:ny-1, 2:nx-1) + K_E * ( ...
+        (Hy(2:ny-1, 2:nx-1) - Hy(2:ny-1, 1:nx-2)) ...
+      - (Hx(2:ny-1, 2:nx-1) - Hx(1:ny-2, 2:nx-1)));
+
+  # TF/SF corrections on E components (need Hy_aux at t^{n+1/2},
+  # which is the value just computed in Phase 1).
+  Ez(i_lo:i_hi, j_lo) = Ez(i_lo:i_hi, j_lo) - K_E * Hy_aux(j_lo - 1);
+  Ez(i_lo:i_hi, j_hi) = Ez(i_lo:i_hi, j_hi) + K_E * Hy_aux(j_hi);
+
+  # ---- Probe trackers ----
+  t_now = step * dt;
+  E_top_max   = max([E_top_max,   abs(real(Ez(i_p_top,   j_p_top)))]);
+  E_bot_max   = max([E_bot_max,   abs(real(Ez(i_p_bot,   j_p_bot)))]);
+  E_right_max = max([E_right_max, abs(real(Ez(i_p_right, j_p_right)))]);
+  E_left_max  = max([E_left_max,  abs(real(Ez(i_p_left,  j_p_left)))]);
+  E_tf_trace(step) = real(Ez(i_tf, j_tf));
+  # Reference: the aux 1-D field at the same column.
+  E_tf_inc(step)   = real(Ez_aux(j_tf));
+end
+
+print(E_top_max)              # → ~ 1e-10 or smaller (machine zero)
+print(E_bot_max)
+print(E_right_max)
+print(E_left_max)
+
+# Inside the box: the recorded trace should track the analytic
+# incident wave. Compare envelope.
+err_tf = max(abs(E_tf_trace - E_tf_inc));
+print(err_tf)                 # → ~ 1e-2 or smaller (dispersion-limited)
+print(max(abs(E_tf_inc)))     # incident peak ≈ 1.0
+
+# === Plots ===
+figure();
+imagesc(real(Ez), "viridis");
+title("E_z snapshot at end of run — wave confined to TF box");
+xlabel("x cell");
+ylabel("y cell");
+savefig("tfsf_final_Ez.svg");
+
+figure();
+hold on;
+plot((1:n_step) * dt * 1e9, real(E_tf_trace), "TF-box centre  (numerical)");
+plot((1:n_step) * dt * 1e9, real(E_tf_inc),   "TF-box centre  (analytic inc)");
+hold off;
+xlabel("t  (ns)");
+ylabel("E_z");
+title("Inside the TF box: numerical wave matches analytic incident");
+legend("numerical", "analytic incident");
+savefig("tfsf_centre_trace.svg");

@@ -304,8 +304,11 @@ The envelope is a $\lambda/2$-periodic sequence of peaks and valleys. The ratio 
 | `twin_wire_impedance.rlab` | Same energy-method on two parallel conductor disks; verify $Z_0 = (\eta_0/\pi)\cosh^{-1}(d/2a)$ |
 | `telegrapher_propagation.rlab` | 1-D V/I leapfrog; matched / open / short / mismatch loads; reflection check |
 | `vswr_standing_wave.rlab` | CW-driven 50 Ω line with 100 Ω load; envelope $|V(z)|$ ; numerical VSWR |
+| `s_parameters_tline.rlab` | 1-D FDTD of a 50→100 Ω step; $S_{11}$, $S_{21}$ via time-domain peak ratio and FFT |
+| `dipole_standing_wave.rlab` | Analytic $I(z) = I_0\sin[k(L/2-\|z\|)]$ for several $L/\lambda$; $\cos(kz)$ recovery at $L = \lambda/2$ |
+| `radiation_resistance.rlab` | Numerical pattern integral on the dipole current; verify $R_{\rm rad}\approx 73.1\,\Omega$ at $L=\lambda/2$ and $20\pi^2 (L/\lambda)^2$ for short dipoles |
 
-Run all four with `make lesson-13`, or one script at a time via `rustlab run lessons/13-transmission-lines-and-antennas/<name>.rlab`.
+Run all seven with `make lesson-13`, or one script at a time via `rustlab run lessons/13-transmission-lines-and-antennas/<name>.rlab`.
 
 ## Expected Numerical Outputs Summary
 
@@ -323,10 +326,10 @@ Run all four with `make lesson-13`, or one script at a time via `rustlab run les
 ## Exercises
 
 1. **Twin-wire $b/a$-style sweep.** `twin_wire_impedance.rlab` runs the numerical solve at $d/2a = 2$ and the analytic curve over $d/a \in [2, 50]$. Extend it by running the numerical solver at three more $d/a$ values (scale the box with $d$) and overlay the numerical points on the analytic curve to confirm agreement out to large spacings.
-2. **S-parameters from a time-domain step.** Replace the single-impedance line with a two-section line ($Z_{0,1} \to Z_{0,2}$ junction). Drive with a Gaussian pulse at port 1; record incident, reflected, and transmitted waveforms; FFT each; divide to obtain $S_{11}(f)$ and $S_{21}(f)$. Compare to the analytic two-port network $\Gamma_{12}, T_{12}$ for the impedance step.
+2. **Smooth the impedance step.** `s_parameters_tline.rlab` reports the time-domain $S_{11}$, $S_{21}$ to sub-percent and the FFT-extracted values within ~10%. The discrepancy is the staggered-grid coefficient choice at a sharp junction. Replace the abrupt $Z_{0,1} \to Z_{0,2}$ step by a linear taper over $\sim 10$ cells and verify both extractions agree to sub-percent.
 3. **Lossy line.** Add a small series resistance $R'$ to the telegrapher leapfrog (modify the $V$ update by $-R'\Delta t \cdot I$). Compute the attenuation constant and verify the standing-wave envelope decays exponentially along $z$.
-4. **Dipole standing-wave current.** Apply the same telegrapher leapfrog to an *open-ended* line (no termination — i.e. $Z_L = \infty$) of length $\lambda/2$, driven at one end. The steady-state current profile $I(z)$ recovers the analytic $\cos(kz)$ shape from Lesson 12's half-wave dipole derivation.
-5. **Radiation resistance from FDTD.** Use Lesson 12's far-field Poynting integral on the dipole current you extracted above to numerically reproduce $R_{\rm rad} \approx 73\,\Omega$ — the same value, this time built entirely from FDTD.
+4. **Dipole standing-wave current from FDTD.** `dipole_standing_wave.rlab` plots the analytic $I(z)$. Reproduce the same profile from an FDTD run: apply the telegrapher leapfrog to an *open-ended* line ($Z_L = \infty$) of length $\lambda/2$, drive at one end, run to steady state, and compare the recorded $I(z)$ envelope to the analytic $\cos(kz)$.
+5. **Radiation resistance from FDTD dipole.** Plug the FDTD-extracted current from exercise 4 into the radiation-pattern integral in `radiation_resistance.rlab` and confirm it recovers $R_{\rm rad}\approx 73\,\Omega$ — the same value, this time built entirely from FDTD.
 
 ## What's next
 

@@ -1,0 +1,85 @@
+# radiation_resistance.rlab — Input-referred radiation resistance of a
+# centre-fed dipole as a function of length L/λ.
+#
+# Carrying the standing-wave current I(z) = I_0 sin[k(L/2 − |z|)] from
+# `dipole_standing_wave.rlab`, the dipole's far-field pattern in the
+# E-plane is
+#   F(θ) = [cos((kL/2) cos θ) − cos(kL/2)] / sin θ
+# with the radiated power
+#   P_rad = (η_0 |I_0|² / 4π) · ∫_0^π |F(θ)|² sin θ dθ.
+# Referring the radiation resistance to the *input* current at the
+# feed (I_in = I_0 sin(kL/2)) makes the result a directly measurable
+# antenna parameter:
+#   R_rad = 2 P_rad / |I_in|² = (η_0 / (2π sin²(kL/2))) · ∫_0^π |F|² sinθ dθ.
+#
+# Two known limits:
+#   L/λ = 1/2 (half-wave):     R_rad ≈ 73.13 Ω (Carson's integral)
+#   L/λ ≪ 1 (short dipole):    R_rad ≈ 20 π² (L/λ)²
+#
+# Reference: ../../notebooks/13-transmission-lines-and-antennas.md.
+
+eps0 = 8.854187817e-12;
+mu0  = 4 * pi * 1e-7;
+eta0 = sqrt(mu0 / eps0);
+
+# === Angular grid for the integral ===
+# Sample θ ∈ (0, π) avoiding the endpoints exactly (sin θ = 0 there
+# makes F(θ) take a 0/0 form that is regular but inconvenient to
+# evaluate naively); trapezoidal weights are zero at the endpoints
+# anyway, so a tiny offset is harmless.
+N_th = 901;
+ths  = linspace(1e-6, pi - 1e-6, N_th);
+
+# === Half-wave dipole check ===
+L_half  = 0.5;                  # L in units of λ
+kL_half = 2 * pi * L_half;
+F_half  = (cos((kL_half / 2) * cos(ths)) - cos(kL_half / 2)) ./ sin(ths);
+R_half  = eta0 / (2 * pi * sin(kL_half / 2) ^ 2) * trapz(ths, F_half .^ 2 .* sin(ths));
+print(real(R_half))             # ≈ 73.13 Ω (Carson)
+
+# === Sweep L/λ ===
+# Stop short of L/λ = 1 — the input current goes through zero there
+# (sin(kL/2) = sin π = 0) so the input-referred R_rad diverges.
+ratios = linspace(0.02, 0.8, 60);
+N_r    = length(ratios);
+R_in   = zeros(N_r);
+R_short_approx = zeros(N_r);
+for kr = 1:N_r
+  L_r   = ratios(kr);
+  kL    = 2 * pi * L_r;
+  F     = (cos((kL / 2) * cos(ths)) - cos(kL / 2)) ./ sin(ths);
+  R_in(kr) = eta0 / (2 * pi * sin(kL / 2) ^ 2) * trapz(ths, F .^ 2 .* sin(ths));
+  R_short_approx(kr) = 20 * pi ^ 2 * L_r ^ 2;
+end
+
+# === Short-dipole limit verification ===
+# Pick a small ratio and compare to 20π²(L/λ)².
+L_short = 0.05;
+kL      = 2 * pi * L_short;
+F_short = (cos((kL / 2) * cos(ths)) - cos(kL / 2)) ./ sin(ths);
+R_s_num = eta0 / (2 * pi * sin(kL / 2) ^ 2) * trapz(ths, F_short .^ 2 .* sin(ths));
+R_s_ana = 20 * pi ^ 2 * L_short ^ 2;
+print(real(R_s_num))            # ≈ 0.493 Ω at L/λ = 0.05
+print(R_s_ana)                  # 20 π² · 0.0025 ≈ 0.493 Ω
+print(abs(real(R_s_num) - R_s_ana) / R_s_ana)   # sub-percent
+
+# === Plots ===
+figure();
+hold on;
+plot(ratios, real(R_in),       "R_rad (input-referred)");
+plot(ratios, R_short_approx,   "20 π² (L/λ)² short-dipole limit");
+hold off;
+xlabel("L / lambda");
+ylabel("R_rad  (Ω)");
+title("Dipole radiation resistance vs length");
+legend("numerical integration", "short-dipole approx");
+savefig("radiation_resistance_sweep.svg");
+
+# Closer look near L/λ = 0.5 — should pass through 73 Ω.
+figure();
+plot(ratios, real(R_in), "R_rad");
+yline(73.13);
+xlabel("L / lambda");
+ylabel("R_rad  (Ω)");
+title("Zoom on half-wave: R_rad → 73.13 Ω at L = λ/2");
+savefig("radiation_resistance_halfwave.svg");

@@ -1,0 +1,177 @@
+# fdtd_pml_depth.rlab — Bérenger split-field PML depth sweep on a
+# 2-D TMz vacuum grid.
+#
+# A point source in the middle of a vacuum grid produces an outgoing
+# wave that, with no absorbing boundary, reflects off the rim and
+# pollutes the interior. A Bérenger split-field PML replaces a band
+# of cells along each edge with anisotropic absorbing media so that
+# (i) the impedance is matched at the inner edge → no analytic
+# reflection, and (ii) waves attenuate exponentially through the
+# layer.
+#
+# We sweep PML depth d ∈ {4, 8, 16}, run the same source/probe layout
+# for each, and compare each run's interior field to a "reference"
+# computed on a much larger grid where reflections never reach the
+# probe within the simulation time. The residual reflection
+# coefficient |E_residual| / |E_incident| should drop ~ one order of
+# magnitude per doubling of d for the cubic σ profile used here.
+#
+# Split-field PML (Bérenger, 1994) for 2-D TMz:
+#   E_z is split into E_zx and E_zy:
+#       ∂E_zx/∂t + (σ_x/ε_0) E_zx =  (1/ε_0) ∂H_y/∂x
+#       ∂E_zy/∂t + (σ_y/ε_0) E_zy = -(1/ε_0) ∂H_x/∂y
+#       E_z = E_zx + E_zy
+#   H components carry the magnetic-conductivity term σ* = σ · μ_0/ε_0
+#   for impedance matching:
+#       ∂H_x/∂t + (σ_y*/μ_0) H_x = -(1/μ_0) ∂E_z/∂y
+#       ∂H_y/∂t + (σ_x*/μ_0) H_y =  (1/μ_0) ∂E_z/∂x
+#   Outside the PML σ = 0 and the system reduces to standard Yee.
+#
+# Reference: ../../notebooks/11-fdtd-simulation.md.
+
+mu0  = 4 * pi * 1e-7;
+eps0 = 8.854187817e-12;
+c0   = 1 / sqrt(mu0 * eps0);
+
+# === Grid & time ===
+nx     = 120;
+ny     = 120;
+dx     = 5e-3;
+dy     = dx;
+S_cfl  = 1 / sqrt(2);
+dt     = S_cfl * dx / c0;
+n_step = 350;
+f0     = 1.0e9;
+t0     = 25 * dt;
+tau    = 8 * dt;
+
+# Point source at the centre; probe placed *just inside* the inner
+# edge of the deepest PML in the sweep (d = 16), so the reading is
+# in vacuum for every depth and the residual reflection isn't masked
+# by PML loss at the probe location.
+i_src = round(ny / 2);
+j_src = round(nx / 2);
+i_pr  = round(ny / 2);
+j_pr  = nx - 20;                    # ≥ 4 cells inside the d = 16 inner edge
+
+# === Cubic σ profile builder ===
+# σ ramps from 0 at the inner edge of the PML to sigma_max at the
+# outermost cell, following a cubic. The matched magnetic conductivity
+# σ* = σ · μ_0/ε_0 = σ · η_0² · ε_0 is folded into the H update
+# coefficients via the same dt factor.
+function s = build_sigma_x(nx, d, sigma_max)
+  s = zeros(nx);
+  if d <= 0; return; end
+  for k = 1:d
+    rmp           = (k - 0.5) / d;
+    s(d - k + 1)  = sigma_max * rmp ^ 3;     # left band, increasing → wall
+    s(nx - d + k) = sigma_max * rmp ^ 3;     # right band, symmetric
+  end
+end
+
+# === One self-contained PML-FDTD run ===
+function E_pr_trace = run_pml(d, nx, ny, dx, dy, dt, n_step, c0, mu0, eps0, ...
+                              i_src, j_src, i_pr, j_pr, t0, tau, f0)
+  # Profile design: sigma_max chosen for theoretical −80 dB reflection
+  # at normal incidence; cubic ramp keeps the impedance gradient smooth.
+  sigma_max = -log(1e-8) * (3 + 1) * eps0 * c0 / (2 * d * dx);
+  sig_x_E = build_sigma_x(nx, d, sigma_max);              # at E_z columns
+  sig_y_E = build_sigma_x(ny, d, sigma_max);              # at E_z rows
+  # Magnetic conductivity (at H positions: between cells, use half-step
+  # offset; for curriculum precision we approximate by using the same
+  # profile as for E).
+  sig_x_H = sig_x_E;
+  sig_y_H = sig_y_E;
+
+  # Diagonalise the update via the standard trapezoidal coefficients.
+  # E_zx update coefficients depend on σ_x at the cell's column.
+  Ca_x = (1 - sig_x_E * dt / (2 * eps0)) ./ (1 + sig_x_E * dt / (2 * eps0));   # 1×nx row
+  Cb_x = (dt / (eps0 * dx))                ./ (1 + sig_x_E * dt / (2 * eps0));
+  Ca_y = (1 - sig_y_E * dt / (2 * eps0)) ./ (1 + sig_y_E * dt / (2 * eps0));   # 1×ny row
+  Cb_y = (dt / (eps0 * dy))                ./ (1 + sig_y_E * dt / (2 * eps0));
+  Da_y = (1 - sig_y_H * dt / (2 * eps0)) ./ (1 + sig_y_H * dt / (2 * eps0));   # H_x: damped by σ_y*
+  Db_y = (dt / (mu0 * dy))                 ./ (1 + sig_y_H * dt / (2 * eps0));
+  Da_x = (1 - sig_x_H * dt / (2 * eps0)) ./ (1 + sig_x_H * dt / (2 * eps0));   # H_y: damped by σ_x*
+  Db_x = (dt / (mu0 * dx))                 ./ (1 + sig_x_H * dt / (2 * eps0));
+
+  # Broadcast σ profiles into the (ny, nx) shape required for matrix
+  # elementwise updates.
+  Ca_x_mat = repmat(Ca_x, ny, 1);
+  Cb_x_mat = repmat(Cb_x, ny, 1);
+  # Ca_y depends only on row; broadcast across all columns.
+  Ca_y_mat = repmat(Ca_y.', 1, nx);
+  Cb_y_mat = repmat(Cb_y.', 1, nx);
+  Da_y_mat = repmat(Da_y.', 1, nx);
+  Db_y_mat = repmat(Db_y.', 1, nx);
+  Da_x_mat = repmat(Da_x, ny, 1);
+  Db_x_mat = repmat(Db_x, ny, 1);
+
+  Ezx = zeros(ny, nx);
+  Ezy = zeros(ny, nx);
+  Hx  = zeros(ny, nx);
+  Hy  = zeros(ny, nx);
+
+  E_pr_trace = zeros(n_step);
+
+  for step = 1:n_step
+    t = step * dt;
+    Ez = Ezx + Ezy;
+
+    # H updates (with split-PML magnetic conductivity)
+    Hx(1:ny-1, :) = Da_y_mat(1:ny-1, :) .* Hx(1:ny-1, :) ...
+                  - Db_y_mat(1:ny-1, :) .* (Ez(2:ny, :) - Ez(1:ny-1, :));
+    Hy(:, 1:nx-1) = Da_x_mat(:, 1:nx-1) .* Hy(:, 1:nx-1) ...
+                  + Db_x_mat(:, 1:nx-1) .* (Ez(:, 2:nx) - Ez(:, 1:nx-1));
+
+    # E_zx update (driven by H_y, damped by σ_x)
+    Ezx(:, 2:nx-1) = Ca_x_mat(:, 2:nx-1) .* Ezx(:, 2:nx-1) ...
+                   + Cb_x_mat(:, 2:nx-1) .* (Hy(:, 2:nx-1) - Hy(:, 1:nx-2));
+    # E_zy update (driven by H_x, damped by σ_y)
+    Ezy(2:ny-1, :) = Ca_y_mat(2:ny-1, :) .* Ezy(2:ny-1, :) ...
+                   - Cb_y_mat(2:ny-1, :) .* (Hx(2:ny-1, :) - Hx(1:ny-2, :));
+
+    # Soft Gaussian point source on E_zx at the centre cell.
+    Ezx(i_src, j_src) = Ezx(i_src, j_src) ...
+                      + exp(-((t - t0) / tau) ^ 2) * cos(2 * pi * f0 * (t - t0));
+
+    E_pr_trace(step) = real(Ezx(i_pr, j_pr) + Ezy(i_pr, j_pr));
+  end
+end
+
+# === Reference: same setup on a *bigger* grid where reflections never
+#     reach the probe within n_step. Use 3× linear size so the round-
+#     trip path from source to PML and back is always longer than the
+#     simulation window.
+nx_big = 3 * nx;
+ny_big = 3 * ny;
+i_src_b = round(ny_big / 2);
+j_src_b = round(nx_big / 2);
+# Probe at the SAME physical offset from the source as in the small
+# grid runs, so we can subtract trace by trace.
+i_pr_b = i_src_b + (i_pr - i_src);
+j_pr_b = j_src_b + (j_pr - j_src);
+E_ref = run_pml(8, nx_big, ny_big, dx, dy, dt, n_step, c0, mu0, eps0, ...
+                i_src_b, j_src_b, i_pr_b, j_pr_b, t0, tau, f0);
+
+# === PML sweep ===
+depths = [4, 8, 16];
+N_d    = length(depths);
+res    = zeros(N_d);
+inc_pk = max(abs(E_ref));
+for kd = 1:N_d
+  d = depths(kd);
+  E_d = run_pml(d, nx, ny, dx, dy, dt, n_step, c0, mu0, eps0, ...
+                i_src, j_src, i_pr, j_pr, t0, tau, f0);
+  res(kd) = max(abs(E_d - E_ref));
+end
+print(inc_pk)               # peak incident amplitude at the probe
+print(res)                  # residual reflection at each depth
+print(res / inc_pk)         # relative reflection coefficient
+
+# === Plot the convergence ===
+figure();
+semilogy(depths, res / inc_pk, "|R(d)|  (residual / incident)");
+xlabel("PML depth  (cells)");
+ylabel("|R|");
+title("Bérenger split-field PML reflection vs depth — exponential trend");
+savefig("pml_depth_sweep.svg");

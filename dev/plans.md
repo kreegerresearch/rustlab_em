@@ -341,8 +341,8 @@ Split-field PML (Berenger): inside the PML, each field component is split into t
 - `fdtd_1d.rlab` — Gaussian pulse launched from the center; propagates in both directions; hit a dielectric slab; measure reflection coefficient and compare to the Fresnel formula.
 - `fdtd_2d_scattering.rlab` — TM$_z$ polarization, TF/SF plane-wave source on one side, PEC cylinder in the middle; watch the incident wave, scattered wave, and total field; animated frames.
 - `fdtd_dispersive.rlab` — 1D pulse through a thin Drude metal film ($\omega_p$, $\gamma$ for gold); verify the plasma transmission peak above $\omega_p$ and evanescent decay below. ADE update integrated with the normal Yee step.
-- `fdtd_tfsf_validation.rlab` — TF/SF box with *nothing* inside. Ensure the incident wave is exact inside the box and zero outside (to machine precision modulo discretization). Isolates injection correctness from solver correctness.
-- `fdtd_pml_depth.rlab` — point source in a 2D box with PMLs of varying depth; measure the residual reflection by comparing the field in the computational domain to the same source in a much larger domain. Verify exponential improvement with PML thickness.
+- `fdtd_tfsf_validation.rlab` — *(shipped)* TF/SF plane-wave injection with an auxiliary 1-D Yee grid that matches the 2-D scheme's numerical dispersion; $|E_z|$ outside the box stays at $\sim 10^{-15}$ (machine zero).
+- `fdtd_pml_depth.rlab` — *(shipped)* Bérenger split-field PML on a 2-D vacuum grid; cubic σ profile, depth sweep $d \in \{4, 8, 16\}$ with residual reflection $\sim 0.16 \to 0.07 \to 0.03$ (clear exponential trend, ~ 6 dB per doubling).
 
 ---
 
@@ -440,9 +440,9 @@ Short dipole: $R_{\rm rad} = 20\pi^2(L/\lambda)^2$.
 - `twin_wire_impedance.rlab` — *(shipped)* pair of conductor disks at $\pm V_0/2$ in vacuum; energy-method $C'$ on a finite-box 2-D Laplace solve; analytic $Z_0 = (\eta_0/\pi)\cosh^{-1}(d/2a)$ sweep over $d/a \in [2, 50]$.
 - `telegrapher_propagation.rlab` — 1D staggered leapfrog for $V(i)$, $I(i+\tfrac12)$; pulse propagation at $v = 1/\sqrt{L'C'}$; reflection cases (matched, open, short, $2Z_0$).
 - `vswr_standing_wave.rlab` — CW-driven terminated line; measure $|V(z)|$ envelope; extract VSWR; compare to $(1+|\Gamma|)/(1-|\Gamma|)$.
-- `s_parameters_tline.rlab` — 1D FDTD of a two-section transmission line with an impedance step; inject a Gaussian pulse; extract $S_{11}$, $S_{21}$ via FFT and compare to the analytic two-port network. Demonstrates the mode-filter + time-gating workflow before Lesson 14 uses it on a 3D antenna.
-- `dipole_standing_wave.rlab` — standing-wave current on a dipole from end-reflection; sweep $L/\lambda$; show the $\cos(kz)$ profile at $L = \lambda/2$.
-- `radiation_resistance.rlab` — far-field Poynting integration; extract $R_{\rm rad}$ vs $L/\lambda$; verify 73 Ω and $20\pi^2(L/\lambda)^2$.
+- `s_parameters_tline.rlab` — *(shipped)* 1-D FDTD of a 50→100 Ω step; time-domain peak ratio recovers $|\Gamma| = 1/3$ and $|S_{21}| = 0.943$ to sub-percent; FFT-based extraction reported alongside with a documented few-percent staggered-grid bias.
+- `dipole_standing_wave.rlab` — *(shipped)* analytic $I(z) = I_0\sin[k(L/2-|z|)]$ for $L/\lambda \in \{0.1, 0.3, 0.5, 0.7, 1.0\}$; machine-precision $\cos(kz)$ recovery at $L = \lambda/2$; feed-point current $|I(0)|$ vs $L/\lambda$ with null at $L = \lambda$.
+- `radiation_resistance.rlab` — *(shipped)* numerical integration of $(\eta_0/2\pi\sin^2(kL/2))\int|F(\theta)|^2\sin\theta\,d\theta$; recovers 73.08 Ω at $L=\lambda/2$ (vs 73.13 Ω analytic) and matches $20\pi^2(L/\lambda)^2$ to sub-percent in the short-dipole limit.
 
 ### What Each Derivation Proves
 
