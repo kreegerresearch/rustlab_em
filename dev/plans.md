@@ -24,8 +24,17 @@ The curriculum targets a "mini Ansys" endpoint: given arbitrary geometry plus ma
 | 12 | Waveguides, Cavity Eigenmodes & Radiation | Drafted |
 | 13 | Transmission Lines, S-Parameters & Antennas | Drafted |
 | 14 | Capstone — End-to-End Device Simulation | Drafted |
+| 15 | Lumped Capacitance Extraction | Planned |
+| 16 | Smith Chart & Impedance Matching | Planned |
+| 17 | Lumped Inductance Extraction | Planned |
 
-**Build order:** The curriculum is strictly sequential. Lesson 04 (geometry/material toolkit) is the first pivot — every downstream solver consumes the arrays it produces. Lesson 05 is the first numerical PDE (static). Lessons 10 and 11 are the two full-wave PDE solvers. Lesson 14 reuses every tool the course has built.
+**Build order:** Lessons 01–14 are a strictly sequential arc that ends at the patch-antenna capstone. Lessons 15–17 are **post-capstone applied-engineering extensions** that depend on the existing toolkit but are *not* prerequisites for each other:
+
+- L15 (capacitance extraction) builds on L05 / L13's Laplace solver.
+- L16 (Smith chart) builds on L13's transmission-line + S-parameter machinery.
+- L17 (inductance extraction) is the magnetic dual of L15, built on L06's vector-potential solver.
+
+Lessons 04 (geometry/material toolkit) and 05 (first numerical PDE) remain the structural pivots of the core arc. Lessons 10 and 11 are the two full-wave solvers; Lesson 14 composes everything.
 
 **Units:** SI throughout. $\varepsilon_0 = 8.854\times10^{-12}$ F/m, $\mu_0 = 4\pi\times10^{-7}$ H/m, $c = 2.998\times10^8$ m/s, $\eta_0 = \sqrt{\mu_0/\varepsilon_0} \approx 376.73\,\Omega$. Scale to dimensionless coordinates inside scripts when it simplifies conditioning; note the scaling in the header.
 
@@ -521,6 +530,156 @@ Everything the course has built, composed:
 
 ---
 
+## Lesson 15 — Lumped Capacitance Extraction
+
+**Motivation:** Lesson 13 extracted per-unit-length $C'$ from a 2-D transmission-line cross-section. That is the right answer for an *infinite* line, but real circuits have **finite plates with fringing fields**, **multiple conductors that couple capacitively**, and **3-D geometries** (MIM caps, IC bond pads, MEMS structures) where the 2-D approximation breaks down by 10–50 %. This lesson runs the same Laplace solver in two new modes — 2-D capacitance-*matrix* extraction for crosstalk analysis, and 3-D single-conductor extraction for real lumped pF values — and closes the loop between field-solver output and circuit-level $C$.
+
+### Learning Objectives
+- Extract a single-conductor lumped capacitance $C$ from a 3-D Laplace solve, via both the energy and the charge (Gauss-integral) methods, and cross-verify
+- Quantify the fringing-field correction to the textbook $C = \varepsilon A / d$ for a finite parallel-plate capacitor
+- Build the multi-conductor capacitance matrix $C_{ij}$ by solving $N$ Laplace problems with $V_k = 1$ on conductor $k$ and 0 on the rest; reuse a single LU factorisation across all $N$ right-hand sides
+- Recognise reciprocity ($C_{ij} = C_{ji}$) and the difference between "Maxwell capacitance" and "mutual capacitance" conventions
+- Compute the electrostatic force on a capacitor plate from $F = \tfrac12 V^2\,\partial C/\partial x$ and verify against the parallel-plate analytic result
+
+### Key Equations
+
+**Single-conductor $C$ (charge method).** Surround the high-V conductor with a Gauss surface $S$ in the dielectric:
+$$Q = \oint_S \varepsilon\,\vec E\cdot d\vec A, \qquad C = Q / \Delta V.$$
+
+**Single-conductor $C$ (energy method).** With the system at voltage $V$,
+$$U_E = \tfrac12 \int_{\Omega}\!\varepsilon |\vec E|^2\, dV, \qquad C = 2U_E / V^2.$$
+
+The two should agree to discretisation precision; energy is usually more accurate at coarse resolution.
+
+**Capacitance matrix.** For $N$ conductors at potentials $V_1, \dots, V_N$ in a single shared dielectric,
+$$Q_i = \sum_{j=1}^{N} C_{ij}\,V_j,\qquad C_{ij} = \frac{\partial Q_i}{\partial V_j}\bigg|_{V_k = 0,\,k\neq j}.$$
+
+The "short-circuit" procedure: drive $V_j = 1$ on conductor $j$, hold the rest at 0, solve for $V(\vec r)$, integrate $Q_i = -\oint_{S_i}\!\varepsilon\nabla V\cdot\hat n\,dA$ on each conductor $i$. The full matrix takes $N$ Laplace solves on the **same** $L$ matrix → factor once, back-solve $N$ times.
+
+**Force on a plate.** A virtual-work argument at fixed $V$ gives
+$$F = +\tfrac12 V^2 \,\frac{\partial C}{\partial x},$$
+attractive between oppositely charged plates. For a parallel-plate of gap $d$ and area $A$, $C = \varepsilon A/d$ so $F = -\tfrac12\varepsilon A V^2 / d^2$ (negative meaning attractive in the $-d$ direction).
+
+**Fringing in a finite parallel-plate.** The ideal capacitance is $C_0 = \varepsilon A/d$; the corrected
+$$C \approx C_0 \cdot \left[1 + \frac{d}{\pi L}\bigl(1 + \ln\frac{2\pi L}{d}\bigr)\right]$$
+for plates of edge $L\gg d$ (Kirchhoff's classical result). The numerical solve should land within a few percent of this for a moderately wide plate.
+
+### Scripts
+
+- `lumped_C_parallel_plate.rlab` — 3-D Laplace on a box containing two finite square plates separated by air. Extract $C$ via energy and via Gauss-integral on the inner plate surface. Sweep plate side $L/d$ from 5 to 50 to chart the fringing correction; verify the analytic Kirchhoff form for large $L/d$.
+- `cap_matrix_microstrip.rlab` — Two coplanar 50 Ω microstrip traces above a ground plane, varying trace-to-trace spacing. Build the 3 × 3 capacitance matrix ($C_{11}$, $C_{22}$, $C_{33}$ for trace1, trace2, ground; off-diagonals for coupling). Use `lu(A)` once and `solve(LU, b_k)` for each $k$; demonstrate the speedup vs three independent `spsolve` calls.
+- `cap_matrix_three_trace.rlab` — Three-trace bus over a ground plane; full 4 × 4 capacitance matrix. Verify $C_{ij} = C_{ji}$ to numerical precision and plot the matrix as a heatmap. Convert between the "Maxwell" (short-circuit) and "mutual" (open-circuit) capacitance forms.
+- `MIM_capacitor_3d.rlab` — Thin-film metal-insulator-metal capacitor: two parallel rectangular plates separated by a 100 nm dielectric layer ($\varepsilon_r = 25$, high-K). Realistic IC structure; compute $C$ in fF and compare to $\varepsilon_r \varepsilon_0 A/d$.
+- `parasitic_bondpad.rlab` — An IC bond pad (square metal patch) over a ground plane through a thick oxide layer. Sweep the oxide thickness and pad size; produce a design-rule curve $C_{\rm pad}(L, t_{\rm ox})$ in fF.
+- `tunable_C_force.rlab` — Parallel-plate capacitor with a sweepable gap. For each gap, solve Laplace, extract $C$, compute the electrostatic force on one plate via finite-difference $F = \tfrac12 V^2 \Delta C / \Delta x$. Verify against the analytic $-\tfrac12 \varepsilon A V^2 / d^2$ to sub-percent at large $L/d$, then quantify the fringing-induced deviation at small $L/d$.
+
+### What students learn
+
+By the end, a student can take a multi-conductor geometry — a coupled microstrip bus, a MEMS comb-drive cross-section, an IC bond-pad parasitic — and extract the SPICE-grade capacitance values that circuit simulators consume. The cached-LU pattern (factor once, solve $N$ times) is the workhorse trick of every commercial parasitic-extraction tool.
+
+---
+
+## Lesson 16 — Smith Chart & Impedance Matching
+
+**Motivation:** Every RF and microwave engineer reads impedance matches off a **Smith chart** — the conformal map that turns "translate along a transmission line" into "rotate on a constant-$|\Gamma|$ circle." This lesson treats the chart as a *computation*: build the geometry from scratch, then use it to design real matching networks (lumped L-match, single-stub, double-stub, quarter-wave transformer) and to read $S_{11}$ loci off broadband simulations like the Lesson 14 patch antenna. Connects Lesson 13's $\Gamma$/VSWR algebra to the visual reasoning that drives practical antenna and amplifier design.
+
+### Learning Objectives
+- Derive the Smith chart as the bilinear transform $\Gamma = (Z - Z_0) / (Z + Z_0)$ and render the constant-$R$ / constant-$X$ circle families
+- Read $Z$, $Y$, $|\Gamma|$, VSWR off a chart position; convert smoothly between impedance and admittance ("flipping" through the chart centre)
+- Trace $\Gamma_{\rm in}(d)$ along a lossless TL — the canonical "constant-$|\Gamma|$ rotation"
+- Design **L-match** networks (series-then-shunt or shunt-then-series) by traversing constant-resistance and constant-conductance circles
+- Design **single-stub** matches: find the shunt-stub length $\ell$ and position $d$ that route an arbitrary load to the chart centre
+- Design **double-stub** matches with fixed spacing $d_{12}$; recognise the forbidden region where double-stub matching fails
+- Design a **quarter-wave transformer**: $Z_{0,T} = \sqrt{Z_0 Z_L}$ for real loads; visualise the impedance jump on the chart
+- Overlay a measured / simulated $S_{11}(f)$ locus (the L14 patch antenna) and read off resonant frequency, bandwidth, and matching-network target
+
+### Key Equations
+
+**Bilinear map.** With normalised impedance $z = Z/Z_0$,
+$$\Gamma = \frac{z - 1}{z + 1}, \qquad z = \frac{1 + \Gamma}{1 - \Gamma}.$$
+
+**Constant-resistance circles** (real $r$): centre $(r/(r+1), 0)$, radius $1/(r+1)$.
+**Constant-reactance circles** (real $x$): centre $(1, 1/x)$, radius $1/|x|$. Only the portion inside the unit disk $|\Gamma|=1$ is on the chart.
+
+**TL transformation.** A lossless line of length $d$ rotates $\Gamma$ clockwise by $2\beta d$ (towards generator):
+$$\Gamma(d) = \Gamma_L\,e^{-2j\beta d}.$$
+
+**VSWR.** $\text{VSWR} = (1 + |\Gamma|)/(1 - |\Gamma|)$ — a single constant-$|\Gamma|$ circle.
+
+**Single-stub match (shunt short-circuited stub).** Given load admittance $y_L$, move along the TL to the point $d$ where $\text{Re}(y(d)) = 1$ (lands on the unit-conductance circle on the admittance chart); the residual susceptance is cancelled by a shunt stub of length $\ell$ chosen from
+$$\tan(\beta\ell) = -1/B_d \quad\text{(short-circuited stub)}.$$
+
+**Double-stub match.** Two shunt stubs separated by fixed $d_{12}$ (typically $\lambda/8$ or $3\lambda/8$). Solvable when the load admittance falls outside the *forbidden* circle of radius $\sin^2(\beta d_{12})$ centred at the origin of the rotated admittance chart.
+
+**Quarter-wave transformer.** A line of length $\lambda_0/4$ and characteristic impedance $Z_{0,T} = \sqrt{Z_0 Z_L}$ matches a *real* load $Z_L$ to $Z_0$ at the design frequency. Bandwidth scales with $1/|Z_L - Z_0|$.
+
+### Scripts
+
+- `smith_chart.rlab` — Reusable helper. Draws the chart background (constant-$r$ circles for $r \in \{0.2, 0.5, 1, 2, 5\}$, constant-$x$ circles for $x \in \{\pm 0.2, \pm 0.5, \pm 1, \pm 2, \pm 5\}$, the outer $|\Gamma| = 1$ unit circle, real-axis baseline, and chart annotations) using `axis("equal")` to keep the circles round. Subsequent scripts source this and overlay markers / trajectories.
+- `tline_transformation.rlab` — Sweep distance $d/\lambda$ for several load impedances ($Z_L = 25, 50, 100, 100j$); plot the $\Gamma(d)$ trajectories as constant-$|\Gamma|$ circles. Animate one example with `frame()` / `saveanim()`.
+- `l_match_synthesis.rlab` — Given a complex load $Z_L = 30 + 50j$, design both possible L-match topologies (series-L + shunt-C and shunt-C + series-L) to match to 50 Ω at 1 GHz. Plot the chart trajectories; print component values.
+- `single_stub_match.rlab` — Algorithmic shunt short-circuited stub synthesiser. Input: $Z_L$, $Z_0$. Output: $d$, $\ell$. Plot the load $\Gamma_L$, the rotation arc, the unit-conductance circle, and the final landing at the centre. Verify by computing $\Gamma_{\rm in}$ of the matched network.
+- `double_stub_match.rlab` — Same but with two stubs at fixed spacing $d_{12} = \lambda/8$. Demonstrate the forbidden-region check; pick a load inside (fails) and outside (succeeds) the forbidden circle.
+- `quarter_wave_transformer.rlab` — Match $Z_L = 100$ Ω to $Z_0 = 50$ Ω with a $\lambda/4$ transformer at $f_0 = 1$ GHz. Sweep frequency 0.5 – 1.5 GHz; plot $|\Gamma|$ vs $f$ and overlay the Smith-chart locus. Show the narrowband behaviour and quantify the −10 dB bandwidth.
+- `patch_antenna_smith.rlab` — Load the $S_{11}(f)$ output of Lesson 14's patch antenna; plot the locus on a Smith chart over 1–5 GHz. Annotate the resonant frequency (locus crosses real axis near the chart centre) and the −10 dB matching bandwidth (excursion outside the $|\Gamma| < 0.316$ circle). This is the headline use case for the chart: turning a broadband simulation into a one-glance design summary.
+
+### What students learn
+
+By the end, a student can take any complex load — circuit element, antenna, measurement — and design a matching network with a Smith chart as the working scratchpad. The skill transfers directly to network-analyser readouts and to the impedance-matching task that closes every real antenna design.
+
+---
+
+## Lesson 17 — Lumped Inductance Extraction
+
+**Motivation:** Lesson 15 extracted lumped capacitance — the electric circuit element from a Laplace solve. This lesson is the magnetic dual: extract **lumped inductance $L$** (Henries) and **mutual inductance $M$** (Henries) from a Lesson 06–style vector-potential solve. The math is structurally identical to L15 with the swaps $\varepsilon \to 1/\mu$ and $V \to A_z$; the engineering content is different and complementary. Together, L15 + L17 close the *circuit-element extraction* loop and put the curriculum's "C, L, R" triad on the same numerical footing.
+
+### Learning Objectives
+- Extract self-inductance $L$ of an arbitrary 3-D current loop from the magnetic vector potential $\vec A$ via flux ($\Phi/I$) and via stored magnetic energy ($2U_M / I^2$)
+- Extract the mutual-inductance matrix $M_{ij}$ for an $N$-loop system using the same cached-LU back-solve trick as Lesson 15's capacitance matrix
+- Recognise the duality with capacitance extraction: $\nabla\cdot(\varepsilon\nabla V) = -\rho$ ↔ $\nabla\cdot(\mu^{-1}\nabla A_z) = -J_z$ in 2-D, so `laplacian_eps_2d(1/μ_r, ...)` is the natural solver
+- Quantify the **coupling coefficient** $k = M/\sqrt{L_1 L_2}$ for two coils as a function of separation and orientation
+- Recover the analytic formulas for parallel-wire self-inductance and for a long solenoid, and quantify the end-effect correction for a finite solenoid
+
+### Key Equations
+
+**Self-inductance (flux method).** For a single closed loop of current $I$,
+$$L = \Phi_B / I = \frac{1}{I}\int_S \vec B\cdot d\vec A.$$
+
+**Self-inductance (energy method).** Stored magnetic energy in the system,
+$$U_M = \tfrac12 \int_{\Omega}\!\frac{|\vec B|^2}{\mu}\,dV, \qquad L = 2 U_M / I^2.$$
+
+**Mutual inductance.** With current $I_j$ in loop $j$ producing flux $\Phi_{ij}$ through loop $i$,
+$$M_{ij} = \Phi_{ij} / I_j.$$
+
+For $N$ coupled loops, the inductance matrix $L_{ij}$ ($i \neq j$ ⇒ $L_{ij} = M_{ij}$, diagonal = self-inductance) is symmetric, and the energy is
+$$U_M = \tfrac12 \sum_{i,j} L_{ij} I_i I_j.$$
+
+**Coupling coefficient.** $k = M / \sqrt{L_1 L_2}$, $|k| \le 1$.
+
+**Parallel-wire self-inductance** (per unit length, centres $d$ apart, radii $a$, $d \gg a$):
+$$L'_{\rm pair} = \frac{\mu_0}{\pi}\Bigl[\ln\frac{d}{a} + \frac14\Bigr].$$
+
+(The $1/4$ is the internal contribution from the current-distribution inside each wire, often dropped in high-frequency limits where current crowds to the surface.)
+
+**Long solenoid inductance.** $L = \mu_0 n^2 V$ where $n$ = turns per length and $V$ = solenoid volume; for finite length $\ell$ and radius $R$, the textbook end-effect correction is
+$$L \approx \mu_0 n^2 \pi R^2 \ell \cdot K(R/\ell)$$
+with $K \to 1$ for $\ell/R \gg 1$.
+
+### Scripts
+
+- `lumped_L_loop.rlab` — Single 3-D circular wire loop carrying current $I = 1$ A. Compute $\vec A$ via Biot-Savart on the loop, then $\vec B = \nabla\times\vec A$, then integrate $\Phi_B$ through the loop interior and divide by $I$. Compare to the textbook self-inductance of a thin-wire loop, $L = \mu_0 R [\ln(8R/a) - 2]$.
+- `ind_matrix_microstrip.rlab` — Magnetic dual of L15's `cap_matrix_microstrip.rlab`. Two parallel current-carrying traces above a ground plane; solve $\nabla\cdot(\mu^{-1}\nabla A_z) = -\mu_0 J_z$ with current injected into one trace at a time; extract the 2 × 2 per-unit-length inductance matrix $L'_{ij}$ via cached LU. Confirm reciprocity $L'_{12} = L'_{21}$.
+- `mutual_inductance_coil_pair.rlab` — Two coaxial circular coils. Sweep the separation $d/R$; compute $M(d)$ from flux integration; verify the analytic Neumann-formula limit at large $d/R$ and the geometric-mean limit at small $d/R$. Plot $M$ and $k = M/\sqrt{L_1 L_2}$ vs $d/R$.
+- `inductance_transformer.rlab` — Two concentric coil pairs (primary and secondary) with $n_1$ and $n_2$ turns. Compute $L_1$, $L_2$, $M$, and the coupling coefficient $k$. Verify $V_2/V_1 \to n_2/n_1$ in the tight-coupling limit ($k \to 1$).
+- `finite_solenoid.rlab` — A finite-length solenoid; compute $L$ vs $\ell/R$ from $\ell/R = 1$ to $\ell/R = 20$; recover the long-solenoid limit $L \to \mu_0 n^2 \pi R^2 \ell$ and quantify the end-effect correction factor $K(R/\ell)$.
+- `tunable_L_force.rlab` — Optional MEMS-style sibling to L15's `tunable_C_force.rlab`. A movable ferromagnetic core inside a solenoid; sweep the core position, extract $L(x)$, compute the magnetic force $F = \tfrac12 I^2 \,\partial L/\partial x$. Verify on a problem with a known analytic answer (e.g. a long-solenoid limit with a partial-fill core).
+
+### What students learn
+
+The magnetic dual of L15: every coil, inductor, and transformer geometry yields an $L$ matrix from a single vector-potential solve, and every mutual-coupling parameter ($M$, $k$, the turns ratio) follows from the same machinery. Combined with L15, this puts circuit-level $C$ and $L$ extraction on identical numerical foundations — the prerequisite skill for any field-to-circuit reduction tool.
+
+---
+
 ## Rustlab Dependencies
 
 The full list of feature requests for upstream rustlab lives in `dev/rustlab/requests/`. Short version, now that vector-calculus operators, contour plots, and `surf` have landed:
@@ -533,3 +692,12 @@ The full list of feature requests for upstream rustlab lives in `dev/rustlab/req
 6. **Animation export** — multi-frame SVG/GIF/HTML for time-domain visualization (Lessons 09, 11, 14).
 
 Several items (FDTD update helpers, dispersive-material ADE state, S-parameter waveport helpers) are deliberately *not* on the upstream list — they belong as rustlab_em library functions because they are EM-specific workflows rather than general scientific-computing primitives.
+
+**Extensions (L15–L17) require only one optional addition** beyond the existing 0.3.4 builtins:
+
+- **Smith-chart helper** — `smith_chart()` builtin that draws the constant-$R$ / constant-$X$ circle background plus axis labels and locks the visual aspect ratio. Filed as `dev/rustlab/requests/smith-chart.md`. **Strictly optional** — the lesson can hand-roll the background with parametric `(cos t, sin t)` traces and `axis("equal")` (~30 lines of helper code per script vs ~5 lines with the builtin).
+
+Everything else L15–L17 need already ships:
+- 3-D Laplace + cached LU (`laplacian_3d`, `lu`, `solve`) — covers L15's lumped 3-D extraction
+- 2-D variable-coefficient Laplace (`laplacian_eps_2d`) — already used by L06; covers L17's $\nabla\cdot(\mu^{-1}\nabla A_z)$ form
+- `axis("equal")` for circular Smith-chart geometry — confirmed working in 0.3.4
