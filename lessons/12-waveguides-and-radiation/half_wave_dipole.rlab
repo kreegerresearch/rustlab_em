@@ -36,20 +36,18 @@ ths  = linspace(0.001, pi - 0.001, N_th);   # avoid sin θ = 0 singularity at en
 F_anal = cos(pi / 2 * cos(ths)) ./ sin(ths);
 P_anal = F_anal .^ 2;
 
-# Numerical pattern via integration over z
+# Numerical pattern via integration over z. Each angle's pattern factor
+# is an independent z-integral over the cos(kz) standing-wave current
+# — close the integration in a lambda and map across the angle grid.
 N_z = 201;
 zs  = linspace(-L / 2, L / 2, N_z);
-# `linspace` builds a true vector (not a 1×N matrix); needed so the
-# polar plot below accepts F_num as the radial argument.
-F_num = linspace(0, 0, N_th);
-for t = 1:N_th
-  integrand_re = cos(k0 * zs) .* cos(k0 * zs * cos(ths(t)));    # real part of integrand
-  integrand_im = cos(k0 * zs) .* sin(k0 * zs * cos(ths(t)));    # imag part
-  Fz_re = trapz(zs, integrand_re);
-  Fz_im = trapz(zs, integrand_im);
-  Fz_mag = sqrt(Fz_re^2 + Fz_im^2);
-  F_num(t) = sin(ths(t)) * Fz_mag;
+function f = halfwave_F(th, zs, k0)
+  integrand_re = cos(k0 * zs) .* cos(k0 * zs * cos(th));
+  integrand_im = cos(k0 * zs) .* sin(k0 * zs * cos(th));
+  Fz_mag = sqrt(trapz(zs, integrand_re) ^ 2 + trapz(zs, integrand_im) ^ 2);
+  f = sin(th) * Fz_mag;
 end
+F_num = arrayfun(@(th) halfwave_F(th, zs, k0), ths);
 
 # Normalise both to unit peak for shape comparison
 F_anal_n = F_anal / max(F_anal);

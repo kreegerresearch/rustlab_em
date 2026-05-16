@@ -24,13 +24,17 @@ phi  = linspace(0, 2 * pi, Nseg + 1);
 phi  = phi(1 : Nseg);
 seg_charge = Q / Nseg;
 
-Ez_num = zeros(length(zs));
-for k = 1:Nseg
+# Each segment's on-axis contribution is independent of the others;
+# `arrayfun` returns a (Nseg × Nz) matrix of contributions, and a
+# column-sum produces the superposed E_z(z) along the axis.
+function ez = ring_seg(k, R, phi, zs, ke, seg_charge)
   xk = R * cos(phi(k));
   yk = R * sin(phi(k));
   rseg3 = (xk * xk + yk * yk + zs .^ 2) .^ 1.5;
-  Ez_num += ke * seg_charge * zs ./ rseg3;
+  ez = ke * seg_charge * zs ./ rseg3;
 end
+Ez_seg = arrayfun(@(k) ring_seg(k, R, phi, zs, ke, seg_charge), 1:Nseg);
+Ez_num = sum(Ez_seg, 1);
 
 # === Closed-form for comparison ===
 Ez_ana = ke * Q * zs ./ ((R * R + zs .^ 2) .^ 1.5);

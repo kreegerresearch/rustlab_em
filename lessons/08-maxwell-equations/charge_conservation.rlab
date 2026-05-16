@@ -39,14 +39,14 @@ ts = linspace(0, 2 / freq, Nt);              # two periods
 I_t   = I0 * cos(omega * ts);
 Q_t   = (I0 / omega) * sin(omega * ts);
 E_t   = Q_t / (A * eps0);
-# Numerical ∂E/∂t via central difference on E_t.
-dt    = ts(2) - ts(1);
-dEdt  = zeros(Nt);
-for i = 2:(Nt - 1)
-  dEdt(i) = (E_t(i + 1) - E_t(i - 1)) / (2 * dt);
-end
-dEdt(1)  = (E_t(2)  - E_t(1))      / dt;
-dEdt(Nt) = (E_t(Nt) - E_t(Nt - 1)) / dt;
+# Numerical ∂E/∂t via central difference on E_t (vectorised — slice-
+# assigning the interior with the (E[i+1] − E[i−1])/(2 dt) stencil and
+# patching the two endpoints with one-sided differences).
+dt              = ts(2) - ts(1);
+dEdt            = zeros(Nt);
+dEdt(2:Nt-1)    = (E_t(3:Nt) - E_t(1:Nt-2)) / (2 * dt);
+dEdt(1)         = (E_t(2)    - E_t(1))      / dt;
+dEdt(Nt)        = (E_t(Nt)   - E_t(Nt - 1)) / dt;
 
 I_disp_t = eps0 * A * dEdt;                  # ε0 ∫ ∂E/∂t · dA = ε0 A ∂E/∂t
 

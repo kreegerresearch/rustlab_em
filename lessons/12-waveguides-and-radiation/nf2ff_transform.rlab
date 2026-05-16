@@ -123,17 +123,14 @@ function amp = ff_amp(rx, ry, rz, xs, ys, zs_s, Jx_s, Jy_s, Jz_s, Mx_s, My_s, Mz
 end
 
 # === θ-cut at φ = 0 (E-plane) ===
-N_th  = 51;
-ths   = linspace(0, pi, N_th);
-E_ff  = zeros(N_th);
-for kt = 1:N_th
-  th = ths(kt);
-  rx = sin(th);
-  ry = 0;
-  rz = cos(th);
-  E_ff(kt) = ff_amp(rx, ry, rz, xs, ys, zs_s, ...
-                    Jx_s, Jy_s, Jz_s, Mx_s, My_s, Mz_s, eta0, k, dA);
-end
+# Each direction is an independent surface-integral evaluation — wrap
+# `ff_amp` in a closure of (θ → amplitude) and map across the angles.
+# The lambda captures the surface arrays from the enclosing scope.
+N_th    = 51;
+ths     = linspace(0, pi, N_th);
+ff_eplane = @(th) ff_amp(sin(th), 0, cos(th), xs, ys, zs_s, ...
+                         Jx_s, Jy_s, Jz_s, Mx_s, My_s, Mz_s, eta0, k, dA);
+E_ff    = arrayfun(ff_eplane, ths);
 
 # Normalise and compare to analytic sin θ.
 E_ff_norm = real(E_ff) / max(real(E_ff));
@@ -144,17 +141,11 @@ print(err)             # ≪ 1 — sin-shape recovered
 # === φ-cut at θ = π/2 (H-plane sanity check) ===
 # For a ẑ dipole the pattern is φ-independent on the equator. Spread
 # is a single-number check on the integral's rotational symmetry.
-N_ph  = 37;
-phs   = linspace(0, 2 * pi, N_ph);
-E_ph  = zeros(N_ph);
-for kp = 1:N_ph
-  ph = phs(kp);
-  rx = cos(ph);
-  ry = sin(ph);
-  rz = 0;
-  E_ph(kp) = ff_amp(rx, ry, rz, xs, ys, zs_s, ...
-                    Jx_s, Jy_s, Jz_s, Mx_s, My_s, Mz_s, eta0, k, dA);
-end
+N_ph      = 37;
+phs       = linspace(0, 2 * pi, N_ph);
+ff_hplane = @(ph) ff_amp(cos(ph), sin(ph), 0, xs, ys, zs_s, ...
+                         Jx_s, Jy_s, Jz_s, Mx_s, My_s, Mz_s, eta0, k, dA);
+E_ph      = arrayfun(ff_hplane, phs);
 phi_spread = (max(real(E_ph)) - min(real(E_ph))) / mean(real(E_ph));
 print(phi_spread)      # ≪ 1 — equatorial cut should be flat
 

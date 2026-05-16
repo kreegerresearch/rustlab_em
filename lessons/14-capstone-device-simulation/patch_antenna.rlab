@@ -115,11 +115,9 @@ for step = 1:n_step
 
   # ----- Source on the feed column (substrate cells only) -----
   src_amp = exp(-((t - t0_s) / tau_s)^2) * sin(omega0 * (t - t0_s));
-  src = zeros(ny, nx);
-  for i = y_g+1:y_top-1
-    src(i, j_feed) = src_amp;
-  end
-  Ez = Ez + src;
+  # Drive the feed-column substrate cells via a column slice — scalar
+  # broadcast across the (y_top - y_g - 1) cells in one assignment.
+  Ez(y_g+1:y_top-1, j_feed) = Ez(y_g+1:y_top-1, j_feed) + src_amp;
 
   # ----- PEC: zero E_z on ground + patch -----
   Ez = Ez .* field_mask;

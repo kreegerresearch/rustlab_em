@@ -69,17 +69,12 @@ title("log10 |E|: bright spot at the re-entrant corner");
 savefig("corner_logE.svg");
 
 # === Sample along the 225° ray into the dielectric ===
-i0 = 60; j0 = 60;
+# `arrayfun` reads |E| at each diagonal step (i0−k, j0−k); the lambda
+# closes over `Emag`, `i0`, `j0` from the enclosing scope.
+i0  = 60; j0 = 60;
 M_r = 30;
-# Build as true 1-D vectors so loglog accepts them — `zeros(1, N)`
-# produces a 1×N matrix that the v0.3 loglog rejects.
-rs = (1:M_r) * dx * sqrt(2.0);
-Es = linspace(0, 0, M_r);
-for k = 1:M_r
-  ic = i0 - k;
-  jc = j0 - k;
-  Es(k) = Emag(ic, jc);
-end
+rs  = (1:M_r) * dx * sqrt(2.0);
+Es  = arrayfun(@(k) Emag(i0 - k, j0 - k), 1:M_r);
 
 # Log-log plot
 figure();
