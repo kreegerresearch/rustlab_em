@@ -88,7 +88,7 @@ ylabel("y cell")
 ```
 
 <!-- rustlab:output-start -->
-![plot 1](plots/14-capstone-device-simulation/plot-1-71db378a.svg)
+![plot 1](plots/14-capstone-device-simulation/plot-1-48cc7225.svg)
 
 <!-- rustlab:output-end -->
 

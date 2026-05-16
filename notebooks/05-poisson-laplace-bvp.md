@@ -45,6 +45,11 @@ $$V_{\rm an}(x, y) = \sin(\pi x)\,\frac{\sinh(\pi y)}{\sinh \pi}.$$
 Solve the same problem numerically with `laplacian_2d` + `spsolve`, then read off the relative error to the closed form. Use an interior-only grid: cell $(i, j)$ sits at $(x_j, y_i) = (j h, i h)$ with $h = 1/(N+1)$, so the physical boundary at $x = 0, 1$ and $y = 0, 1$ lies one cell *outside* the grid.
 
 ```rustlab
+% Physics y-axis (row 0 at the bottom) for every imagesc panel in this
+% notebook — matches the meshgrid layout and the contour overlays. One
+% preamble call applies to every code block below.
+set_default_axis("xy");
+
 N  = 41;
 h  = 1.0 / (N + 1);
 xs = h * (1:N);                 % interior x positions, exclusive of boundary
@@ -82,13 +87,11 @@ The two values agree to four digits; the worst-case error sits comfortably under
 ```rustlab
 clf;
 hold on;
-imagesc(real(V(N:-1:1, :)), "viridis");        % rows flipped — see note below
+imagesc(real(V), "viridis");
 contour(X, Y, V, 10, "k");
 title("V(x, y) — Laplace, V_top = sin(πx), other edges 0");
 hold off;
 ```
-
-> Why the `V(N:-1:1, :)` flip on the `imagesc` call? rustlab 0.3.4 draws matrix row 1 at the top of the plot but labels the y-axis 0 → N from bottom to top — the two conventions are inverted, so physical data laid out via `meshgrid` with ascending `y` ends up upside down. Reversing the rows before plotting cancels the flip. See `dev/rustlab/requests/imagesc-y-axis-orientation.md`. `contour(X, Y, V)` follows the physics convention correctly, so it doesn't need a flip.
 
 The contours bend smoothly from a sinusoid at the top to flat zero at the other three sides — the same picture you'd draw freehand from "harmonic functions interpolate their boundary values smoothly."
 
@@ -177,7 +180,7 @@ ys = dy * (1:ny) - Ly/2;
 w = 0.06; d = 0.02;
 top_plate = rect_mask(Xb, Yb, -w/2,  d/2 - dy/2, w, dy);
 bot_plate = rect_mask(Xb, Yb, -w/2, -d/2 - dy/2, w, dy);
-imagesc((top_plate + 2 * bot_plate)(ny:-1:1, :), "viridis");
+imagesc(top_plate + 2 * bot_plate, "viridis");
 title("Plate masks: 1 = +V plate (top), 2 = -V plate (bottom)")
 ```
 
@@ -222,7 +225,7 @@ V      = reshape(V_flat, ny, nx);
 ```rustlab
 clf;
 hold on;
-imagesc(real(V(ny:-1:1, :)), "viridis");
+imagesc(real(V), "viridis");
 contour(Xb, Yb, real(V), 16, "k");
 title("Parallel plates with fringing: V(x, y), V₀ = 1 V");
 hold off;
@@ -284,7 +287,7 @@ ysd = linspace(0, Lyd, nyd);
 eps_map = ones(nyd, nxd);
 i_half  = sum(ysd < Lyd / 2);
 eps_map(1:i_half, :) = 4.0;
-imagesc(eps_map(nyd:-1:1, :), "viridis");
+imagesc(eps_map, "viridis");
 title("ε_r(x, y): 4 below the interface, 1 above")
 ```
 
@@ -391,11 +394,7 @@ ys2 = dy2 * (1:ny2);
 % Inner corner of the L-shape sits at (x0, y0) = (0.06, 0.06).
 x0 = 0.06; y0 = 0.06;
 conductor = rect_mask(X2, Y2, x0, y0, 0.04, 0.04);
-% rustlab 0.3.4 `imagesc` puts matrix row 1 at the top but labels the
-% y-axis 0 → ny from bottom → top, flipping physical data vertically.
-% Until upstream fixes this (dev/rustlab/requests/imagesc-y-axis-orientation.md),
-% reverse the rows before plotting so high physical y reads at the top.
-imagesc(conductor(ny2:-1:1, :), "viridis");
+imagesc(conductor, "viridis");
 title("Conductor mask: V = 1 inside; grounded box on the outer boundary")
 ```
 
@@ -426,7 +425,7 @@ V2      = real(reshape(V2_flat, ny2, nx2));
 ```rustlab
 clf;
 hold on;
-imagesc(V2(ny2:-1:1, :), "viridis");
+imagesc(V2, "viridis");
 contour(X2, Y2, V2, 14, "k");
 title("L-shape Laplace: V around a pinned upper-right conductor");
 hold off;

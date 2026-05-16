@@ -139,7 +139,7 @@ title("|∇f|  —  peaks at r = σ/√2")
 ```
 
 <!-- rustlab:output-start -->
-![plot 2](plots/01-vector-calculus-and-fields/plot-2-af93aebb.svg)
+![plot 2](plots/01-vector-calculus-and-fields/plot-2-008a2a9f.svg)
 
 <!-- rustlab:output-end -->
 
@@ -185,7 +185,7 @@ title("∇·F for F = (x, y)  —  uniformly = 2")
 ```
 
 <!-- rustlab:output-start -->
-![plot 4](plots/01-vector-calculus-and-fields/plot-4-cdeeb493.svg)
+![plot 4](plots/01-vector-calculus-and-fields/plot-4-85a7a619.svg)
 
 <!-- rustlab:output-end -->
 
@@ -234,7 +234,7 @@ title("(∇×F)_z for F = (-y, x)  —  uniformly = 2")
 ```
 
 <!-- rustlab:output-start -->
-![plot 6](plots/01-vector-calculus-and-fields/plot-6-397fb15d.svg)
+![plot 6](plots/01-vector-calculus-and-fields/plot-6-20a09c39.svg)
 
 <!-- rustlab:output-end -->
 

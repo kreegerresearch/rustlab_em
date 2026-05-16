@@ -197,7 +197,7 @@ saveanim("fdtd_2d_scattering.gif", 24)
 ```
 
 <!-- rustlab:output-start -->
-![animation 2](plots/11-fdtd-simulation/anim-2-2fdfd15b.gif)
+![animation 2](plots/11-fdtd-simulation/anim-2-7dbb6f34.gif)
 
 <!-- rustlab:output-end -->
 

@@ -1,6 +1,10 @@
 # Request / Bug: `imagesc` y-axis orientation inconsistent with axis labels
 
-**Status**: Filed
+**Status**: Landed (2026-05-16, same-day round trip).
+Phase 1 (label-only fix) shipped first; the preferred data-flip fix landed as `axis("xy")` / `axis("ij")` per-panel selectors plus `set_default_axis("xy" | "ij")` for whole-notebook preambles. Default convention remains `"ij"` (matrix-pixel) for back-compat; physics-y is one preamble call away. See `../../rustlab/docs/functions.md` §`axis`, §`set_default_axis`.
+
+The curriculum dropped its `M(ny:-1:1, :)` workaround flips at all seven affected sites and now drops a single `set_default_axis("xy");` near the top of each affected file. L05 corner_singularity (the user-reported case) renders correctly without further intervention.
+
 **Date**: 2026-05-16
 **Origin**: `rustlab_em` Lesson 05 — `corner_singularity` example (visible user-facing report)
 **Affected rustlab version**: 0.3.4 (tested), likely all earlier

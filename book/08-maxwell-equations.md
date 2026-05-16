@@ -207,7 +207,7 @@ ylabel("t")
 ```
 
 <!-- rustlab:output-start -->
-![plot 3](plots/08-maxwell-equations/plot-3-ee1670cc.svg)
+![plot 3](plots/08-maxwell-equations/plot-3-0d108f69.svg)
 
 <!-- rustlab:output-end -->
 
@@ -247,7 +247,7 @@ ylabel("t")
 ```
 
 <!-- rustlab:output-start -->
-![plot 4](plots/08-maxwell-equations/plot-4-69069d6f.svg)
+![plot 4](plots/08-maxwell-equations/plot-4-0201843a.svg)
 
 <!-- rustlab:output-end -->
 
@@ -308,7 +308,7 @@ ylabel("y")
 ```
 
 <!-- rustlab:output-start -->
-![plot 5](plots/08-maxwell-equations/plot-5-d6f7e15a.svg)
+![plot 5](plots/08-maxwell-equations/plot-5-749d9adc.svg)
 
 <!-- rustlab:output-end -->
 

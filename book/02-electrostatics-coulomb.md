@@ -124,7 +124,7 @@ title("log_{10} |E|  for a single +q at the origin")
 ```
 
 <!-- rustlab:output-start -->
-![plot 2](plots/02-electrostatics-coulomb/plot-2-f1f9dada.svg)
+![plot 2](plots/02-electrostatics-coulomb/plot-2-959de666.svg)
 
 <!-- rustlab:output-end -->
 
@@ -203,7 +203,7 @@ hold off;
 ```
 
 <!-- rustlab:output-start -->
-![plot 4](plots/02-electrostatics-coulomb/plot-4-ea4aab18.svg)
+![plot 4](plots/02-electrostatics-coulomb/plot-4-eb513fd3.svg)
 
 <!-- rustlab:output-end -->
 

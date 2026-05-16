@@ -11,6 +11,10 @@
 #
 # Reference: ../../notebooks/05-poisson-laplace-bvp.md.
 
+# Physics y-axis (row 0 at the bottom) for every imagesc panel in this
+# script — matches the meshgrid layout and the contour overlay below.
+set_default_axis("xy");
+
 # === Grid ===
 nx = 100; ny = 100;
 Lx = 0.10; Ly = 0.10;
@@ -47,16 +51,9 @@ end
 V_flat = spsolve(A, b);
 V = real(reshape(V_flat, ny, nx));
 
-# rustlab 0.3.4 `imagesc` draws matrix row 1 at the top of the plot
-# but labels the y-axis 0 → ny from bottom → top, inverting physical
-# data laid out via `meshgrid` with ascending y. Until upstream fixes
-# this (see dev/rustlab/requests/imagesc-y-axis-orientation.md), flip
-# the rows before plotting so high physical y appears at the top.
-V_flip = V(ny:-1:1, :);
-
 figure();
 hold on;
-imagesc(V_flip, "viridis");
+imagesc(V, "viridis");
 contour(X, Y, V, 14, "k");
 title("L-shape Laplace: V around a pinned upper-right conductor");
 hold off;
@@ -67,7 +64,7 @@ savefig("corner_V.svg");
 Emag = sqrt(Vx .^ 2 + Vy .^ 2);
 
 figure();
-imagesc(log10(Emag(ny:-1:1, :) + 1e-12), "viridis");
+imagesc(log10(Emag + 1e-12), "viridis");
 title("log10 |E|: bright spot at the re-entrant corner");
 savefig("corner_logE.svg");
 

@@ -124,7 +124,7 @@ ylabel("y cell")
 ```
 
 <!-- rustlab:output-start -->
-![plot 1](plots/13-transmission-lines-and-antennas/plot-1-3b52cba4.svg)
+![plot 1](plots/13-transmission-lines-and-antennas/plot-1-6d4b8a18.svg)
 
 <!-- rustlab:output-end -->
 

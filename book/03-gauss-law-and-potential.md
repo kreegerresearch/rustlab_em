@@ -181,7 +181,7 @@ hold off;
 ```
 
 <!-- rustlab:output-start -->
-![plot 3](plots/03-gauss-law-and-potential/plot-3-46100ee3.svg)
+![plot 3](plots/03-gauss-law-and-potential/plot-3-afbf5e76.svg)
 
 <!-- rustlab:output-end -->
 

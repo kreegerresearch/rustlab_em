@@ -330,7 +330,7 @@ hold off;
 ```
 
 <!-- rustlab:output-start -->
-![plot 5](plots/06-magnetostatics/plot-5-e2a91d9f.svg)
+![plot 5](plots/06-magnetostatics/plot-5-18d3d3b6.svg)
 
 <!-- rustlab:output-end -->
 
@@ -411,7 +411,7 @@ title("Iron annulus mask (μ_r = 1000 inside the ring, 1 elsewhere)")
 ```
 
 <!-- rustlab:output-start -->
-![plot 7](plots/06-magnetostatics/plot-7-27c0a235.svg)
+![plot 7](plots/06-magnetostatics/plot-7-4a7f975a.svg)
 
 <!-- rustlab:output-end -->
 
@@ -444,7 +444,7 @@ hold off;
 ```
 
 <!-- rustlab:output-start -->
-![plot 8](plots/06-magnetostatics/plot-8-0fb9274f.svg)
+![plot 8](plots/06-magnetostatics/plot-8-9a9b20a9.svg)
 
 <!-- rustlab:output-end -->
 
@@ -486,7 +486,7 @@ title("|B|(x, y): bright ring is the iron, exterior is shielded")
 ```
 
 <!-- rustlab:output-start -->
-![plot 9](plots/06-magnetostatics/plot-9-364ca310.svg)
+![plot 9](plots/06-magnetostatics/plot-9-75c5ab3d.svg)
 
 <!-- rustlab:output-end -->
 

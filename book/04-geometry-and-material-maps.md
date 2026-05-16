@@ -69,7 +69,7 @@ title("rect_mask: lower-left (-0.5, -0.4), 1.0 × 0.6")
 ```
 
 <!-- rustlab:output-start -->
-![plot 1](plots/04-geometry-and-material-maps/plot-1-70b9acfc.svg)
+![plot 1](plots/04-geometry-and-material-maps/plot-1-cacbfd81.svg)
 
 <!-- rustlab:output-end -->
 
@@ -97,7 +97,7 @@ title("disk_mask: centre (0, 0), radius 1.0")
 ```
 
 <!-- rustlab:output-start -->
-![plot 2](plots/04-geometry-and-material-maps/plot-2-531bc5d1.svg)
+![plot 2](plots/04-geometry-and-material-maps/plot-2-a4021794.svg)
 
 <!-- rustlab:output-end -->
 
@@ -131,7 +131,7 @@ title("polygon_mask: triangle (-1,-0.7)-(1,-0.7)-(0,1)")
 ```
 
 <!-- rustlab:output-start -->
-![plot 3](plots/04-geometry-and-material-maps/plot-3-1e4481f9.svg)
+![plot 3](plots/04-geometry-and-material-maps/plot-3-4e6da86b.svg)
 
 <!-- rustlab:output-end -->
 
@@ -168,7 +168,7 @@ title("Annulus: D_outer .* (1 - D_inner)")
 ```
 
 <!-- rustlab:output-start -->
-![plot 4](plots/04-geometry-and-material-maps/plot-4-5010eb0d.svg)
+![plot 4](plots/04-geometry-and-material-maps/plot-4-f62dbfb9.svg)
 
 <!-- rustlab:output-end -->
 
@@ -200,7 +200,7 @@ title("C-shape: R_block .* (1 - R_bite)")
 ```
 
 <!-- rustlab:output-start -->
-![plot 5](plots/04-geometry-and-material-maps/plot-5-7308590f.svg)
+![plot 5](plots/04-geometry-and-material-maps/plot-5-57e113a0.svg)
 
 <!-- rustlab:output-end -->
 
@@ -224,7 +224,7 @@ title("Region IDs: 0 outside, 1 = R only, 2 = D only, 3 = R ∩ D")
 ```
 
 <!-- rustlab:output-start -->
-![plot 6](plots/04-geometry-and-material-maps/plot-6-a2bd8759.svg)
+![plot 6](plots/04-geometry-and-material-maps/plot-6-8675f08a.svg)
 
 <!-- rustlab:output-end -->
 
@@ -294,7 +294,7 @@ title("ε_r(x, y): air = 1, FR-4 = 4.4, copper disk overwrites substrate")
 ```
 
 <!-- rustlab:output-start -->
-![plot 7](plots/04-geometry-and-material-maps/plot-7-ad2060ef.svg)
+![plot 7](plots/04-geometry-and-material-maps/plot-7-a4115f12.svg)
 
 <!-- rustlab:output-end -->
 
@@ -331,7 +331,7 @@ title("σ(x, y): zero everywhere except the copper disk")
 ```
 
 <!-- rustlab:output-start -->
-![plot 8](plots/04-geometry-and-material-maps/plot-8-2b414ad3.svg)
+![plot 8](plots/04-geometry-and-material-maps/plot-8-da885f5e.svg)
 
 <!-- rustlab:output-end -->
 
@@ -374,7 +374,7 @@ title("Conformal α(x, y) for unit disk (K = 8 subsamples)")
 ```
 
 <!-- rustlab:output-start -->
-![plot 9](plots/04-geometry-and-material-maps/plot-9-fec01f95.svg)
+![plot 9](plots/04-geometry-and-material-maps/plot-9-7afa1e83.svg)
 
 <!-- rustlab:output-end -->
 
@@ -414,7 +414,7 @@ title("α - M: nonzero only on the disk's rim")
 ```
 
 <!-- rustlab:output-start -->
-![plot 10](plots/04-geometry-and-material-maps/plot-10-c15891bd.svg)
+![plot 10](plots/04-geometry-and-material-maps/plot-10-7a99fa96.svg)
 
 <!-- rustlab:output-end -->
 

@@ -27,6 +27,9 @@
 #
 # Reference: ../../notebooks/14-capstone-device-simulation.md.
 
+set_default_axis("xy");        # physics y-axis: ground stays at the bottom,
+                               # patch at the top in every imagesc/frame panel.
+
 mu0  = 4 * pi * 1e-7;
 eps0 = 8.854187817e-12;
 c0   = 1 / sqrt(mu0 * eps0);
@@ -125,10 +128,7 @@ for step = 1:n_step
   Ez_probe(step) = real(Ez(i_probe, j_feed));
 
   if mod(step, 40) == 0
-    # imagesc rows flipped so the ground plane stays at the bottom and
-    # the patch at the top — rustlab 0.3.4 otherwise inverts vertically.
-    # See dev/rustlab/requests/imagesc-y-axis-orientation.md.
-    imagesc(real(Ez(ny:-1:1, :)), "viridis");
+    imagesc(real(Ez), "viridis");
     title(sprintf("t = %.2f ns", t * 1e9));
     xlabel("x cell");
     ylabel("y cell");
@@ -164,16 +164,16 @@ savefig("patch_spectrum.svg");
 print(fs(kmax) / 1e9)               # GHz of dominant peak
 print(Sp_max)
 
-# === Geometry + final field snapshots (rows flipped for orientation) ===
+# === Geometry + final field snapshots ===
 figure();
-imagesc((eps_r_map + 5 * pec_mask)(ny:-1:1, :), "viridis");
+imagesc(eps_r_map + 5 * pec_mask, "viridis");
 title("Geometry: substrate eps_r = 4.4 + ground / patch (PEC, drawn as 6.4)");
 xlabel("x cell");
 ylabel("y cell");
 savefig("patch_geometry.svg");
 
 figure();
-imagesc(abs(Ez(ny:-1:1, :)), "viridis");
+imagesc(abs(Ez), "viridis");
 title("Final |E_z| — late-time standing-wave pattern under the patch");
 xlabel("x cell");
 ylabel("y cell");

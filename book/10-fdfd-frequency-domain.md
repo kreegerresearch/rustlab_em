@@ -105,7 +105,7 @@ ylabel("y cell index")
 ```
 
 <!-- rustlab:output-start -->
-![plot 1](plots/10-fdfd-frequency-domain/plot-1-37f2313b.svg)
+![plot 1](plots/10-fdfd-frequency-domain/plot-1-c9e8fae6.svg)
 
 <!-- rustlab:output-end -->
 
@@ -123,7 +123,7 @@ ylabel("y cell index")
 ```
 
 <!-- rustlab:output-start -->
-![plot 2](plots/10-fdfd-frequency-domain/plot-2-3571d4ca.svg)
+![plot 2](plots/10-fdfd-frequency-domain/plot-2-33942220.svg)
 
 <!-- rustlab:output-end -->
 
@@ -328,7 +328,7 @@ ylabel("y")
 ```
 
 <!-- rustlab:output-start -->
-![plot 5](plots/10-fdfd-frequency-domain/plot-5-78e12408.svg)
+![plot 5](plots/10-fdfd-frequency-domain/plot-5-2be0f010.svg)
 
 <!-- rustlab:output-end -->
 
@@ -350,7 +350,7 @@ ylabel("y")
 ```
 
 <!-- rustlab:output-start -->
-![plot 6](plots/10-fdfd-frequency-domain/plot-6-eb66c898.svg)
+![plot 6](plots/10-fdfd-frequency-domain/plot-6-76aaa330.svg)
 
 <!-- rustlab:output-end -->
 
@@ -363,7 +363,7 @@ ylabel("y")
 ```
 
 <!-- rustlab:output-start -->
-![plot 7](plots/10-fdfd-frequency-domain/plot-7-239f856c.svg)
+![plot 7](plots/10-fdfd-frequency-domain/plot-7-41b32117.svg)
 
 <!-- rustlab:output-end -->
 
@@ -478,7 +478,7 @@ ylabel("y cell index")
 ```
 
 <!-- rustlab:output-start -->
-![plot 9](plots/10-fdfd-frequency-domain/plot-9-c78bd3a7.svg)
+![plot 9](plots/10-fdfd-frequency-domain/plot-9-34a55993.svg)
 
 <!-- rustlab:output-end -->
 

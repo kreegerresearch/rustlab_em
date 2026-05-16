@@ -100,7 +100,7 @@ ylabel("y cell")
 ```
 
 <!-- rustlab:output-start -->
-![plot 1](plots/12-waveguides-and-radiation/plot-1-38ac7038.svg)
+![plot 1](plots/12-waveguides-and-radiation/plot-1-21ed820e.svg)
 
 <!-- rustlab:output-end -->
 
@@ -161,7 +161,7 @@ ylabel("y cell")
 ```
 
 <!-- rustlab:output-start -->
-![plot 2](plots/12-waveguides-and-radiation/plot-2-deab919a.svg)
+![plot 2](plots/12-waveguides-and-radiation/plot-2-89fac5c9.svg)
 
 <!-- rustlab:output-end -->
 

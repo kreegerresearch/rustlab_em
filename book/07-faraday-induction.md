@@ -147,7 +147,7 @@ title("B_z from the outer loop sampled on the inner disk's plane")
 ```
 
 <!-- rustlab:output-start -->
-![plot 2](plots/07-faraday-induction/plot-2-c49dc565.svg)
+![plot 2](plots/07-faraday-induction/plot-2-8b0b8e95.svg)
 
 <!-- rustlab:output-end -->
 
@@ -223,7 +223,7 @@ title("Conducting plate mask (1 inside the disk, 0 outside)")
 ```
 
 <!-- rustlab:output-start -->
-![plot 3](plots/07-faraday-induction/plot-3-6367e875.svg)
+![plot 3](plots/07-faraday-induction/plot-3-fdd0890b.svg)
 
 <!-- rustlab:output-end -->
 
@@ -264,7 +264,7 @@ hold off;
 ```
 
 <!-- rustlab:output-start -->
-![plot 4](plots/07-faraday-induction/plot-4-7f05095e.svg)
+![plot 4](plots/07-faraday-induction/plot-4-95b44a1a.svg)
 
 <!-- rustlab:output-end -->
 

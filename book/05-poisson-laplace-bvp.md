@@ -47,6 +47,11 @@ $$V_{\rm an}(x, y) = \sin(\pi x)\,\frac{\sinh(\pi y)}{\sinh \pi}.$$
 Solve the same problem numerically with `laplacian_2d` + `spsolve`, then read off the relative error to the closed form. Use an interior-only grid: cell $(i, j)$ sits at $(x_j, y_i) = (j h, i h)$ with $h = 1/(N+1)$, so the physical boundary at $x = 0, 1$ and $y = 0, 1$ lies one cell *outside* the grid.
 
 ```rustlab
+% Physics y-axis (row 0 at the bottom) for every imagesc panel in this
+% notebook — matches the meshgrid layout and the contour overlays. One
+% preamble call applies to every code block below.
+set_default_axis("xy");
+
 N  = 41;
 h  = 1.0 / (N + 1);
 xs = h * (1:N);                 % interior x positions, exclusive of boundary
@@ -93,18 +98,16 @@ The two values agree to four digits; the worst-case error sits comfortably under
 ```rustlab
 clf;
 hold on;
-imagesc(real(V(N:-1:1, :)), "viridis");        % rows flipped — see note below
+imagesc(real(V), "viridis");
 contour(X, Y, V, 10, "k");
 title("V(x, y) — Laplace, V_top = sin(πx), other edges 0");
 hold off;
 ```
 
 <!-- rustlab:output-start -->
-![plot 1](plots/05-poisson-laplace-bvp/plot-1-08308c99.svg)
+![plot 1](plots/05-poisson-laplace-bvp/plot-1-0b0ae6dc.svg)
 
 <!-- rustlab:output-end -->
-
-> Why the `V(N:-1:1, :)` flip on the `imagesc` call? rustlab 0.3.4 draws matrix row 1 at the top of the plot but labels the y-axis 0 → N from bottom to top — the two conventions are inverted, so physical data laid out via `meshgrid` with ascending `y` ends up upside down. Reversing the rows before plotting cancels the flip. See `dev/rustlab/requests/imagesc-y-axis-orientation.md`. `contour(X, Y, V)` follows the physics convention correctly, so it doesn't need a flip.
 
 The contours bend smoothly from a sinusoid at the top to flat zero at the other three sides — the same picture you'd draw freehand from "harmonic functions interpolate their boundary values smoothly."
 
@@ -202,12 +205,12 @@ ys = dy * (1:ny) - Ly/2;
 w = 0.06; d = 0.02;
 top_plate = rect_mask(Xb, Yb, -w/2,  d/2 - dy/2, w, dy);
 bot_plate = rect_mask(Xb, Yb, -w/2, -d/2 - dy/2, w, dy);
-imagesc((top_plate + 2 * bot_plate)(ny:-1:1, :), "viridis");
+imagesc(top_plate + 2 * bot_plate, "viridis");
 title("Plate masks: 1 = +V plate (top), 2 = -V plate (bottom)")
 ```
 
 <!-- rustlab:output-start -->
-![plot 2](plots/05-poisson-laplace-bvp/plot-2-8a9d6de7.svg)
+![plot 2](plots/05-poisson-laplace-bvp/plot-2-d238f8a4.svg)
 
 <!-- rustlab:output-end -->
 
@@ -252,14 +255,14 @@ V      = reshape(V_flat, ny, nx);
 ```rustlab
 clf;
 hold on;
-imagesc(real(V(ny:-1:1, :)), "viridis");
+imagesc(real(V), "viridis");
 contour(Xb, Yb, real(V), 16, "k");
 title("Parallel plates with fringing: V(x, y), V₀ = 1 V");
 hold off;
 ```
 
 <!-- rustlab:output-start -->
-![plot 3](plots/05-poisson-laplace-bvp/plot-3-23098be8.svg)
+![plot 3](plots/05-poisson-laplace-bvp/plot-3-2842ef45.svg)
 
 <!-- rustlab:output-end -->
 
@@ -327,12 +330,12 @@ ysd = linspace(0, Lyd, nyd);
 eps_map = ones(nyd, nxd);
 i_half  = sum(ysd < Lyd / 2);
 eps_map(1:i_half, :) = 4.0;
-imagesc(eps_map(nyd:-1:1, :), "viridis");
+imagesc(eps_map, "viridis");
 title("ε_r(x, y): 4 below the interface, 1 above")
 ```
 
 <!-- rustlab:output-start -->
-![plot 4](plots/05-poisson-laplace-bvp/plot-4-ce9ba709.svg)
+![plot 4](plots/05-poisson-laplace-bvp/plot-4-3d2cf4bb.svg)
 
 <!-- rustlab:output-end -->
 
@@ -463,16 +466,12 @@ ys2 = dy2 * (1:ny2);
 % Inner corner of the L-shape sits at (x0, y0) = (0.06, 0.06).
 x0 = 0.06; y0 = 0.06;
 conductor = rect_mask(X2, Y2, x0, y0, 0.04, 0.04);
-% rustlab 0.3.4 `imagesc` puts matrix row 1 at the top but labels the
-% y-axis 0 → ny from bottom → top, flipping physical data vertically.
-% Until upstream fixes this (dev/rustlab/requests/imagesc-y-axis-orientation.md),
-% reverse the rows before plotting so high physical y reads at the top.
-imagesc(conductor(ny2:-1:1, :), "viridis");
+imagesc(conductor, "viridis");
 title("Conductor mask: V = 1 inside; grounded box on the outer boundary")
 ```
 
 <!-- rustlab:output-start -->
-![plot 6](plots/05-poisson-laplace-bvp/plot-6-e423088b.svg)
+![plot 6](plots/05-poisson-laplace-bvp/plot-6-1d6c4d20.svg)
 
 <!-- rustlab:output-end -->
 
@@ -503,14 +502,14 @@ V2      = real(reshape(V2_flat, ny2, nx2));
 ```rustlab
 clf;
 hold on;
-imagesc(V2(ny2:-1:1, :), "viridis");
+imagesc(V2, "viridis");
 contour(X2, Y2, V2, 14, "k");
 title("L-shape Laplace: V around a pinned upper-right conductor");
 hold off;
 ```
 
 <!-- rustlab:output-start -->
-![plot 7](plots/05-poisson-laplace-bvp/plot-7-d1b3e122.svg)
+![plot 7](plots/05-poisson-laplace-bvp/plot-7-72b1cc39.svg)
 
 <!-- rustlab:output-end -->
 
@@ -525,7 +524,7 @@ title("log₁₀ |E|: bright spot at the re-entrant corner")
 ```
 
 <!-- rustlab:output-start -->
-![plot 8](plots/05-poisson-laplace-bvp/plot-8-af10676d.svg)
+![plot 8](plots/05-poisson-laplace-bvp/plot-8-880e3505.svg)
 
 <!-- rustlab:output-end -->
 
