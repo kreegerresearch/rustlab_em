@@ -7,6 +7,8 @@
 #
 # Reference: ../../notebooks/04-geometry-and-material-maps.md.
 
+set_default_axis("xy");        # physics y-axis for every imagesc panel below
+
 # === Grid ===
 N      = 200;
 [X, Y] = meshgrid(linspace(-1.5, 1.5, N), linspace(-1.5, 1.5, N));

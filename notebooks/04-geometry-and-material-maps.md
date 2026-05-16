@@ -21,6 +21,11 @@ Lessons 01–03 (gradient, divergence, the meshgrid convention). Comfort reading
 Every primitive in this lesson takes coordinate matrices `X`, `Y` from `meshgrid` and returns an `ny × nx` real-valued mask. Rows index $y$, columns index $x$ — the same convention used by `imagesc`, `contour`, `gradient`, and every later solver.
 
 ```rustlab
+% Physics y-axis (row 0 at the bottom) for every imagesc panel in this
+% notebook — shapes drawn in their meshgrid orientation, matches the
+% convention used by `contour(X, Y, F)` and every later solver.
+set_default_axis("xy");
+
 N      = 200;
 [X, Y] = meshgrid(linspace(-1.5, 1.5, N), linspace(-1.5, 1.5, N));
 dx     = 3.0 / (N - 1);

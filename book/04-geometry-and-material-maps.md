@@ -23,6 +23,11 @@ Lessons 01–03 (gradient, divergence, the meshgrid convention). Comfort reading
 Every primitive in this lesson takes coordinate matrices `X`, `Y` from `meshgrid` and returns an `ny × nx` real-valued mask. Rows index $y$, columns index $x$ — the same convention used by `imagesc`, `contour`, `gradient`, and every later solver.
 
 ```rustlab
+% Physics y-axis (row 0 at the bottom) for every imagesc panel in this
+% notebook — shapes drawn in their meshgrid orientation, matches the
+% convention used by `contour(X, Y, F)` and every later solver.
+set_default_axis("xy");
+
 N      = 200;
 [X, Y] = meshgrid(linspace(-1.5, 1.5, N), linspace(-1.5, 1.5, N));
 dx     = 3.0 / (N - 1);
@@ -69,7 +74,7 @@ title("rect_mask: lower-left (-0.5, -0.4), 1.0 × 0.6")
 ```
 
 <!-- rustlab:output-start -->
-![plot 1](plots/04-geometry-and-material-maps/plot-1-cacbfd81.svg)
+![plot 1](plots/04-geometry-and-material-maps/plot-1-15f50046.svg)
 
 <!-- rustlab:output-end -->
 
@@ -97,7 +102,7 @@ title("disk_mask: centre (0, 0), radius 1.0")
 ```
 
 <!-- rustlab:output-start -->
-![plot 2](plots/04-geometry-and-material-maps/plot-2-a4021794.svg)
+![plot 2](plots/04-geometry-and-material-maps/plot-2-cc195d67.svg)
 
 <!-- rustlab:output-end -->
 
@@ -131,7 +136,7 @@ title("polygon_mask: triangle (-1,-0.7)-(1,-0.7)-(0,1)")
 ```
 
 <!-- rustlab:output-start -->
-![plot 3](plots/04-geometry-and-material-maps/plot-3-4e6da86b.svg)
+![plot 3](plots/04-geometry-and-material-maps/plot-3-9e6c4b9c.svg)
 
 <!-- rustlab:output-end -->
 
@@ -168,7 +173,7 @@ title("Annulus: D_outer .* (1 - D_inner)")
 ```
 
 <!-- rustlab:output-start -->
-![plot 4](plots/04-geometry-and-material-maps/plot-4-f62dbfb9.svg)
+![plot 4](plots/04-geometry-and-material-maps/plot-4-fdbaf4fb.svg)
 
 <!-- rustlab:output-end -->
 
@@ -200,7 +205,7 @@ title("C-shape: R_block .* (1 - R_bite)")
 ```
 
 <!-- rustlab:output-start -->
-![plot 5](plots/04-geometry-and-material-maps/plot-5-57e113a0.svg)
+![plot 5](plots/04-geometry-and-material-maps/plot-5-b3334ad7.svg)
 
 <!-- rustlab:output-end -->
 
@@ -224,7 +229,7 @@ title("Region IDs: 0 outside, 1 = R only, 2 = D only, 3 = R ∩ D")
 ```
 
 <!-- rustlab:output-start -->
-![plot 6](plots/04-geometry-and-material-maps/plot-6-8675f08a.svg)
+![plot 6](plots/04-geometry-and-material-maps/plot-6-62c3e38d.svg)
 
 <!-- rustlab:output-end -->
 
@@ -294,7 +299,7 @@ title("ε_r(x, y): air = 1, FR-4 = 4.4, copper disk overwrites substrate")
 ```
 
 <!-- rustlab:output-start -->
-![plot 7](plots/04-geometry-and-material-maps/plot-7-a4115f12.svg)
+![plot 7](plots/04-geometry-and-material-maps/plot-7-290bb2be.svg)
 
 <!-- rustlab:output-end -->
 
@@ -331,7 +336,7 @@ title("σ(x, y): zero everywhere except the copper disk")
 ```
 
 <!-- rustlab:output-start -->
-![plot 8](plots/04-geometry-and-material-maps/plot-8-da885f5e.svg)
+![plot 8](plots/04-geometry-and-material-maps/plot-8-0905ca6e.svg)
 
 <!-- rustlab:output-end -->
 
@@ -374,7 +379,7 @@ title("Conformal α(x, y) for unit disk (K = 8 subsamples)")
 ```
 
 <!-- rustlab:output-start -->
-![plot 9](plots/04-geometry-and-material-maps/plot-9-7afa1e83.svg)
+![plot 9](plots/04-geometry-and-material-maps/plot-9-643a0a37.svg)
 
 <!-- rustlab:output-end -->
 
@@ -414,7 +419,7 @@ title("α - M: nonzero only on the disk's rim")
 ```
 
 <!-- rustlab:output-start -->
-![plot 10](plots/04-geometry-and-material-maps/plot-10-7a99fa96.svg)
+![plot 10](plots/04-geometry-and-material-maps/plot-10-54cf2a18.svg)
 
 <!-- rustlab:output-end -->
 
