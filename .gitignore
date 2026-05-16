@@ -9,6 +9,14 @@ lessons/*/*.png
 # living alongside the committed *.md (large Plotly bundles, regenerable).
 book/*.html
 
+# Un-hashed plot artefacts referenced only by the gitignored *.html
+# build (`make html`). The committed *.md uses content-hashed filenames
+# (plot-N-<hash>.svg, anim-N-<hash>.gif). Regenerated on every render.
+book/plots/*/anim-[0-9]*.gif
+!book/plots/*/anim-[0-9]*-[0-9a-f]*.gif
+book/plots/*/plot-[0-9]*.svg
+!book/plots/*/plot-[0-9]*-[0-9a-f]*.svg
+
 # macOS
 .DS_Store
 
