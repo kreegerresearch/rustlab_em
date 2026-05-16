@@ -80,10 +80,13 @@ print(Er(1))                            % ≈ 71.9 V/m  (linear in r near origin
 print(Er(argmin(abs(rs - R))))          % at r ≈ R:  ≈ 3586 V/m  (closed form 3595)
 ```
 
+<!-- rustlab:output-start -->
 ```text
 71.9
 3586.1701754385963
 ```
+
+<!-- rustlab:output-end -->
 
 ```rustlab
 clf;
@@ -92,7 +95,10 @@ xlabel("r (cm)");
 ylabel("E_r (V/m)")
 ```
 
-![plot 1](plots/03-gauss-law-and-potential/plot-1.svg)
+<!-- rustlab:output-start -->
+![plot 1](plots/03-gauss-law-and-potential/plot-1-2b9cd44a.svg)
+
+<!-- rustlab:output-end -->
 
 ### Example — $V(r)$ across the surface
 
@@ -106,10 +112,13 @@ print(V_r(1))                 % at r ≈ 0:  V = 3 k_e Q / (2R)
 print(ke * Q / R)             % surface value:  k_e Q / R
 ```
 
+<!-- rustlab:output-start -->
 ```text
 269.58905
 179.75
 ```
+
+<!-- rustlab:output-end -->
 
 ```rustlab
 clf;
@@ -118,7 +127,10 @@ xlabel("r (cm)");
 ylabel("V (V)")
 ```
 
-![plot 2](plots/03-gauss-law-and-potential/plot-2.svg)
+<!-- rustlab:output-start -->
+![plot 2](plots/03-gauss-law-and-potential/plot-2-ef208894.svg)
+
+<!-- rustlab:output-end -->
 
 The interior parabola joins the exterior $1/r$ branch smoothly — both the value and the slope $-E_r$ are continuous at $r = R$.
 
@@ -168,7 +180,10 @@ title("Dipole potential V(x, y)  with equipotentials");
 hold off;
 ```
 
-![plot 3](plots/03-gauss-law-and-potential/plot-3.svg)
+<!-- rustlab:output-start -->
+![plot 3](plots/03-gauss-law-and-potential/plot-3-46100ee3.svg)
+
+<!-- rustlab:output-end -->
 
 ### Example — $\vec E = -\nabla V$ matches direct superposition
 
@@ -187,17 +202,23 @@ print(real(Ex_from_V(46, 26)))    % ≈ -2798 V/m  (analytic = -2808.59;  ~0.4% 
 print(real(Ey_from_V(46, 26)))    % ≈ 0  by symmetry
 ```
 
+<!-- rustlab:output-start -->
 ```text
 -2798.094338301234
 -0
 ```
+
+<!-- rustlab:output-end -->
 
 ```rustlab
 clf;
 quiver(X, Y, Ex_from_V, Ey_from_V, "Dipole field recovered as -∇V")
 ```
 
-![plot 4](plots/03-gauss-law-and-potential/plot-4.svg)
+<!-- rustlab:output-start -->
+![plot 4](plots/03-gauss-law-and-potential/plot-4-f977346f.svg)
+
+<!-- rustlab:output-end -->
 
 The quiver is visually identical to Lesson 02's direct-superposition plot — and now we have a *scalar* recipe (compute $V$, take $-\nabla V$) that scales to $10^4$ charges as cheaply as to two.
 
@@ -239,6 +260,7 @@ print(C)                       % ≈ 8.854e-12 F = 8.854 pF
 print(Q / V0)                  % independent check:  Q/V = C
 ```
 
+<!-- rustlab:output-start -->
 ```text
 0.00000010000000000000001
 11294.090673730192
@@ -246,6 +268,8 @@ print(Q / V0)                  % independent check:  Q/V = C
 0.0000000000088541878128
 0.000000000008854187812799999
 ```
+
+<!-- rustlab:output-end -->
 
 ### Example — Plot $E_z(z)$ and $V(z)$ across the gap
 
@@ -268,7 +292,10 @@ xlabel("z (mm)");
 legend("E_z (V/m)", "V (V)")
 ```
 
-![plot 5](plots/03-gauss-law-and-potential/plot-5.svg)
+<!-- rustlab:output-start -->
+![plot 5](plots/03-gauss-law-and-potential/plot-5-d1766d62.svg)
+
+<!-- rustlab:output-end -->
 
 ## Numerical Verification of $\nabla\cdot\vec E = \rho/\varepsilon_0$
 
@@ -300,9 +327,12 @@ divE = divergence(Ex, Ey, dx, dy);
 print(real(divE(40, 30)))      % expect a small finite stencil-error value (V/m²)
 ```
 
+<!-- rustlab:output-start -->
 ```text
 -106873.65130626428
 ```
+
+<!-- rustlab:output-end -->
 
 The numerical value is *not* particularly small in absolute units (V/m² values in the $10^4$–$10^5$ range are typical here) — the central-difference stencil sees the steep $1/r^3$ dipole falloff and the leading truncation error is of order $\Delta^2\,\partial^3 E/\partial x^3$, which is sizeable when $|\vec E|/\Delta^2$ is large. Lesson 05 fixes this by solving for $V$ on a grid using the finite-difference Laplacian directly, where the discretization is *consistent with the operator*: the algebraic identity $\nabla^2 V_{\rm num} = -\rho_{\rm num}/\varepsilon_0$ is built in by construction, so vacuum cells return zero exactly under the same stencil that defines $\nabla^2$.
 

@@ -53,7 +53,10 @@ title("Loop in sinusoidal B(t): flux and EMF (EMF / 100)");
 legend("Φ(t)  (Wb)", "ε(t)/100  (V)")
 ```
 
-![plot 1](plots/07-faraday-induction/plot-1.svg)
+<!-- rustlab:output-start -->
+![plot 1](plots/07-faraday-induction/plot-1-ceb2049b.svg)
+
+<!-- rustlab:output-end -->
 
 ```rustlab
 % Peak quantities
@@ -63,10 +66,13 @@ print(Phi_peak)        % ≈ 7.85e-4 Wb
 print(Eps_peak)        % ≈ 0.296 V
 ```
 
+<!-- rustlab:output-start -->
 ```text
 0.0007853981633974484
 0.29608813203268075
 ```
+
+<!-- rustlab:output-end -->
 
 The EMF leads the flux by $\pi/2$ (cosine vs sine) — the EMF is largest at the moments when the flux is changing fastest, and zero at the flux peaks where $d\Phi/dt = 0$. Flipping the sign of $B_0$ (or running the loop counter-clockwise) flips the sign of $\varepsilon$ — Lenz's law in action.
 
@@ -140,7 +146,10 @@ imagesc(real(Bz_grid), "viridis");
 title("B_z from the outer loop sampled on the inner disk's plane")
 ```
 
-![plot 2](plots/07-faraday-induction/plot-2.svg)
+<!-- rustlab:output-start -->
+![plot 2](plots/07-faraday-induction/plot-2-c49dc565.svg)
+
+<!-- rustlab:output-end -->
 
 ```rustlab
 % Φ = ∫∫_{disk_a} Bz dA, picked out by Lesson-04's disk_mask. The
@@ -155,10 +164,13 @@ print(M_num)                              % ≈ 7.94e-9 H
 print(M_an)                               % ≈ 7.90e-9 H — within ~0.5 % for a/b = 0.2
 ```
 
+<!-- rustlab:output-start -->
 ```text
 0.000000007936917228094323
 0.000000007895683520871486
 ```
+
+<!-- rustlab:output-end -->
 
 The two values agree to within a few percent at $a/b = 0.2$; refining the grid or shrinking $a/b$ tightens the match. Reciprocity ($M_{12} = M_{21}$) is built into the formula but worth checking by hand on Exercise 2 — flip which loop carries the current and recompute. The pipeline directly extends to non-concentric, non-coplanar, and non-circular loops where no closed form exists.
 
@@ -210,7 +222,10 @@ imagesc(plate_mask, "viridis");
 title("Conducting plate mask (1 inside the disk, 0 outside)")
 ```
 
-![plot 3](plots/07-faraday-induction/plot-3.svg)
+<!-- rustlab:output-start -->
+![plot 3](plots/07-faraday-induction/plot-3-6367e875.svg)
+
+<!-- rustlab:output-end -->
 
 ```rustlab
 % Sparse Poisson with -∇²ψ = σ Ḃ inside the plate, ψ = 0 elsewhere.
@@ -248,7 +263,10 @@ title("Stream function ψ(x, y) for the eddy-current pattern");
 hold off;
 ```
 
-![plot 4](plots/07-faraday-induction/plot-4.svg)
+<!-- rustlab:output-start -->
+![plot 4](plots/07-faraday-induction/plot-4-7f05095e.svg)
+
+<!-- rustlab:output-end -->
 
 ```rustlab
 % Recover J = ẑ × ∇ψ.   Jx = ∂ψ/∂y,   Jy = -∂ψ/∂x
@@ -262,7 +280,10 @@ xlabel("x (m)");
 ylabel("y (m)")
 ```
 
-![plot 5](plots/07-faraday-induction/plot-5.svg)
+<!-- rustlab:output-start -->
+![plot 5](plots/07-faraday-induction/plot-5-7dbe57d3.svg)
+
+<!-- rustlab:output-end -->
 
 The quiver field circulates clockwise inside the plate — consistent with Lenz's law for a positive $\dot B_z$. Sample the current magnitude along a radius and compare to the analytic $J_\varphi(r) = \sigma\dot B_z\,r/2$.
 
@@ -277,11 +298,14 @@ print(sigma_cu * Bdot * 0.7 * R_plate / 2.0)                   % analytic at r =
 print(real(Jmag(i_c, nx3 / 2 + 1)))                            % near centre
 ```
 
+<!-- rustlab:output-start -->
 ```text
 1175649.633045984
 1218000
 40606.13198313814
 ```
+
+<!-- rustlab:output-end -->
 
 The numerical $|J|$ at $r = 0.7\,R$ matches the analytic $\sigma\dot B_z r/2$ within a few percent; near $r = 0$ both go to zero. The eddy-current pattern this produces — circular flow lines, current density growing linearly outward — is the same one industrial-induction-heating cookers exploit (a strong $\dot B$ from a coil drives huge $J$ in the steel pan, which dissipates as $\int|\vec J|^2/\sigma$). The drift of these eddies into a conductor is also why **transformer cores must be laminated**: replacing solid iron with thin insulated sheets confines the eddy stream-function support to each lamination's small disk, killing $\propto R^4$ eddy losses to a manageable level.
 

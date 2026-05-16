@@ -90,7 +90,10 @@ title("Plane wave snapshots — phase advances toward +x");
 legend("t = 0", "t = T/4", "t = T/2")
 ```
 
-![plot 1](plots/09-em-waves/plot-1.svg)
+<!-- rustlab:output-start -->
+![plot 1](plots/09-em-waves/plot-1-4ebeaa4c.svg)
+
+<!-- rustlab:output-end -->
 
 The cosine envelope shifts to the right by $\lambda/4$ between $t = 0$ and $t = T/4$, and by $\lambda/2$ between $t = 0$ and $t = T/2$ — exactly $c\,\Delta t$ in each case. A trace at fixed $x$ would show pure $\cos(\omega t)$ with the same period as the spatial pattern.
 
@@ -100,9 +103,12 @@ B0_v   = E0_v / c_v;
 print(E0_v / B0_v)               % → c ≈ 2.998e8
 ```
 
+<!-- rustlab:output-start -->
 ```text
 299792458.0105029
 ```
+
+<!-- rustlab:output-end -->
 
 ```rustlab
 % Animation: 60 frames over one full period.
@@ -126,7 +132,10 @@ end
 saveanim("plane_wave.gif", 24)
 ```
 
-![animation 2](plots/09-em-waves/anim-2.gif)
+<!-- rustlab:output-start -->
+![animation 2](plots/09-em-waves/anim-2-e2e7810d.gif)
+
+<!-- rustlab:output-end -->
 
 The two curves are identical in the animation — that is the visual statement of $E_y$ and $cB_z$ having equal amplitude and phase. Switching to the complex amplitude form $E_y = \mathrm{Re}(E_0\,e^{i(kx - \omega t)})$ would let us read both magnitude and phase off a single complex array, but for monochromatic vacuum propagation the real form is enough.
 
@@ -203,7 +212,10 @@ xlabel("E_y"); ylabel("E_z");
 title("Elliptical (2:1)")
 ```
 
-![plot 3](plots/09-em-waves/plot-3.svg)
+<!-- rustlab:output-start -->
+![plot 3](plots/09-em-waves/plot-3-f43fc613.svg)
+
+<!-- rustlab:output-end -->
 
 The four loci are immediately readable: a diagonal line, two oppositely oriented circles, and an axis-aligned ellipse. The animation below sweeps a marker around the RCP circle in real time so the *direction* of rotation is unambiguous.
 
@@ -232,7 +244,10 @@ end
 saveanim("polarization_rcp.gif", 24)
 ```
 
-![animation 4](plots/09-em-waves/anim-4.gif)
+<!-- rustlab:output-start -->
+![animation 4](plots/09-em-waves/anim-4-55eda3b0.gif)
+
+<!-- rustlab:output-end -->
 
 Every plane wave decomposes into RCP + LCP components at fixed amplitude and phase — the chiral basis $\{\hat e_+,\,\hat e_-\}$ is just as fundamental as the Cartesian basis $\{\hat y,\,\hat z\}$, and is preferred when discussing media that respond differently to the two handedness states (Faraday rotation, the quarter-wave plate).
 
@@ -300,11 +315,14 @@ title("Standing wave — snapshots inside envelope");
 legend("wt = pi/8", "wt = pi/4", "wt = pi/2", "+envelope", "-envelope")
 ```
 
+<!-- rustlab:output-start -->
 ```text
 0
 ```
 
-![plot 5](plots/09-em-waves/plot-5.svg)
+![plot 5](plots/09-em-waves/plot-5-bff5220a.svg)
+
+<!-- rustlab:output-end -->
 
 The three snapshots all lie inside the same envelope $\pm 2E_0|\sin kx|$, with the snapshot at $\omega t = \pi/2$ (i.e. $t = T/4$) coinciding with the upper envelope itself. Nodes at $x = 0,\,\lambda/2,\,\lambda,\,3\lambda/2,\,2\lambda$ show up as forced zeros every snapshot. The animation below sweeps over an entire period: the field "breathes" between the two envelopes without translating, and the boundary condition holds frame-by-frame.
 
@@ -329,7 +347,10 @@ end
 saveanim("standing_wave.gif", 24)
 ```
 
-![animation 6](plots/09-em-waves/anim-6.gif)
+<!-- rustlab:output-start -->
+![animation 6](plots/09-em-waves/anim-6-b3836798.gif)
+
+<!-- rustlab:output-end -->
 
 The same pair of incident + reflected waves with a *non*-PEC reflector (finite impedance, dielectric, conductor with finite $\sigma$) produces a reflection coefficient $|\Gamma| < 1$ and a partial standing-wave pattern with non-zero minima — the **VSWR** that Lesson 13 quantifies on transmission lines, and that every microwave engineer's network analyser measures.
 

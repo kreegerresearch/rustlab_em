@@ -104,7 +104,10 @@ xlabel("x cell index");
 ylabel("y cell index")
 ```
 
-![plot 1](plots/10-fdfd-frequency-domain/plot-1.svg)
+<!-- rustlab:output-start -->
+![plot 1](plots/10-fdfd-frequency-domain/plot-1-37f2313b.svg)
+
+<!-- rustlab:output-end -->
 
 ```rustlab
 clf;
@@ -119,7 +122,10 @@ xlabel("x cell index");
 ylabel("y cell index")
 ```
 
-![plot 2](plots/10-fdfd-frequency-domain/plot-2.svg)
+<!-- rustlab:output-start -->
+![plot 2](plots/10-fdfd-frequency-domain/plot-2-3571d4ca.svg)
+
+<!-- rustlab:output-end -->
 
 ```rustlab
 % Symmetry sanity: |E_pml| at four cardinal-direction sample points
@@ -135,9 +141,12 @@ sW_v = abs(E_pml(ic, jc - r));
 print((max([sN_v, sS_v, sE_v, sW_v]) - min([sN_v, sS_v, sE_v, sW_v])) / mean([sN_v, sS_v, sE_v, sW_v]))
 ```
 
+<!-- rustlab:output-start -->
 ```text
 0.000000000000013302613204762732
 ```
+
+<!-- rustlab:output-end -->
 
 The hard-wall image shows the cavity's rectangular mode pattern — that is *not* the response of a free point source. The PML image shows nearly perfect radial symmetry (asymmetry $< 2\times10^{-5}$, dominated by the 5-point stencil's preference for axis-aligned propagation over diagonal). SC-PML is the workhorse that lets every later FDFD demo treat the computational box as if it extends to infinity.
 
@@ -200,7 +209,10 @@ ylabel("eps_r");
 title("Stratification — air | AR layer | substrate (extending into PML)")
 ```
 
-![plot 3](plots/10-fdfd-frequency-domain/plot-3.svg)
+<!-- rustlab:output-start -->
+![plot 3](plots/10-fdfd-frequency-domain/plot-3-cbcfe6a6.svg)
+
+<!-- rustlab:output-end -->
 
 ```rustlab
 function E = solve_1d(eps_x, N, dx, npml, sigma_max, omega, idx_src)
@@ -247,10 +259,13 @@ print(ripple_AR)         % ~ 0.01 (perfect AR — only discretisation residual)
 print(ripple_noAR)       % ~ 0.64 (Fresnel R = 1/3 → VSWR = 2)
 ```
 
+<!-- rustlab:output-start -->
 ```text
 0.009464189943461977
 0.6415815498947353
 ```
+
+<!-- rustlab:output-end -->
 
 ```rustlab
 clf;
@@ -264,7 +279,10 @@ title("Air-region ripple disappears with the quarter-wave AR coating");
 legend("with AR", "no AR")
 ```
 
-![plot 4](plots/10-fdfd-frequency-domain/plot-4.svg)
+<!-- rustlab:output-start -->
+![plot 4](plots/10-fdfd-frequency-domain/plot-4-06db1a7a.svg)
+
+<!-- rustlab:output-end -->
 
 The AR-coated air region has $|E_z|$ nearly constant — a pure travelling +x wave from the source — while the uncoated case shows a clear standing-wave ripple matching the analytic Fresnel prediction $|R| = 1/3$, VSWR $= 2$. A frequency sweep ($0.6f_0$ to $1.4f_0$) puts a $\text{sech}^2$-like AR transmission peak right at the design frequency. The full sweep is in the standalone script `fdfd_1d_layers.rlab`.
 
@@ -309,7 +327,10 @@ xlabel("x");
 ylabel("y")
 ```
 
-![plot 5](plots/10-fdfd-frequency-domain/plot-5.svg)
+<!-- rustlab:output-start -->
+![plot 5](plots/10-fdfd-frequency-domain/plot-5-78e12408.svg)
+
+<!-- rustlab:output-end -->
 
 ```rustlab
 clf;
@@ -328,7 +349,10 @@ xlabel("x");
 ylabel("y")
 ```
 
-![plot 6](plots/10-fdfd-frequency-domain/plot-6.svg)
+<!-- rustlab:output-start -->
+![plot 6](plots/10-fdfd-frequency-domain/plot-6-eb66c898.svg)
+
+<!-- rustlab:output-end -->
 
 ```rustlab
 clf;
@@ -338,7 +362,10 @@ xlabel("x");
 ylabel("y")
 ```
 
-![plot 7](plots/10-fdfd-frequency-domain/plot-7.svg)
+<!-- rustlab:output-start -->
+![plot 7](plots/10-fdfd-frequency-domain/plot-7-239f856c.svg)
+
+<!-- rustlab:output-end -->
 
 The total-field shows the classic optical signatures: a bright **lit side** on the source-facing surface where the field constructively interferes, and a **shadow region** on the far side where the cylinder casts a dim spot. The scattered-only image isolates the outgoing radiation; the back-scatter (toward the source) is brighter than the forward-scatter for this size, consistent with the analytic 2-D Mie series for a moderately strong dielectric scatterer.
 
@@ -422,6 +449,7 @@ ylabel("|E_z| at sample point");
 title("Closed-cavity FDFD response — Lorentzian peaks at TM_{m n}")
 ```
 
+<!-- rustlab:output-start -->
 ```text
 1.4989622900525144
 1.998616386736686
@@ -430,7 +458,9 @@ title("Closed-cavity FDFD response — Lorentzian peaks at TM_{m n}")
 3.603056931180843
 ```
 
-![plot 8](plots/10-fdfd-frequency-domain/plot-8.svg)
+![plot 8](plots/10-fdfd-frequency-domain/plot-8-0a97296b.svg)
+
+<!-- rustlab:output-end -->
 
 ```rustlab
 clf;
@@ -447,7 +477,10 @@ xlabel("x cell index");
 ylabel("y cell index")
 ```
 
-![plot 9](plots/10-fdfd-frequency-domain/plot-9.svg)
+<!-- rustlab:output-start -->
+![plot 9](plots/10-fdfd-frequency-domain/plot-9-c78bd3a7.svg)
+
+<!-- rustlab:output-end -->
 
 The peaks in the sweep land within ~ 0.1 % of the analytic frequencies (limited by grid spacing — $\Delta x = a/(n_x+1)$ here gives ~ 1 % discretisation error on the eigenfrequency, converging quadratically as the grid is refined). The TM$_{10}$ snapshot shows the standing-wave half-cosine along $x$ with no $y$-dependence — the lowest-order cavity mode. Lesson 12 returns to these modes with a cleaner approach: directly solve the generalised eigenvalue problem $A\phi = k_c^2\phi$ with `eigs` instead of sweeping the frequency.
 

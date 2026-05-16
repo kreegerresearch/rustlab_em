@@ -70,9 +70,12 @@ ys = -2:dy:2;
 print(size(X))           % → [21, 21]
 ```
 
+<!-- rustlab:output-start -->
 ```text
 [1×2]  21.000000  21.000000
 ```
+
+<!-- rustlab:output-end -->
 
 The center $(x, y) = (0, 0)$ is at index $(11, 11)$; the corner $(2, 2)$ is at $(21, 21)$.
 
@@ -98,11 +101,14 @@ print(fy(11, 11))        % ≈ 0
 print(fx(11, 15))        % ≈ -0.824 at (x=0.8, y=0)  (analytic: -0.844; ~2% stencil error at dx=0.2)
 ```
 
+<!-- rustlab:output-start -->
 ```text
 0.0000000000000005551115123125783
 0.0000000000000005551115123125783
 -0.8244922122489718
 ```
+
+<!-- rustlab:output-end -->
 
 ### Example — Gradient arrows on $f$ contours
 
@@ -116,7 +122,10 @@ quiver(X, Y, fx, fy, "Gaussian f(x,y) with gradient arrows");
 hold off;
 ```
 
-![plot 1](plots/01-vector-calculus-and-fields/plot-1.svg)
+<!-- rustlab:output-start -->
+![plot 1](plots/01-vector-calculus-and-fields/plot-1-7c230805.svg)
+
+<!-- rustlab:output-end -->
 
 ### Example — Magnitude $|\nabla f|$ heatmap
 
@@ -129,7 +138,10 @@ imagesc(fmag, "viridis");
 title("|∇f|  —  peaks at r = σ/√2")
 ```
 
-![plot 2](plots/01-vector-calculus-and-fields/plot-2.svg)
+<!-- rustlab:output-start -->
+![plot 2](plots/01-vector-calculus-and-fields/plot-2-af93aebb.svg)
+
+<!-- rustlab:output-end -->
 
 ## Divergence on a Grid
 
@@ -148,17 +160,23 @@ print(divU(11, 11))      % ≈ 2  (interior)
 print(divU(1, 1))        % ≈ 2  (boundary — one-sided stencil is exact for linear fields)
 ```
 
+<!-- rustlab:output-start -->
 ```text
 2
 1.9999999999999996
 ```
+
+<!-- rustlab:output-end -->
 
 ```rustlab
 clf;
 quiver(X, Y, Ux, Uy, "Radial field F = (x, y)")
 ```
 
-![plot 3](plots/01-vector-calculus-and-fields/plot-3.svg)
+<!-- rustlab:output-start -->
+![plot 3](plots/01-vector-calculus-and-fields/plot-3-1aa992b7.svg)
+
+<!-- rustlab:output-end -->
 
 ```rustlab
 clf;
@@ -166,7 +184,10 @@ imagesc(divU, "viridis");
 title("∇·F for F = (x, y)  —  uniformly = 2")
 ```
 
-![plot 4](plots/01-vector-calculus-and-fields/plot-4.svg)
+<!-- rustlab:output-start -->
+![plot 4](plots/01-vector-calculus-and-fields/plot-4-cdeeb493.svg)
+
+<!-- rustlab:output-end -->
 
 ## Curl on a Grid
 
@@ -188,17 +209,23 @@ print(divV(11, 11))      % ≈ 0  (solenoidal)
 print(curlV(11, 11))     % ≈ 2  (uniform rotation)
 ```
 
+<!-- rustlab:output-start -->
 ```text
 0
 2
 ```
+
+<!-- rustlab:output-end -->
 
 ```rustlab
 clf;
 quiver(X, Y, Vx, Vy, "F = (-y, x)  —  pure rotation")
 ```
 
-![plot 5](plots/01-vector-calculus-and-fields/plot-5.svg)
+<!-- rustlab:output-start -->
+![plot 5](plots/01-vector-calculus-and-fields/plot-5-f669d6c6.svg)
+
+<!-- rustlab:output-end -->
 
 ```rustlab
 clf;
@@ -206,7 +233,10 @@ imagesc(curlV, "viridis");
 title("(∇×F)_z for F = (-y, x)  —  uniformly = 2")
 ```
 
-![plot 6](plots/01-vector-calculus-and-fields/plot-6.svg)
+<!-- rustlab:output-start -->
+![plot 6](plots/01-vector-calculus-and-fields/plot-6-397fb15d.svg)
+
+<!-- rustlab:output-end -->
 
 The two quivers (this one and the radial one above) look qualitatively similar — arrow length growing with distance — but the operators tell them apart immediately: radial is pure source, rotational is pure rotation.
 
@@ -226,9 +256,12 @@ laplV = divergence(Vx2, Vy2, dx, dy);
 print(laplV(11, 11))     % ≈ 4
 ```
 
+<!-- rustlab:output-start -->
 ```text
 4
 ```
+
+<!-- rustlab:output-end -->
 
 ## The Divergence Theorem
 
@@ -278,9 +311,12 @@ circulation = I_bot + I_rht + I_top + I_lft;
 print(circulation)       % ≈ 8
 ```
 
+<!-- rustlab:output-start -->
 ```text
 8
 ```
+
+<!-- rustlab:output-end -->
 
 ### Example — Surface integral of curl over the same square
 
@@ -301,9 +337,12 @@ surface_integral = trapz(ys_grid, row_int);
 print(surface_integral)  % ≈ 8
 ```
 
+<!-- rustlab:output-start -->
 ```text
 8
 ```
+
+<!-- rustlab:output-end -->
 
 Both expressions for the same physical quantity agree to within sub-percent discretization error — a direct numerical check of Stokes' theorem.
 

@@ -125,7 +125,10 @@ for step = 1:n_step
   Ez_probe(step) = real(Ez(i_probe, j_feed));
 
   if mod(step, 40) == 0
-    imagesc(real(Ez), "viridis");
+    # imagesc rows flipped so the ground plane stays at the bottom and
+    # the patch at the top — rustlab 0.3.4 otherwise inverts vertically.
+    # See dev/rustlab/requests/imagesc-y-axis-orientation.md.
+    imagesc(real(Ez(ny:-1:1, :)), "viridis");
     title(sprintf("t = %.2f ns", t * 1e9));
     xlabel("x cell");
     ylabel("y cell");
@@ -161,16 +164,16 @@ savefig("patch_spectrum.svg");
 print(fs(kmax) / 1e9)               # GHz of dominant peak
 print(Sp_max)
 
-# === Geometry + final field snapshots ===
+# === Geometry + final field snapshots (rows flipped for orientation) ===
 figure();
-imagesc(eps_r_map + 5 * pec_mask, "viridis");
+imagesc((eps_r_map + 5 * pec_mask)(ny:-1:1, :), "viridis");
 title("Geometry: substrate eps_r = 4.4 + ground / patch (PEC, drawn as 6.4)");
 xlabel("x cell");
 ylabel("y cell");
 savefig("patch_geometry.svg");
 
 figure();
-imagesc(abs(Ez), "viridis");
+imagesc(abs(Ez(ny:-1:1, :)), "viridis");
 title("Final |E_z| — late-time standing-wave pattern under the patch");
 xlabel("x cell");
 ylabel("y cell");

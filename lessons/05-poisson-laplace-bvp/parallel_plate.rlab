@@ -55,9 +55,13 @@ V_flat = spsolve(A, b);
 V = real(reshape(V_flat, ny, nx));
 
 # === Plots ===
+# Reverse rows for `imagesc` so high physical y ends up at the top —
+# rustlab 0.3.4 otherwise puts row 1 at the top while labelling the
+# y-axis 0 → ny from bottom → top, which inverts the data vs the
+# contour overlay. See dev/rustlab/requests/imagesc-y-axis-orientation.md.
 figure();
 hold on;
-imagesc(V, "viridis");
+imagesc(V(ny:-1:1, :), "viridis");
 contour(X, Y, V, 16, "k");
 title("Parallel plates with fringing: V(x, y), V0 = 1 V");
 hold off;

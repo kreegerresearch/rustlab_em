@@ -51,10 +51,13 @@ print(dx)                     % 0.002 m
 print(size(X))                % [51, 51]
 ```
 
+<!-- rustlab:output-start -->
 ```text
 0.0020000000000000018
 [1×2]  51.000000  51.000000
 ```
+
+<!-- rustlab:output-end -->
 
 The origin is at index $(26, 26)$; the points $(\pm d/2, 0)$ are at columns $21$ and $31$ on row $26$.
 
@@ -85,12 +88,15 @@ print(real(Ex_pt(31, 26)))    % at (x=0, y=0.01):    ≈ 0
 print(real(Ey_pt(31, 26)))    % ≈ 89875 V/m
 ```
 
+<!-- rustlab:output-start -->
 ```text
 89874.99865187515
 0
 0
 89874.99865187515
 ```
+
+<!-- rustlab:output-end -->
 
 ### Example — Quiver of the radial field
 
@@ -101,7 +107,10 @@ clf;
 quiver(X, Y, Ex_pt, Ey_pt, "Point charge:  E radiates from the origin")
 ```
 
-![plot 1](plots/02-electrostatics-coulomb/plot-1.svg)
+<!-- rustlab:output-start -->
+![plot 1](plots/02-electrostatics-coulomb/plot-1-1227af1f.svg)
+
+<!-- rustlab:output-end -->
 
 ### Example — log$_{10}|\vec E|$ heatmap
 
@@ -114,7 +123,10 @@ imagesc(log10(Emag), "viridis");
 title("log_{10} |E|  for a single +q at the origin")
 ```
 
-![plot 2](plots/02-electrostatics-coulomb/plot-2.svg)
+<!-- rustlab:output-start -->
+![plot 2](plots/02-electrostatics-coulomb/plot-2-f1f9dada.svg)
+
+<!-- rustlab:output-end -->
 
 ## The Electric Dipole — Direct Superposition
 
@@ -153,11 +165,14 @@ print(real(Ey(26, 26)))       % ≈ 0
 print(real(Ey(36, 26)))       % on y-axis at y=0.02: ≈ 0
 ```
 
+<!-- rustlab:output-start -->
 ```text
 -179749.99730375005
 0
 0
 ```
+
+<!-- rustlab:output-end -->
 
 ### Example — Quiver of the dipole field
 
@@ -168,7 +183,10 @@ clf;
 quiver(X, Y, Ex, Ey, "Dipole:  +q at (+d/2, 0),  -q at (-d/2, 0)")
 ```
 
-![plot 3](plots/02-electrostatics-coulomb/plot-3.svg)
+<!-- rustlab:output-start -->
+![plot 3](plots/02-electrostatics-coulomb/plot-3-0b0be963.svg)
+
+<!-- rustlab:output-end -->
 
 ### Example — log$_{10}|\vec E|$ heatmap with contours
 
@@ -184,7 +202,10 @@ title("log_{10} |E|  for the dipole");
 hold off;
 ```
 
-![plot 4](plots/02-electrostatics-coulomb/plot-4.svg)
+<!-- rustlab:output-start -->
+![plot 4](plots/02-electrostatics-coulomb/plot-4-ea4aab18.svg)
+
+<!-- rustlab:output-end -->
 
 ## The Far-Field Dipole Formula
 
@@ -213,10 +234,13 @@ print(real(Exd(26, 36)))      % at (0.02, 0):  ≈ 22469 V/m  (= 2 k_e p / x³)
 print(real(Eyd(26, 36)))      % ≈ 0  on the dipole axis
 ```
 
+<!-- rustlab:output-start -->
 ```text
 44937.49971914066
 0
 ```
+
+<!-- rustlab:output-end -->
 
 ### Example — Exact vs far-field along the perpendicular bisector
 
@@ -233,7 +257,10 @@ xlabel("y / d");
 ylabel("|E_far - E_exact| / |E_exact|")
 ```
 
-![plot 5](plots/02-electrostatics-coulomb/plot-5.svg)
+<!-- rustlab:output-start -->
+![plot 5](plots/02-electrostatics-coulomb/plot-5-aa69475e.svg)
+
+<!-- rustlab:output-end -->
 
 At $y/d = 5$ the error is already under 1.5 %; at $y/d = 10$ it has fallen to $\sim 0.4$ % — the multipole expansion's leading correction goes like $(d/r)^2$, so doubling the distance shrinks the error fourfold.
 
@@ -250,7 +277,10 @@ clf;
 streamplot(X, Y, Ex, Ey, "Dipole field lines  —  start on +q, end on -q")
 ```
 
-![plot 6](plots/02-electrostatics-coulomb/plot-6.svg)
+<!-- rustlab:output-start -->
+![plot 6](plots/02-electrostatics-coulomb/plot-6-446e39df.svg)
+
+<!-- rustlab:output-end -->
 
 ## A Ring of Charge — Symmetry as a Tool
 
@@ -289,9 +319,12 @@ err = max(abs(Ez_num - Ez_ana));
 print(err)                    % ≲ 1e-3 V/m at Nseg = 360
 ```
 
+<!-- rustlab:output-start -->
 ```text
 0.00000000008731149137020111
 ```
+
+<!-- rustlab:output-end -->
 
 ### Example — Axial $E_z$ vs $z$
 
@@ -308,7 +341,10 @@ ylabel("E_z (V/m)");
 legend("numerical (360 seg.)", "analytic")
 ```
 
-![plot 7](plots/02-electrostatics-coulomb/plot-7.svg)
+<!-- rustlab:output-start -->
+![plot 7](plots/02-electrostatics-coulomb/plot-7-5d0ec853.svg)
+
+<!-- rustlab:output-end -->
 
 ## Standalone Scripts
 

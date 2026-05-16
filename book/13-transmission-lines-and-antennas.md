@@ -105,12 +105,15 @@ print(Z0_num)                   % Ω
 print(Z0_ana)                   % textbook 60 ln(b/a) ≈ 83.2 Ω for b/a = 4
 ```
 
+<!-- rustlab:output-start -->
 ```text
 37.484133938205574-0.00000000000000459048206743806j
 40.13036795002273
 88.9880757913102+0.000000000000010897895275085122j
 83.12011880924634
 ```
+
+<!-- rustlab:output-end -->
 
 ```rustlab
 clf;
@@ -120,7 +123,10 @@ xlabel("x cell");
 ylabel("y cell")
 ```
 
-![plot 1](plots/13-transmission-lines-and-antennas/plot-1.svg)
+<!-- rustlab:output-start -->
+![plot 1](plots/13-transmission-lines-and-antennas/plot-1-3b52cba4.svg)
+
+<!-- rustlab:output-end -->
 
 The 2-D potential matches the analytic $\ln(b/r)/\ln(b/a)$ shape to grid precision in the bulk; near the rasterised circular conductors a staircase error of a few percent shows up in the extracted $C'$ and propagates into $Z_0$. Refining the grid drops the error like $h^2$.
 
@@ -220,7 +226,10 @@ title("1-D telegrapher leapfrog: pulse reflections vs load");
 legend("matched", "open", "short", "Z_L = 2 Z_0")
 ```
 
-![plot 2](plots/13-transmission-lines-and-antennas/plot-2.svg)
+<!-- rustlab:output-start -->
+![plot 2](plots/13-transmission-lines-and-antennas/plot-2-787cfffe.svg)
+
+<!-- rustlab:output-end -->
 
 ```rustlab
 % Reflected-pulse amplitude near the source — peak |V| in a window
@@ -231,12 +240,15 @@ print(max(abs(real(V_short(20:80)))))     % ~ source peak  (|Γ| = 1, sign flipp
 print(max(abs(real(V_mis(20:80)))))       % ~ source peak / 3
 ```
 
+<!-- rustlab:output-start -->
 ```text
 0.0007891384832894909
 0.5277294048309296
 0.5277294056262551
 0.17603347155469123
 ```
+
+<!-- rustlab:output-end -->
 
 Four overlaid traces tell the story: the matched line has nothing left (the pulse was absorbed by the load), the open / short have a returning pulse with the *same* amplitude as the incident (with a sign flip for the short), and the 100 Ω termination has a one-third-amplitude returning pulse — exactly $\Gamma = 1/3$.
 
@@ -306,11 +318,14 @@ print(VSWR_ana)                  % 2
 print(VSWR_num)                  % ~ 2 to ~ 0.1 %
 ```
 
+<!-- rustlab:output-start -->
 ```text
 0.3333333333333333
 1.9999999999999998
 1.9983622453568501
 ```
+
+<!-- rustlab:output-end -->
 
 ```rustlab
 clf;
@@ -320,7 +335,10 @@ ylabel("|V|_env");
 title("Standing-wave envelope on a Z_L = 2 Z_0 line — VSWR ≈ 2")
 ```
 
-![plot 3](plots/13-transmission-lines-and-antennas/plot-3.svg)
+<!-- rustlab:output-start -->
+![plot 3](plots/13-transmission-lines-and-antennas/plot-3-12a08662.svg)
+
+<!-- rustlab:output-end -->
 
 The envelope is a $\lambda/2$-periodic sequence of peaks and valleys. The ratio of maxima to minima nails the analytic VSWR of 2 to within 0.1 % — and demonstrates that everything a slotted line measures *is*, in the discrete world, just an FDTD time average.
 

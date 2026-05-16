@@ -70,6 +70,7 @@ for k = 1:6
 end
 ```
 
+<!-- rustlab:output-start -->
 ```text
 --- Cutoff frequency comparison (GHz) ---
 7.067035608824674
@@ -86,6 +87,8 @@ end
 16.144317943225087
 ```
 
+<!-- rustlab:output-end -->
+
 ```rustlab
 clf;
 mode = real(V_w(:, 1));
@@ -96,7 +99,10 @@ xlabel("x cell");
 ylabel("y cell")
 ```
 
-![plot 1](plots/12-waveguides-and-radiation/plot-1.svg)
+<!-- rustlab:output-start -->
+![plot 1](plots/12-waveguides-and-radiation/plot-1-38ac7038.svg)
+
+<!-- rustlab:output-end -->
 
 A 2-D imagesc of the lowest mode shows a single antinode at the cross-section centre — the expected $\sin(\pi x/a)\sin(\pi y/b)$ pattern.
 
@@ -129,6 +135,7 @@ for k = 1:4
 end
 ```
 
+<!-- rustlab:output-start -->
 ```text
 --- Cavity resonance comparison (GHz) ---
 2.497780718904941
@@ -141,6 +148,8 @@ end
 4.921022148327287
 ```
 
+<!-- rustlab:output-end -->
+
 ```rustlab
 clf;
 % TM_{21} mode pattern
@@ -151,7 +160,10 @@ xlabel("x cell");
 ylabel("y cell")
 ```
 
-![plot 2](plots/12-waveguides-and-radiation/plot-2.svg)
+<!-- rustlab:output-start -->
+![plot 2](plots/12-waveguides-and-radiation/plot-2-deab919a.svg)
+
+<!-- rustlab:output-end -->
 
 The lowest four resonances match analytic predictions to within $0.6\,\%$ — the second-order discretisation error of `laplacian_2d` on this grid.
 
@@ -190,7 +202,10 @@ polar(ths_full, P_full, "|F(theta)|  (Hertzian)");
 title("Hertzian dipole far-field pattern  —  |F| ∝ sin θ")
 ```
 
-![plot 3](plots/12-waveguides-and-radiation/plot-3.svg)
+<!-- rustlab:output-start -->
+![plot 3](plots/12-waveguides-and-radiation/plot-3-86495fe9.svg)
+
+<!-- rustlab:output-end -->
 
 ```rustlab
 % Numerical Poynting integral over the unit sphere.
@@ -204,11 +219,14 @@ P_rad = eta0_h * I0_h^2 * (k0_h * dell)^2 / (12 * pi);
 print(P_rad)                     % ~ 0.44 W
 ```
 
+<!-- rustlab:output-start -->
 ```text
 1.333333333429994
 8.377580410180117
 0.4389527549196978
 ```
+
+<!-- rustlab:output-end -->
 
 The pattern is a flat $\sin\theta$ trace, sharp null directly along the dipole axis ($\theta = 0, \pi$), and a peak in the equatorial plane. The numerical $\int\sin^3\theta\,d\theta$ recovers $4/3$ to seven decimal places — pure trapezoidal-rule precision.
 
@@ -258,9 +276,12 @@ F_num_n = F_num / max(F_num);
 print(max(abs(F_anal_n - F_num_n)))    % ~ 1e-5
 ```
 
+<!-- rustlab:output-start -->
 ```text
 0.000006780296477604253
 ```
+
+<!-- rustlab:output-end -->
 
 ```rustlab
 clf;
@@ -272,7 +293,10 @@ title("Half-wave vs Hertzian pattern — half-wave is slightly narrower");
 legend("half-wave  cos(π/2 cosθ)/sinθ", "Hertzian  sinθ")
 ```
 
-![plot 4](plots/12-waveguides-and-radiation/plot-4.svg)
+<!-- rustlab:output-start -->
+![plot 4](plots/12-waveguides-and-radiation/plot-4-5ec4a40c.svg)
+
+<!-- rustlab:output-end -->
 
 ```rustlab
 % Radiation resistance — direct angular integral.
@@ -282,9 +306,12 @@ R_rad = eta0_d / (2 * pi) * trapz(ths_R, integrand_R);
 print(R_rad)                  % ~ 73.13 Ω
 ```
 
+<!-- rustlab:output-start -->
 ```text
 73.07901024816654
 ```
+
+<!-- rustlab:output-end -->
 
 The two polar traces almost coincide — both peak at $\theta = \pi/2$, both null on-axis — but the half-wave's shape (slightly elongated lobes) is a real physical effect that improves antenna gain by $\approx 0.4$ dB. The numerical $R_{\rm rad}$ matches the textbook $73.13\,\Omega$ to four significant figures.
 

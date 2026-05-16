@@ -101,7 +101,10 @@ end
 saveanim("fdtd_1d_pulse.gif", 24)
 ```
 
-![animation 1](plots/11-fdtd-simulation/anim-1.gif)
+<!-- rustlab:output-start -->
+![animation 1](plots/11-fdtd-simulation/anim-1-62e10a2f.gif)
+
+<!-- rustlab:output-end -->
 
 The animation shows the Gaussian splitting at the source, both halves propagating, the +x half hitting the slab, partially transmitting (smaller fast pulse) and partially reflecting (smaller pulse going −x). The first-arrival transmitted-amplitude ratio matches $|t_1 t_2| = 8/9$ to grid precision.
 
@@ -193,7 +196,10 @@ end
 saveanim("fdtd_2d_scattering.gif", 24)
 ```
 
-![animation 2](plots/11-fdtd-simulation/anim-2.gif)
+<!-- rustlab:output-start -->
+![animation 2](plots/11-fdtd-simulation/anim-2-2fdfd15b.gif)
+
+<!-- rustlab:output-end -->
 
 The animation shows the plane wave forming at the line source, propagating in +x, hitting the cylinder, and forming a clear shadow on the lee side with a bright ring of constructive interference on the lit side. The standing-wave structure between source and cylinder is the same partial-reflection physics as Lesson 09's reflector but in 2-D.
 
@@ -274,11 +280,14 @@ print(max(abs(E_fwd_d)))
 print(max(abs(E_fwd_d)) / max(abs(E_back_d)))
 ```
 
+<!-- rustlab:output-start -->
 ```text
 0.5050797206017913
 0.1026534587667643
 0.20324209145529537
 ```
+
+<!-- rustlab:output-end -->
 
 ```rustlab
 clf;
@@ -293,7 +302,10 @@ title("Drude film — pre/post traces; source below plasma frequency");
 legend("before film", "after film")
 ```
 
-![plot 3](plots/11-fdtd-simulation/plot-3.svg)
+<!-- rustlab:output-start -->
+![plot 3](plots/11-fdtd-simulation/plot-3-7f0b13f9.svg)
+
+<!-- rustlab:output-end -->
 
 Comparing the source frequency to the plasma frequency tells the story: at $f_{\rm src} = 2$ GHz $< f_p = 3$ GHz, the transmitted amplitude is suppressed by roughly $5\times$ relative to the incident. Re-running with $f_{\rm src} > f_p$ (e.g. 5 GHz) would yield near-unity transmission. The qualitative point — a frequency-selective filter that the same FDTD code captures without any pre-set $\varepsilon(\omega)$ — is what gives FDTD its broad reach into photonics, antennas, plasmas, and biomedical EM.
 

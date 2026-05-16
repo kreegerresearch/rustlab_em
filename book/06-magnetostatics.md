@@ -78,10 +78,13 @@ print(real(Bzg(21, 21)))                       % on-axis (x=0, z=0)
 print(real(mu0 * Iloop / (2 * R)))             % closed-form  μ₀I/(2R)
 ```
 
+<!-- rustlab:output-start -->
 ```text
 0.000012566370614359209
 0.000012566370614359172
 ```
+
+<!-- rustlab:output-end -->
 
 ```rustlab
 clf;
@@ -90,7 +93,10 @@ xlabel("x (m)");
 ylabel("z (m)")
 ```
 
-![plot 1](plots/06-magnetostatics/plot-1.svg)
+<!-- rustlab:output-start -->
+![plot 1](plots/06-magnetostatics/plot-1-4d9237b9.svg)
+
+<!-- rustlab:output-end -->
 
 The arrows trace the familiar dipole-like pattern with closed field lines through the loop. The on-axis numeric matches the closed form $B_z(0) = \mu_0 I/(2R)$ to machine precision; off-axis, the loop field falls off and reverses sign at points outside the loop's plane on the symmetry axis.
 
@@ -109,7 +115,10 @@ ylabel("B_z (T)");
 legend("Numerical", "μ₀IR²/[2(R²+z²)^{3/2}]")
 ```
 
-![plot 2](plots/06-magnetostatics/plot-2.svg)
+<!-- rustlab:output-start -->
+![plot 2](plots/06-magnetostatics/plot-2-70d94573.svg)
+
+<!-- rustlab:output-end -->
 
 The two curves overlap throughout — the $1/r^3$ kernel is benign on a smooth circular path and 100 segments are enough for plotting-accuracy agreement.
 
@@ -166,10 +175,13 @@ print(real(Bz_axis(61)))                    % centre of the solenoid (z = 0)
 print(B_amp)                                % μ₀nI
 ```
 
+<!-- rustlab:output-start -->
 ```text
 0.0005732925467861275
 0.0006283185307179586
 ```
+
+<!-- rustlab:output-end -->
 
 ```rustlab
 clf;
@@ -182,7 +194,10 @@ ylabel("B_z (T)");
 legend("Biot-Savart sum", "μ₀nI (∞ limit)")
 ```
 
-![plot 3](plots/06-magnetostatics/plot-3.svg)
+<!-- rustlab:output-start -->
+![plot 3](plots/06-magnetostatics/plot-3-33c315b4.svg)
+
+<!-- rustlab:output-end -->
 
 The interior field sits just below the infinite-solenoid value $\mu_0 n I$ (the finite ends leak a small amount of flux); at each end the field drops to roughly half, and outside the solenoid it falls off exponentially. This is the basis for every air-core inductor and every "uniform field" lab magnet.
 
@@ -224,7 +239,10 @@ title("Helmholtz pair: B_z(z) for d/R = 0.5, 1.0, 1.5");
 legend("d/R = 0.5", "d/R = 1.0", "d/R = 1.5")
 ```
 
-![plot 4](plots/06-magnetostatics/plot-4.svg)
+<!-- rustlab:output-start -->
+![plot 4](plots/06-magnetostatics/plot-4-2ed3a090.svg)
+
+<!-- rustlab:output-end -->
 
 ```rustlab
 % Quantify uniformity: Bz at midpoint vs Bz at z = ±0.5R off-centre.
@@ -240,11 +258,14 @@ end
 % Ratio closest to 1.0 (least variation) → Helmholtz d/R = 1
 ```
 
+<!-- rustlab:output-start -->
 ```text
 0.780371182542001
 0.9458241851693391
 1.1297448510218757
 ```
+
+<!-- rustlab:output-end -->
 
 The middle line ($d/R = 1$) is visibly flattest near $z = 0$; the printed `Bz_off / Bz0` ratio is closest to 1 for the Helmholtz case, confirming the second-derivative cancellation at the midpoint.
 
@@ -308,7 +329,10 @@ title("A_z(x, y) for two opposing parallel wires (μ_r = 1)");
 hold off;
 ```
 
-![plot 5](plots/06-magnetostatics/plot-5.svg)
+<!-- rustlab:output-start -->
+![plot 5](plots/06-magnetostatics/plot-5-e2a91d9f.svg)
+
+<!-- rustlab:output-end -->
 
 ```rustlab
 % B = (dAz/dy, -dAz/dx). The contour density visualises field-line
@@ -323,7 +347,10 @@ xlabel("x (m)");
 ylabel("y (m)")
 ```
 
-![plot 6](plots/06-magnetostatics/plot-6.svg)
+<!-- rustlab:output-start -->
+![plot 6](plots/06-magnetostatics/plot-6-24d5003a.svg)
+
+<!-- rustlab:output-end -->
 
 ```rustlab
 % Validate against the analytic two-wire formula. On the y-axis (x = 0),
@@ -338,10 +365,13 @@ print(real(By_w(i_test, j_mid)))                 % numerical ≈ -2.4e-6 T
 print(By_an)                                     % analytic  ≈ -2.7e-6 T
 ```
 
+<!-- rustlab:output-start -->
 ```text
 -0.000002376753965347522
 -0.0000026966318711941665
 ```
+
+<!-- rustlab:output-end -->
 
 The numerical $B_y$ on the symmetry axis above the wires comes within ~12 % of the infinite-wire analytic formula. The remaining gap has two pieces: each wire is approximated as a single cell (so the near-wire kernel is regularised at the cell scale), and the grounded outer boundary distorts the dipolar tail. Both errors shrink under refinement — Exercise 4 walks through the convergence study. The pipeline — solve a scalar Poisson, take a 2-D curl — is now ready to handle magnetic materials, which Biot–Savart cannot.
 
@@ -380,7 +410,10 @@ imagesc(iron, "viridis");
 title("Iron annulus mask (μ_r = 1000 inside the ring, 1 elsewhere)")
 ```
 
-![plot 7](plots/06-magnetostatics/plot-7.svg)
+<!-- rustlab:output-start -->
+![plot 7](plots/06-magnetostatics/plot-7-27c0a235.svg)
+
+<!-- rustlab:output-end -->
 
 ```rustlab
 % Build μ_r and the reluctivity map 1/μ_r. `iron` is a 0/1 mask, so
@@ -410,7 +443,10 @@ title("A_z(x, y) — wire inside an iron shell");
 hold off;
 ```
 
-![plot 8](plots/06-magnetostatics/plot-8.svg)
+<!-- rustlab:output-start -->
+![plot 8](plots/06-magnetostatics/plot-8-0fb9274f.svg)
+
+<!-- rustlab:output-end -->
 
 ```rustlab
 % Recover B and compare |B| inside the iron vs just outside.
@@ -432,6 +468,7 @@ print(mu0 * 1.0 / (2 * pi * 0.07))
 print(mu0 * 1.0 / (2 * pi * 0.09))
 ```
 
+<!-- rustlab:output-start -->
 ```text
 0.0039570930262576385
 0.0000030000908545821005
@@ -440,13 +477,18 @@ print(mu0 * 1.0 / (2 * pi * 0.09))
 0.000002222222222222222
 ```
 
+<!-- rustlab:output-end -->
+
 ```rustlab
 clf;
 imagesc(real(Bmag), "viridis");
 title("|B|(x, y): bright ring is the iron, exterior is shielded")
 ```
 
-![plot 9](plots/06-magnetostatics/plot-9.svg)
+<!-- rustlab:output-start -->
+![plot 9](plots/06-magnetostatics/plot-9-364ca310.svg)
+
+<!-- rustlab:output-end -->
 
 The iron ring carries roughly three orders of magnitude more $|\vec B|$ than the surrounding vacuum — that's the flux concentration that makes transformer cores possible. The exterior field at $r = 7$ cm and $r = 9$ cm is essentially the bare-wire $\mu_0 I/(2\pi r)$ result: in this *cylindrically symmetric* geometry, Ampère's law applied to a circular contour gives $H = I/(2\pi r)$ regardless of $\mu_r$, so the exterior $B = \mu_0 H$ is independent of the iron. True external shielding requires either an external applied field (so that the iron has flux to short-circuit) or a non-axisymmetric source — Exercise 5 walks through the high-$\mu$ shielding setup that exploits this.
 

@@ -90,7 +90,10 @@ title("Conduction vs displacement current — equal at every t");
 legend("I_wire (mA)", "I_disp (mA)")
 ```
 
-![plot 1](plots/08-maxwell-equations/plot-1.svg)
+<!-- rustlab:output-start -->
+![plot 1](plots/08-maxwell-equations/plot-1-2573d971.svg)
+
+<!-- rustlab:output-end -->
 
 The two traces lie on top of each other to within $10^{-4}$ of $I_0$ — the residual is the centred-difference truncation error on $\partial E/\partial t$, scaling like $(\omega\Delta t)^2/6$. Halving $\Delta t$ would shrink it four-fold.
 
@@ -100,9 +103,12 @@ err_int = max(abs(I_t(2:Nt-1) - I_disp_t(2:Nt-1))) / I0;
 print(err_int)        % ~ (ω dt)²/6
 ```
 
+<!-- rustlab:output-start -->
 ```text
 0.0001644852894568203
 ```
+
+<!-- rustlab:output-end -->
 
 To complete the picture we can plot $I_{\rm cond}(z) + I_{\rm disp}(z)$ along a 1-D axis through wire–plate–gap–plate–wire. In the wire $I_{\rm cond} = I(t)$ and $I_{\rm disp} = 0$; in the gap $I_{\rm cond} = 0$ and $I_{\rm disp} = I(t)$. The *sum* is constant in $z$ — Ampère's law is satisfied on every loop, because the loop's enclosed current is the same no matter which surface we attach.
 
@@ -138,7 +144,10 @@ title("Ampère's loop: I_cond + I_disp is the same everywhere");
 legend("I_cond", "I_disp", "I_total")
 ```
 
-![plot 2](plots/08-maxwell-equations/plot-2.svg)
+<!-- rustlab:output-start -->
+![plot 2](plots/08-maxwell-equations/plot-2-83691690.svg)
+
+<!-- rustlab:output-end -->
 
 The total-current trace is a horizontal line at $1\,\text{mA}$ across the entire stack — wire, gap, wire — independent of $z$. That horizontal line is what Ampère's law sees no matter which surface is attached to a loop around the circuit.
 
@@ -197,7 +206,10 @@ xlabel("x");
 ylabel("t")
 ```
 
-![plot 3](plots/08-maxwell-equations/plot-3.svg)
+<!-- rustlab:output-start -->
+![plot 3](plots/08-maxwell-equations/plot-3-ee1670cc.svg)
+
+<!-- rustlab:output-end -->
 
 ```rustlab
 % Discrete derivatives on the (x, t) grid.
@@ -218,10 +230,13 @@ print(max(max(abs(r_faraday))) / peak_F)   % ≈ 3 × 10⁻³ at N = 81
 print(max(max(abs(r_ampere)))  / peak_A)
 ```
 
+<!-- rustlab:output-start -->
 ```text
 0.003079498005016296
 0.003079498005016913
 ```
+
+<!-- rustlab:output-end -->
 
 ```rustlab
 clf;
@@ -231,7 +246,10 @@ xlabel("x");
 ylabel("t")
 ```
 
-![plot 4](plots/08-maxwell-equations/plot-4.svg)
+<!-- rustlab:output-start -->
+![plot 4](plots/08-maxwell-equations/plot-4-69069d6f.svg)
+
+<!-- rustlab:output-end -->
 
 The residuals are not just small — they are *structured*: the discrete second derivative of a cosine is itself a cosine, so the residual map has the same diagonal stripes as the field, just multiplied by $-(k\Delta x)^2/6$. Halving the grid spacing should drop the maximum residual by a factor of four; running the convergence sweep at $N \in \{41, 81, 161\}$ confirms it (`residual_convergence.svg`).
 
@@ -289,7 +307,10 @@ xlabel("x");
 ylabel("y")
 ```
 
-![plot 5](plots/08-maxwell-equations/plot-5.svg)
+<!-- rustlab:output-start -->
+![plot 5](plots/08-maxwell-equations/plot-5-d6f7e15a.svg)
+
+<!-- rustlab:output-end -->
 
 ```rustlab
 % Radial profile + integrated flux over the annulus.
@@ -300,10 +321,13 @@ print(P_int)                                  % → 10.000…
 print(abs(P_int - V_co * I_co) / (V_co * I_co))   % → ~3 × 10⁻⁶
 ```
 
+<!-- rustlab:output-start -->
 ```text
 10.00003169965276
 0.0000031699652760508457
 ```
+
+<!-- rustlab:output-end -->
 
 ```rustlab
 clf;
@@ -313,7 +337,10 @@ ylabel("S_z  (kW/m²)");
 title("Radial Poynting profile S_z(r) ∝ 1/r²")
 ```
 
-![plot 6](plots/08-maxwell-equations/plot-6.svg)
+<!-- rustlab:output-start -->
+![plot 6](plots/08-maxwell-equations/plot-6-b3447854.svg)
+
+<!-- rustlab:output-end -->
 
 The radial profile blows up at the inner conductor ($1/r^2$) and tails off at the outer; integrating against $2\pi r$ tames the inner singularity to a logarithm and gives exactly $V I$. The Poynting picture is what justifies, downstream, why we can compute antenna gain by integrating $\vec S\cdot d\vec A$ over a sphere in the far field (Lessons 12–13).
 

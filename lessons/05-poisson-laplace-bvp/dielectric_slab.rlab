@@ -28,7 +28,10 @@ i_half  = sum(ysd < Lyd / 2);
 eps_map(1:i_half, :) = 4.0;
 
 figure();
-imagesc(eps_map, "viridis");
+# Reverse rows so the ε = 4 region (low physical y) draws at the bottom
+# of the plot — rustlab 0.3.4 imagesc convention work-around. See
+# dev/rustlab/requests/imagesc-y-axis-orientation.md.
+imagesc(eps_map(nyd:-1:1, :), "viridis");
 title("eps_r(x, y): 4 below the interface, 1 above");
 savefig("dielectric_eps_map.svg");
 

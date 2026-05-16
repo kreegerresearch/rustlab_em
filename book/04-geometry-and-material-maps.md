@@ -31,10 +31,13 @@ print(size(X))     % [200, 200] — rows = y, cols = x
 print(dx)          % 0.01507... m on this grid
 ```
 
+<!-- rustlab:output-start -->
 ```text
 [1×2]  200.000000  200.000000
 0.01507537688442211
 ```
+
+<!-- rustlab:output-end -->
 
 Throughout the lesson coordinates are in metres. Holding `X, Y, dx, dy` constant across blocks lets every shape land on the same canvas.
 
@@ -65,16 +68,22 @@ imagesc(R, "viridis");
 title("rect_mask: lower-left (-0.5, -0.4), 1.0 × 0.6")
 ```
 
-![plot 1](plots/04-geometry-and-material-maps/plot-1.svg)
+<!-- rustlab:output-start -->
+![plot 1](plots/04-geometry-and-material-maps/plot-1-70b9acfc.svg)
+
+<!-- rustlab:output-end -->
 
 ```rustlab
 % Sanity check: the area should equal w·h = 0.60 m².
 print(sum(sum(R)) * dx * dy)        % ≈ 0.60
 ```
 
+<!-- rustlab:output-start -->
 ```text
 0.5999848488674527
 ```
+
+<!-- rustlab:output-end -->
 
 ### Example — Disk
 
@@ -87,17 +96,23 @@ imagesc(D, "viridis");
 title("disk_mask: centre (0, 0), radius 1.0")
 ```
 
-![plot 2](plots/04-geometry-and-material-maps/plot-2.svg)
+<!-- rustlab:output-start -->
+![plot 2](plots/04-geometry-and-material-maps/plot-2-531bc5d1.svg)
+
+<!-- rustlab:output-end -->
 
 ```rustlab
 print(sum(sum(D)) * dx * dy)        % ≈ 3.135 (overshoots π by ≈ 0.2 %)
 print(pi)                            % 3.14159...
 ```
 
+<!-- rustlab:output-start -->
 ```text
 3.1353753693088553
 3.141592653589793
 ```
+
+<!-- rustlab:output-end -->
 
 The overshoot is the staircase artefact: `disk_mask` is *closed* (the boundary cells are included), and on a 200-cell grid the rim is a few cells thick.
 
@@ -115,7 +130,10 @@ imagesc(T, "viridis");
 title("polygon_mask: triangle (-1,-0.7)-(1,-0.7)-(0,1)")
 ```
 
-![plot 3](plots/04-geometry-and-material-maps/plot-3.svg)
+<!-- rustlab:output-start -->
+![plot 3](plots/04-geometry-and-material-maps/plot-3-1e4481f9.svg)
+
+<!-- rustlab:output-end -->
 
 The polygon is implicitly closed — an edge runs from the last vertex back to the first. Concave and self-intersecting polygons work the same way; PNPOLY's even-odd rule does the right thing.
 
@@ -149,7 +167,10 @@ imagesc(A_ring, "viridis");
 title("Annulus: D_outer .* (1 - D_inner)")
 ```
 
-![plot 4](plots/04-geometry-and-material-maps/plot-4.svg)
+<!-- rustlab:output-start -->
+![plot 4](plots/04-geometry-and-material-maps/plot-4-5010eb0d.svg)
+
+<!-- rustlab:output-end -->
 
 ```rustlab
 % Area should be π(R² - r²) = π(1 - 0.25) ≈ 2.356 m².
@@ -157,10 +178,13 @@ print(sum(sum(A_ring)) * dx * dy)   % ≈ 2.351 (staircase undershoot)
 print(pi * (1 - 0.25))              % 2.35619...
 ```
 
+<!-- rustlab:output-start -->
 ```text
 2.3508497260170196
 2.356194490192345
 ```
+
+<!-- rustlab:output-end -->
 
 ### Example — C-shape by union plus difference
 
@@ -175,7 +199,10 @@ imagesc(C_shape, "viridis");
 title("C-shape: R_block .* (1 - R_bite)")
 ```
 
-![plot 5](plots/04-geometry-and-material-maps/plot-5.svg)
+<!-- rustlab:output-start -->
+![plot 5](plots/04-geometry-and-material-maps/plot-5-7308590f.svg)
+
+<!-- rustlab:output-end -->
 
 ### Example — Two overlapping shapes as integer-coded regions
 
@@ -196,7 +223,10 @@ imagesc(regions, "viridis");
 title("Region IDs: 0 outside, 1 = R only, 2 = D only, 3 = R ∩ D")
 ```
 
-![plot 6](plots/04-geometry-and-material-maps/plot-6.svg)
+<!-- rustlab:output-start -->
+![plot 6](plots/04-geometry-and-material-maps/plot-6-a2bd8759.svg)
+
+<!-- rustlab:output-end -->
 
 ```rustlab
 print(sum(sum(r_only)) * dx * dy)   % rect minus the disk overlap   ≈ 0.380
@@ -204,11 +234,14 @@ print(sum(sum(d_only)) * dx * dy)   % disk minus the rect overlap   ≈ 0.201
 print(sum(sum(both))   * dx * dy)   % the lens-shaped intersection  ≈ 0.583
 ```
 
+<!-- rustlab:output-start -->
 ```text
 0.38044493825913483
 0.20135855155172847
 0.5831670917401075
 ```
+
+<!-- rustlab:output-end -->
 
 ## From Masks to Material Maps
 
@@ -260,7 +293,10 @@ imagesc(eps_r, "viridis");
 title("ε_r(x, y): air = 1, FR-4 = 4.4, copper disk overwrites substrate")
 ```
 
-![plot 7](plots/04-geometry-and-material-maps/plot-7.svg)
+<!-- rustlab:output-start -->
+![plot 7](plots/04-geometry-and-material-maps/plot-7-ad2060ef.svg)
+
+<!-- rustlab:output-end -->
 
 ```rustlab
 % Spot-check the three regions by sampling one cell from each.
@@ -275,6 +311,7 @@ print(sigma(100, 128))      % copper conductivity → 5.8e7
 print(sigma(100,  34))      % substrate (lossless dielectric) → 0
 ```
 
+<!-- rustlab:output-start -->
 ```text
 1
 4.4
@@ -282,6 +319,8 @@ print(sigma(100,  34))      % substrate (lossless dielectric) → 0
 58000000
 0
 ```
+
+<!-- rustlab:output-end -->
 
 The three arrays `eps_r`, `mu_r`, `sigma` are now ready to be passed into any solver from Lesson 05 onward — they share the same shape, the same grid, and the same material assignments. Adding a new region (say, a second metal trace) is one more line: build a mask, overwrite each of the three arrays.
 
@@ -291,7 +330,10 @@ imagesc(sigma, "viridis");
 title("σ(x, y): zero everywhere except the copper disk")
 ```
 
-![plot 8](plots/04-geometry-and-material-maps/plot-8.svg)
+<!-- rustlab:output-start -->
+![plot 8](plots/04-geometry-and-material-maps/plot-8-2b414ad3.svg)
+
+<!-- rustlab:output-end -->
 
 ## Conformal Area Weighting at Curved Boundaries
 
@@ -331,7 +373,10 @@ imagesc(alpha, "viridis");
 title("Conformal α(x, y) for unit disk (K = 8 subsamples)")
 ```
 
-![plot 9](plots/04-geometry-and-material-maps/plot-9.svg)
+<!-- rustlab:output-start -->
+![plot 9](plots/04-geometry-and-material-maps/plot-9-fec01f95.svg)
+
+<!-- rustlab:output-end -->
 
 ```rustlab
 A_stair = sum(sum(D_unit)) * dx * dy;    % from the binary mask
@@ -344,6 +389,7 @@ print(abs(A_stair - A_true) / A_true)     % staircase relative error ≈ 2e-3
 print(abs(A_conf  - A_true) / A_true)     % conformal relative error ≈ 2e-5
 ```
 
+<!-- rustlab:output-start -->
 ```text
 3.1353753693088553
 3.141667824044847
@@ -351,6 +397,8 @@ print(abs(A_conf  - A_true) / A_true)     % conformal relative error ≈ 2e-5
 0.001979023051837588
 0.000023927498992589625
 ```
+
+<!-- rustlab:output-end -->
 
 The conformal error on this single grid is already two orders of magnitude smaller. A grid-refinement sweep (Exercise 4) shows the staircase error decays as $O(h)$ while the conformal error decays as $O(h^2)$ — exactly the rate every interior stencil in this curriculum aspires to.
 
@@ -365,7 +413,10 @@ imagesc(delta, "viridis");
 title("α - M: nonzero only on the disk's rim")
 ```
 
-![plot 10](plots/04-geometry-and-material-maps/plot-10.svg)
+<!-- rustlab:output-start -->
+![plot 10](plots/04-geometry-and-material-maps/plot-10-c15891bd.svg)
+
+<!-- rustlab:output-end -->
 
 For a shape with no curved boundaries (a rectangle aligned to the axes, say), $\alpha = M$ everywhere — there is nothing to correct. The conformal pass is purely a curved-boundary fix.
 

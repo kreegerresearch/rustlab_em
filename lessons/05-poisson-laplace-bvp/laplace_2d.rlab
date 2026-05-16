@@ -32,9 +32,14 @@ V_flat = spsolve(A, b);
 V = reshape(V_flat, N, N);
 
 # === Plots ===
+# Flip rows for the imagesc draw so the sin(πx) top-edge bright band
+# appears at the top of the plot — rustlab 0.3.4 imagesc otherwise
+# puts matrix row 1 (low y) at the top, contradicting the y-axis
+# labels and the contour overlay below. See
+# dev/rustlab/requests/imagesc-y-axis-orientation.md.
 figure();
 hold on;
-imagesc(real(V), "viridis");
+imagesc(real(V(N:-1:1, :)), "viridis");
 contour(X, Y, real(V), 10, "k");
 title("Laplace V(x, y) — V_top = sin(pi x), other edges 0");
 hold off;

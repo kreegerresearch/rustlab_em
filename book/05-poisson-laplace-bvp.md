@@ -79,24 +79,32 @@ print(V_an(i_mid, i_mid))            % ≈ 0.1830 — agrees to four digits
 print(real(max(err(:))))             % ≈ 1.6e-4 — well below the (1/42)² ≈ 6e-4 bound
 ```
 
+<!-- rustlab:output-start -->
 ```text
 0.18317394238233684
 0.18304604079678616
 0.00016149246740576606
 ```
 
+<!-- rustlab:output-end -->
+
 The two values agree to four digits; the worst-case error sits comfortably under the $(1/(N+1))^2$ bound the second-order stencil promises.
 
 ```rustlab
 clf;
 hold on;
-imagesc(V, "viridis");
+imagesc(real(V(N:-1:1, :)), "viridis");        % rows flipped — see note below
 contour(X, Y, V, 10, "k");
 title("V(x, y) — Laplace, V_top = sin(πx), other edges 0");
 hold off;
 ```
 
-![plot 1](plots/05-poisson-laplace-bvp/plot-1.svg)
+<!-- rustlab:output-start -->
+![plot 1](plots/05-poisson-laplace-bvp/plot-1-08308c99.svg)
+
+<!-- rustlab:output-end -->
+
+> Why the `V(N:-1:1, :)` flip on the `imagesc` call? rustlab 0.3.4 draws matrix row 1 at the top of the plot but labels the y-axis 0 → N from bottom to top — the two conventions are inverted, so physical data laid out via `meshgrid` with ascending `y` ends up upside down. Reversing the rows before plotting cancels the flip. See `dev/rustlab/requests/imagesc-y-axis-orientation.md`. `contour(X, Y, V)` follows the physics convention correctly, so it doesn't need a flip.
 
 The contours bend smoothly from a sinusoid at the top to flat zero at the other three sides — the same picture you'd draw freehand from "harmonic functions interpolate their boundary values smoothly."
 
@@ -157,11 +165,14 @@ for target = iters
 end
 ```
 
+<!-- rustlab:output-start -->
 ```text
 0.11803579929357888
 0.003492182470557742
 0.0006430625831445047
 ```
+
+<!-- rustlab:output-end -->
 
 The three printed errors decay roughly an order of magnitude per 200 iterations: $\sim 10^{-1}$ after 50, $\sim 3\times10^{-3}$ after 200, $\sim 6\times10^{-4}$ after 1000 (where it floors out at the grid's $h^2$ truncation error). `spsolve` produced the same accuracy in one factorisation, taking less time than even the 50-iteration Gauss–Seidel pass. From here the rest of the lesson uses the direct solver exclusively.
 
@@ -191,11 +202,14 @@ ys = dy * (1:ny) - Ly/2;
 w = 0.06; d = 0.02;
 top_plate = rect_mask(Xb, Yb, -w/2,  d/2 - dy/2, w, dy);
 bot_plate = rect_mask(Xb, Yb, -w/2, -d/2 - dy/2, w, dy);
-imagesc(top_plate + 2 * bot_plate, "viridis");
-title("Plate masks: 1 = +V plate, 2 = -V plate")
+imagesc((top_plate + 2 * bot_plate)(ny:-1:1, :), "viridis");
+title("Plate masks: 1 = +V plate (top), 2 = -V plate (bottom)")
 ```
 
-![plot 2](plots/05-poisson-laplace-bvp/plot-2.svg)
+<!-- rustlab:output-start -->
+![plot 2](plots/05-poisson-laplace-bvp/plot-2-8a9d6de7.svg)
+
+<!-- rustlab:output-end -->
 
 Build the system, then pin the plate cells. For each plate cell at flat index $k$, zero out the four off-diagonal entries in row $k$ (one per stencil neighbour), set the diagonal to 1, and write the plate potential into $b$.
 
@@ -238,13 +252,16 @@ V      = reshape(V_flat, ny, nx);
 ```rustlab
 clf;
 hold on;
-imagesc(real(V), "viridis");
+imagesc(real(V(ny:-1:1, :)), "viridis");
 contour(Xb, Yb, real(V), 16, "k");
 title("Parallel plates with fringing: V(x, y), V₀ = 1 V");
 hold off;
 ```
 
-![plot 3](plots/05-poisson-laplace-bvp/plot-3.svg)
+<!-- rustlab:output-start -->
+![plot 3](plots/05-poisson-laplace-bvp/plot-3-23098be8.svg)
+
+<!-- rustlab:output-end -->
 
 ```rustlab
 % Recover the field and integrate flux around the top plate to get C.
@@ -262,10 +279,13 @@ C_1d = eps0 * w / d;                            % per metre depth
 print(C_1d)                                     % ≈ 2.66e-11 F/m
 ```
 
+<!-- rustlab:output-start -->
 ```text
 48.08953558439116
 0.0000000000265625634384
 ```
+
+<!-- rustlab:output-end -->
 
 The mid-gap field comes out close to $V_0/d = 50$ V/m, confirming that the 1-D estimate is locally accurate inside the plates. The contour map shows the equipotentials curving sharply at the plate edges — that's fringing, the visible signature of why finite plates have $C > \varepsilon_0 w/d$. (Exercise 3 walks through extracting the actual numerical $C$ via the flux integral and quantifying the fringing correction.)
 
@@ -307,11 +327,14 @@ ysd = linspace(0, Lyd, nyd);
 eps_map = ones(nyd, nxd);
 i_half  = sum(ysd < Lyd / 2);
 eps_map(1:i_half, :) = 4.0;
-imagesc(eps_map, "viridis");
+imagesc(eps_map(nyd:-1:1, :), "viridis");
 title("ε_r(x, y): 4 below the interface, 1 above")
 ```
 
-![plot 4](plots/05-poisson-laplace-bvp/plot-4.svg)
+<!-- rustlab:output-start -->
+![plot 4](plots/05-poisson-laplace-bvp/plot-4-ce9ba709.svg)
+
+<!-- rustlab:output-end -->
 
 ```rustlab
 % Variable-coefficient stencil with Neumann sides
@@ -349,7 +372,10 @@ xlabel("y (mm)");
 ylabel("V (V)")
 ```
 
-![plot 5](plots/05-poisson-laplace-bvp/plot-5.svg)
+<!-- rustlab:output-start -->
+![plot 5](plots/05-poisson-laplace-bvp/plot-5-e4b07d7e.svg)
+
+<!-- rustlab:output-end -->
 
 The profile is piecewise linear: shallow slope through the dielectric (small $E$), four times steeper through the air (large $E$). The slopes differ by $\varepsilon_r$, exactly as the boundary condition $D_n^{\rm in} = D_n^{\rm out}$ requires.
 
@@ -372,6 +398,7 @@ print(real(D_diel))
 print(real(D_air))         % same value to six+ digits → continuity verified
 ```
 
+<!-- rustlab:output-start -->
 ```text
 39.70223358024655
 158.8089296451023
@@ -379,6 +406,8 @@ print(real(D_air))         % same value to six+ digits → continuity verified
 -0.0000000014061241308286318
 -0.0000000014061240894274774
 ```
+
+<!-- rustlab:output-end -->
 
 The field jump-by-$\varepsilon_r$ and the displacement continuity both come out of the harmonic-mean stencil for free — no user-side bookkeeping at the interface. Now read off the capacitance per unit area and compare to the series-dielectric formula.
 
@@ -396,10 +425,13 @@ C_num     = abs(sigma_top) / 1.0;
 print(C_num)                                   % matches C_an to ~10⁻³
 ```
 
+<!-- rustlab:output-start -->
 ```text
 0.000000001416670050048
 0.0000000014061236586766112
 ```
+
+<!-- rustlab:output-end -->
 
 ## Field Singularities at Sharp Corners
 
@@ -431,11 +463,18 @@ ys2 = dy2 * (1:ny2);
 % Inner corner of the L-shape sits at (x0, y0) = (0.06, 0.06).
 x0 = 0.06; y0 = 0.06;
 conductor = rect_mask(X2, Y2, x0, y0, 0.04, 0.04);
-imagesc(conductor, "viridis");
+% rustlab 0.3.4 `imagesc` puts matrix row 1 at the top but labels the
+% y-axis 0 → ny from bottom → top, flipping physical data vertically.
+% Until upstream fixes this (dev/rustlab/requests/imagesc-y-axis-orientation.md),
+% reverse the rows before plotting so high physical y reads at the top.
+imagesc(conductor(ny2:-1:1, :), "viridis");
 title("Conductor mask: V = 1 inside; grounded box on the outer boundary")
 ```
 
-![plot 6](plots/05-poisson-laplace-bvp/plot-6.svg)
+<!-- rustlab:output-start -->
+![plot 6](plots/05-poisson-laplace-bvp/plot-6-e423088b.svg)
+
+<!-- rustlab:output-end -->
 
 ```rustlab
 L2 = laplacian_2d(nx2, ny2, dx2, dy2);
@@ -464,13 +503,16 @@ V2      = real(reshape(V2_flat, ny2, nx2));
 ```rustlab
 clf;
 hold on;
-imagesc(V2, "viridis");
+imagesc(V2(ny2:-1:1, :), "viridis");
 contour(X2, Y2, V2, 14, "k");
 title("L-shape Laplace: V around a pinned upper-right conductor");
 hold off;
 ```
 
-![plot 7](plots/05-poisson-laplace-bvp/plot-7.svg)
+<!-- rustlab:output-start -->
+![plot 7](plots/05-poisson-laplace-bvp/plot-7-d1b3e122.svg)
+
+<!-- rustlab:output-end -->
 
 ```rustlab
 % Field magnitude from -∇V
@@ -482,7 +524,10 @@ imagesc(log10(Emag + 1e-12), "viridis");
 title("log₁₀ |E|: bright spot at the re-entrant corner")
 ```
 
-![plot 8](plots/05-poisson-laplace-bvp/plot-8.svg)
+<!-- rustlab:output-start -->
+![plot 8](plots/05-poisson-laplace-bvp/plot-8-af10676d.svg)
+
+<!-- rustlab:output-end -->
 
 The brightest pixel sits on the inner $(0.06, 0.06)$ corner — that's the singularity. To extract the exponent, sample $|\vec E|$ along the diagonal ray $r$ pointing outward from the corner into the L-shaped dielectric (lower-left direction here):
 
@@ -517,9 +562,12 @@ slope = (nfit * sxy - sx * sy) / (nfit * sxx - sx * sx);
 print(real(slope))                          % ≈ -0.38 (theory: -1/3 ≈ -0.333)
 ```
 
+<!-- rustlab:output-start -->
 ```text
 -0.37760395168279587
 ```
+
+<!-- rustlab:output-end -->
 
 ```rustlab
 clf;
@@ -528,7 +576,10 @@ xlabel("r (m)");
 ylabel("|E| (V/m)")
 ```
 
-![plot 9](plots/05-poisson-laplace-bvp/plot-9.svg)
+<!-- rustlab:output-start -->
+![plot 9](plots/05-poisson-laplace-bvp/plot-9-0eecec00.svg)
+
+<!-- rustlab:output-end -->
 
 The fitted slope sits in the neighbourhood of $-1/3$ — the asymptotic singularity exponent — once the small-$r$ pinning artefact and the large-$r$ box-boundary corrections are excluded. The match isn't sharp on a $100\times100$ grid (the asymptotic regime $h \ll r \ll L_{\rm box}$ is narrow here), and refining the grid pushes the fit closer to $-0.33$. The qualitative point — that $|\vec E|$ does diverge as $r \to 0$, with a power-law slope visible on log-log axes — is robust and is the only thing the lightning-rod argument actually needs.
 

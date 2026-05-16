@@ -87,7 +87,10 @@ xlabel("x cell");
 ylabel("y cell")
 ```
 
-![plot 1](plots/14-capstone-device-simulation/plot-1.svg)
+<!-- rustlab:output-start -->
+![plot 1](plots/14-capstone-device-simulation/plot-1-71db378a.svg)
+
+<!-- rustlab:output-end -->
 
 The geometry snapshot shows the substrate band (mid-yellow) sandwiched between the ground plane (top row of metal, drawn as a stripe) and the patch (shorter stripe above). The colour scale stacks the PEC value on top of the dielectric ε so both regions stay visible.
 
