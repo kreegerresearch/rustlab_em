@@ -1,0 +1,196 @@
+# cap_matrix_microstrip.rlab — Per-unit-length 2×2 capacitance matrix
+# for two coplanar microstrip traces above a ground plane.
+#
+# Cross-section (2-D, infinite in z), drawn looking down the trace
+# direction:
+#
+#       ┌──────────────── air ───────────────┐
+#       │   ┌─trace 1─┐         ┌─trace 2─┐  │
+#       │   |   PEC   |         |   PEC   |  │
+#       │   └─────────┘         └─────────┘  │
+#       │   ────  FR-4 substrate (ε_r=4.4) ──│
+#       └──────────────  PEC ground  ────────┘
+#
+# Procedure: for each trace k drive V_k = 1, V_(other traces) = V_ground = 0.
+# Solve ∇·(ε∇V) = 0 → V(x, y). Extract Q'_i (charge per unit length on
+# trace i) via Gauss integration around the trace perimeter.  Stack the
+# results into C_ij = Q'_i / V_j.
+#
+# In the Maxwell (short-circuit) convention C_ii is the trace's
+# self-capacitance to all grounded conductors and C_ij (i ≠ j) is
+# *negative*, representing the coupling that gets shorted out when
+# you ground all other ports.
+#
+# Re-using a single LU factorisation across the N right-hand sides
+# would be ideal here; rustlab's spsolve refactors per call (open
+# upstream request). The script structure already shows the pattern.
+#
+# Units: SI. C' in pF/m (printed) — typical microstrip scale.
+#
+# Reference: ../../notebooks/15-lumped-capacitance.md.
+
+eps0 = 8.854187817e-12;
+
+# === Grid ===
+nx = 161;
+ny = 81;
+dx = 0.1e-3;                                  # 0.1 mm cells
+dy = dx;
+
+# Geometry rows / columns (1-based).
+i_ground = 5;                                 # ground-plane row
+i_top    = i_ground + 12;                     # trace row (substrate 12 cells = 1.2 mm)
+trace_w  = 10;                                # trace width in cells (1 mm)
+sep_cells = 30;                               # trace-to-trace centre-to-centre spacing in cells (3 mm)
+
+j_centre = round(nx / 2);
+j_t1     = j_centre - round(sep_cells / 2);
+j_t2     = j_centre + round(sep_cells / 2);
+j_t1_lo  = j_t1 - round(trace_w / 2) + 1;
+j_t1_hi  = j_t1_lo + trace_w - 1;
+j_t2_lo  = j_t2 - round(trace_w / 2) + 1;
+j_t2_hi  = j_t2_lo + trace_w - 1;
+
+print(j_t1_lo); print(j_t1_hi);
+print(j_t2_lo); print(j_t2_hi);
+
+# === ε map ===
+eps_map = ones(ny, nx);                       # air everywhere
+eps_map(1:i_top - 1, :) = 4.4;                # FR-4 substrate fills below the trace row
+
+# === Build sparse Poisson operator (variable-ε form) ===
+L_lap = laplacian_eps_2d(eps_map, dx, dy);
+A_base = -1 * L_lap;                          # ∇·(ε∇V) = 0
+N = nx * ny;
+
+# Pin function (2-D version of L05's idiom).
+function [A_out, b_out] = pin(A, b, i, j, ny, nx, V_val)
+  k = ij2k(i, j, ny);
+  A(k, k) = 1.0;
+  if i > 1;   A(k, ij2k(i-1, j, ny)) = 0.0; end
+  if i < ny;  A(k, ij2k(i+1, j, ny)) = 0.0; end
+  if j > 1;   A(k, ij2k(i, j-1, ny)) = 0.0; end
+  if j < nx;  A(k, ij2k(i, j+1, ny)) = 0.0; end
+  b(k) = V_val;
+  A_out = A;
+  b_out = b;
+end
+
+# Apply the ground-plane pin (same in every solve) once into A_g.
+A_g = A_base;
+b_g = zeros(1, N);
+for jj = 1:nx
+  [A_g, b_g] = pin(A_g, b_g, i_ground, jj, ny, nx, 0.0);
+end
+
+# === Solver wrapper: pin the two traces at (V1, V2), return V grid ===
+function V_grid = solve_for(A_g, b_g, ny, nx, i_top, j_t1_lo, j_t1_hi, j_t2_lo, j_t2_hi, V1, V2)
+  A = A_g;
+  b = b_g;
+  for jj = j_t1_lo:j_t1_hi
+    [A, b] = pin(A, b, i_top, jj, ny, nx, V1);
+  end
+  for jj = j_t2_lo:j_t2_hi
+    [A, b] = pin(A, b, i_top, jj, ny, nx, V2);
+  end
+  V_flat = spsolve(A, b);
+  V_grid = reshape(V_flat, ny, nx);
+end
+
+# === Q'_i extraction via Gauss on a tight pillbox around trace i ===
+# For each trace we sum ε E_n on the 4 sides of a 1-cell-padding loop
+# around its row. ε_map at the trace row depends on whether we are in
+# substrate (below, eps_r = 4.4) or air (above, eps_r = 1).
+function Q_per_len = trace_charge(V, eps_map, eps0, dx, dy, i_top, j_lo, j_hi)
+  # Top face: above trace, sample at row i_top + 1
+  Q_top = 0;
+  for jj = j_lo:j_hi
+    En = -(V(i_top + 1, jj) - V(i_top, jj)) / dy;     # E_y at face, outward = +y, normal flux = -dV/dy
+    eps_face = (eps_map(i_top + 1, jj) + eps_map(i_top, jj)) / 2;
+    Q_top = Q_top + eps0 * eps_face * En * dx;
+  end
+  # Bottom face: below trace, sample at row i_top - 1
+  Q_bot = 0;
+  for jj = j_lo:j_hi
+    En = -(V(i_top - 1, jj) - V(i_top, jj)) / dy;     # outward = -y
+    eps_face = (eps_map(i_top - 1, jj) + eps_map(i_top, jj)) / 2;
+    Q_bot = Q_bot + eps0 * eps_face * En * dx;
+  end
+  # Left face: at column j_lo - 1
+  Q_l = 0;
+  for ii = i_top:i_top                          # 1-cell-thick trace
+    En = -(V(ii, j_lo - 1) - V(ii, j_lo)) / dx;       # outward = -x
+    eps_face = (eps_map(ii, j_lo - 1) + eps_map(ii, j_lo)) / 2;
+    Q_l = Q_l + eps0 * eps_face * En * dy;
+  end
+  # Right face: at column j_hi + 1
+  Q_r = 0;
+  for ii = i_top:i_top
+    En = -(V(ii, j_hi + 1) - V(ii, j_hi)) / dx;       # outward = +x
+    eps_face = (eps_map(ii, j_hi + 1) + eps_map(ii, j_hi)) / 2;
+    Q_r = Q_r + eps0 * eps_face * En * dy;
+  end
+  Q_per_len = Q_top + Q_bot + Q_l + Q_r;
+end
+
+# === Solve #1: V_1 = 1, V_2 = 0 ===
+V_a = solve_for(A_g, b_g, ny, nx, i_top, j_t1_lo, j_t1_hi, j_t2_lo, j_t2_hi, 1.0, 0.0);
+Q1_a = trace_charge(V_a, eps_map, eps0, dx, dy, i_top, j_t1_lo, j_t1_hi);
+Q2_a = trace_charge(V_a, eps_map, eps0, dx, dy, i_top, j_t2_lo, j_t2_hi);
+C11 = Q1_a;                                   # /1 V
+C21 = Q2_a;
+
+# === Solve #2: V_1 = 0, V_2 = 1 ===
+V_b = solve_for(A_g, b_g, ny, nx, i_top, j_t1_lo, j_t1_hi, j_t2_lo, j_t2_hi, 0.0, 1.0);
+Q1_b = trace_charge(V_b, eps_map, eps0, dx, dy, i_top, j_t1_lo, j_t1_hi);
+Q2_b = trace_charge(V_b, eps_map, eps0, dx, dy, i_top, j_t2_lo, j_t2_hi);
+C12 = Q1_b;
+C22 = Q2_b;
+
+# === Report (pF/m) ===
+print(C11 * 1e12)                             # diagonal (self) — large positive
+print(C22 * 1e12)                             # ≈ C11 by symmetry
+print(C12 * 1e12)                             # cross-term — small negative
+print(C21 * 1e12)                             # = C12 by reciprocity
+print(abs(C12 - C21) / max(abs(C12), 1e-30))  # reciprocity error
+
+# === Field snapshot ===
+figure();
+imagesc(real(V_a), "viridis");
+title("V (V_1 = 1, V_2 = 0) — coupling visible between traces");
+xlabel("x cell"); ylabel("y cell");
+savefig("microstrip_V_drive1.svg");
+
+# === Spacing sweep — coupling vs. centre-to-centre distance ===
+sweep_seps = [20, 30, 40, 60, 80];
+C11_s = zeros(1, length(sweep_seps));
+C12_s = zeros(1, length(sweep_seps));
+for q = 1:length(sweep_seps)
+  s_q = sweep_seps(q);
+  jt1q = j_centre - round(s_q / 2);
+  jt2q = j_centre + round(s_q / 2);
+  jt1_lo = jt1q - round(trace_w / 2) + 1;
+  jt1_hi = jt1_lo + trace_w - 1;
+  jt2_lo = jt2q - round(trace_w / 2) + 1;
+  jt2_hi = jt2_lo + trace_w - 1;
+  V_q = solve_for(A_g, b_g, ny, nx, i_top, jt1_lo, jt1_hi, jt2_lo, jt2_hi, 1.0, 0.0);
+  C11_s(q) = trace_charge(V_q, eps_map, eps0, dx, dy, i_top, jt1_lo, jt1_hi);
+  C12_s(q) = trace_charge(V_q, eps_map, eps0, dx, dy, i_top, jt2_lo, jt2_hi);
+end
+seps_mm = sweep_seps * dx * 1e3;
+print(seps_mm)
+print(C11_s * 1e12)                           # pF/m
+print(-C12_s * 1e12)                          # mutual capacitance (positive)
+
+figure();
+hold on;
+plot(seps_mm, real(C11_s) * 1e12, "C_{11} (self)");
+plot(seps_mm, real(-C12_s) * 1e12, "−C_{12} (mutual)");
+hold off;
+xlabel("trace-to-trace centre spacing  (mm)");
+ylabel("C'  (pF/m)");
+title("Coplanar-microstrip C-matrix vs. trace spacing");
+legend("C_{11}", "−C_{12}");
+savefig("microstrip_cap_vs_spacing.svg");
+
+print(1)

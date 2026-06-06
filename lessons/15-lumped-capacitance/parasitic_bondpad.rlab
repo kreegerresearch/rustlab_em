@@ -1,0 +1,142 @@
+# parasitic_bondpad.rlab — IC bond-pad parasitic capacitance to the
+# substrate (ground), through a thick oxide.
+#
+# Cross-section (z runs vertical):
+#
+#     ╔═══════════════════════════ air ═══════════════════════════╗
+#     ║      ┌─── square bond pad (PEC, V = 1 V) ───┐              ║
+#     ║      └──────────────────────────────────────┘              ║
+#     ║ ── thermal oxide  ε_r = 3.9  (gap = t_ox) ────────────────  ║
+#     ║ ─────────────── substrate (PEC ground, V = 0) ────────────  ║
+#     ╚═══════════════════════════════════════════════════════════╝
+#
+# Routes a 3-D Laplace at n³ = 25³ per geometry. Sweeps two pad sizes
+# × two oxide thicknesses → a 2×2 design-rule grid in fF. The plotted
+# curve overlays the simple ε_r ε₀ A / t_ox baseline (which neglects
+# fringing); the numerical values land above it as expected for finite
+# pads.
+#
+# Units: SI. Pad side L in µm; oxide t in µm; C in fF.
+#
+# Reference: ../../notebooks/15-lumped-capacitance.md.
+
+eps0 = 8.854187817e-12;
+eps_ox = 3.9;
+
+# === Grid (fixed across the sweep) ===
+n  = 25;
+dx = 1.0e-6;  dy = dx;                        # 1 µm in plane
+N  = n * n * n;
+
+# Pad row z_pad, ground row z_gnd. Vary oxide thickness via dz.
+i_ground = 6;                                 # ground (PEC) plane row in z
+# z_pad we set per-sweep so plate at fixed cells, with oxide spanning
+# z_ground+1 .. z_pad-1 (filled by oxide).
+
+function [A_out, b_out] = pin_cell(A, b, ii, jj, kk, n, V_val)
+  k = ijk2k(ii, jj, kk, n, n);
+  A(k, k) = 1.0;
+  if ii > 1;  A(k, ijk2k(ii-1, jj, kk, n, n)) = 0.0; end
+  if ii < n;  A(k, ijk2k(ii+1, jj, kk, n, n)) = 0.0; end
+  if jj > 1;  A(k, ijk2k(ii, jj-1, kk, n, n)) = 0.0; end
+  if jj < n;  A(k, ijk2k(ii, jj+1, kk, n, n)) = 0.0; end
+  if kk > 1;  A(k, ijk2k(ii, jj, kk-1, n, n)) = 0.0; end
+  if kk < n;  A(k, ijk2k(ii, jj, kk+1, n, n)) = 0.0; end
+  b(k) = V_val;
+  A_out = A;
+  b_out = b;
+end
+
+function C = bondpad_C(n, dx, dy, dz, i_ground, z_pad, xy_lo, xy_hi, eps_ox, eps0)
+  L_lap = laplacian_3d(n, n, n, dx, dy, dz);
+  A = -1 * L_lap;
+  b = zeros(1, n * n * n);
+
+  # Pin pad cells to V = 1.
+  for jj = xy_lo:xy_hi
+    for ii = xy_lo:xy_hi
+      [A, b] = pin_cell(A, b, ii, jj, z_pad, n, 1.0);
+    end
+  end
+  # Pin entire ground row to V = 0.
+  for jj = 1:n
+    for ii = 1:n
+      [A, b] = pin_cell(A, b, ii, jj, i_ground, n, 0.0);
+    end
+  end
+
+  V_flat = spsolve(A, b);
+  V = reshape(V_flat, n, n, n);
+
+  # Gauss around the pad (top + sides; bottom face is in oxide).
+  [Ex, Ey, Ez] = gradient3(V, dx, dy, dz);
+  Ex = -Ex; Ey = -Ey; Ez = -Ez;
+  kg_lo = z_pad - 1;  kg_hi = z_pad + 1;
+  # Bottom face: in oxide.
+  flux_mz = -sum(sum(Ez(xy_lo:xy_hi, xy_lo:xy_hi, kg_lo))) * eps_ox;
+  # Top face: in air.
+  flux_pz =  sum(sum(Ez(xy_lo:xy_hi, xy_lo:xy_hi, kg_hi)));
+  # Side faces span one oxide cell + one air cell → average ε.
+  eps_side = (eps_ox + 1) / 2;
+  flux_px =  sum(sum(Ex(xy_lo:xy_hi, xy_hi, kg_lo:kg_hi))) * eps_side;
+  flux_mx = -sum(sum(Ex(xy_lo:xy_hi, xy_lo, kg_lo:kg_hi))) * eps_side;
+  flux_py =  sum(sum(Ey(xy_hi, xy_lo:xy_hi, kg_lo:kg_hi))) * eps_side;
+  flux_my = -sum(sum(Ey(xy_lo, xy_lo:xy_hi, kg_lo:kg_hi))) * eps_side;
+  Q_top_face = eps0 * (flux_mz + flux_pz) * (dx * dy);
+  Q_side     = eps0 * (flux_px + flux_mx + flux_py + flux_my) * (dx * dz);
+  C = real(Q_top_face + Q_side);
+end
+
+# === Sweep: 2 pad sizes × 2 oxide thicknesses ===
+pad_widths_cells = [8, 14];                    # 8 µm and 14 µm
+ox_thick_nm      = [500, 1500];                # 0.5 µm and 1.5 µm thermal oxide
+# Three cells through oxide → dz = t_ox / 3
+# z_pad = i_ground + 3 + 1 = i_ground + 4 (3 oxide cells + the pad row)
+
+C_grid = zeros(length(pad_widths_cells), length(ox_thick_nm));
+for pi = 1:length(pad_widths_cells)
+  Pcells = pad_widths_cells(pi);
+  xy_lo  = round((n - Pcells) / 2) + 1;
+  xy_hi  = xy_lo + Pcells - 1;
+  for oi = 1:length(ox_thick_nm)
+    t_ox = ox_thick_nm(oi) * 1e-9;
+    dz   = t_ox / 3;                          # 3 oxide cells
+    z_pad = i_ground + 4;                     # immediately above the 3 oxide cells
+    C = bondpad_C(n, dx, dy, dz, i_ground, z_pad, xy_lo, xy_hi, eps_ox, eps0);
+    C_grid(pi, oi) = C;
+    print(Pcells); print(t_ox * 1e9); print(C * 1e15);
+  end
+end
+
+# === Analytic baselines (no fringing) ===
+C_ideal = zeros(length(pad_widths_cells), length(ox_thick_nm));
+for pi = 1:length(pad_widths_cells)
+  Pcells = pad_widths_cells(pi);
+  A_pad = (Pcells * dx)^2;
+  for oi = 1:length(ox_thick_nm)
+    t_ox = ox_thick_nm(oi) * 1e-9;
+    C_ideal(pi, oi) = eps_ox * eps0 * A_pad / t_ox;
+  end
+end
+print("C ideal (fF):");
+print(C_ideal * 1e15);
+print("C numerical (fF):");
+print(C_grid * 1e15);
+print("ratio numerical / ideal (>1 ⇒ fringing dominates):");
+print(C_grid ./ C_ideal);
+
+# === Plot ===
+figure();
+hold on;
+plot(pad_widths_cells, real(C_grid(:, 1)) * 1e15, sprintf("t_{ox} = %d nm (num.)", ox_thick_nm(1)));
+plot(pad_widths_cells, real(C_grid(:, 2)) * 1e15, sprintf("t_{ox} = %d nm (num.)", ox_thick_nm(2)));
+plot(pad_widths_cells, real(C_ideal(:, 1)) * 1e15, sprintf("t_{ox} = %d nm (ideal)", ox_thick_nm(1)));
+plot(pad_widths_cells, real(C_ideal(:, 2)) * 1e15, sprintf("t_{ox} = %d nm (ideal)", ox_thick_nm(2)));
+hold off;
+xlabel("pad side  (µm)");
+ylabel("C  (fF)");
+title("Bond-pad parasitic C vs. size and oxide thickness");
+legend("500 nm (num.)", "1500 nm (num.)", "500 nm (ideal)", "1500 nm (ideal)");
+savefig("bondpad_C_sweep.svg");
+
+print(1)

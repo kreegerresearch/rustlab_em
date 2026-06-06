@@ -1,0 +1,155 @@
+# cap_matrix_three_trace.rlab — Three-trace bus over a ground plane.
+# Full 3×3 Maxwell capacitance matrix; symmetry & reciprocity checks;
+# Maxwell → mutual conversion.
+#
+# Maxwell ("short-circuit") capacitance:
+#   C_M[i, i] = Q_i / V_i with V_i = 1, V_k = 0 for k ≠ i.
+#   C_M[i, j] = Q_i / V_j  (negative for i ≠ j — coupling fights the
+#                          self-cap when other traces are grounded).
+#
+# Mutual ("partial") capacitance:
+#   The equivalent lumped network has one capacitor *between* each
+#   pair of traces and one *from* each trace to ground. The mutual
+#   pair-cap c_ij = −C_M[i, j] for i ≠ j. The trace-to-ground cap is
+#   c_i0 = ∑_k C_M[i, k] (the row sum). The two conventions describe
+#   the same physical network; SPICE / PEX tools usually emit mutual.
+#
+# Units: SI. C' in pF/m (printed).
+#
+# Reference: ../../notebooks/15-lumped-capacitance.md.
+
+eps0 = 8.854187817e-12;
+
+# === Grid ===
+nx = 181;
+ny = 81;
+dx = 0.1e-3;
+dy = dx;
+
+i_ground = 5;
+i_top    = i_ground + 12;
+trace_w  = 10;
+sep      = 28;
+
+j_centre = round(nx / 2);
+js = [j_centre - sep, j_centre, j_centre + sep];
+jlo = js - round(trace_w / 2) + 1;
+jhi = jlo + trace_w - 1;
+
+# === ε map (FR-4 below trace row) ===
+eps_map = ones(ny, nx);
+eps_map(1:i_top - 1, :) = 4.4;
+
+# === Operator base + ground pin ===
+L_lap = laplacian_eps_2d(eps_map, dx, dy);
+A_base = -1 * L_lap;
+N = nx * ny;
+
+function [A_out, b_out] = pin(A, b, i, j, ny, nx, V_val)
+  k = ij2k(i, j, ny);
+  A(k, k) = 1.0;
+  if i > 1;   A(k, ij2k(i-1, j, ny)) = 0.0; end
+  if i < ny;  A(k, ij2k(i+1, j, ny)) = 0.0; end
+  if j > 1;   A(k, ij2k(i, j-1, ny)) = 0.0; end
+  if j < nx;  A(k, ij2k(i, j+1, ny)) = 0.0; end
+  b(k) = V_val;
+  A_out = A;
+  b_out = b;
+end
+
+A_g = A_base;
+b_g = zeros(1, N);
+for jj = 1:nx
+  [A_g, b_g] = pin(A_g, b_g, i_ground, jj, ny, nx, 0.0);
+end
+
+# === Helper: solve with V applied to trace k_drive ===
+function V_grid = solve_drive(A_g, b_g, ny, nx, i_top, jlo, jhi, k_drive)
+  A = A_g;
+  b = b_g;
+  for k = 1:3
+    if k == k_drive
+      Vk = 1.0;
+    else
+      Vk = 0.0;
+    end
+    for jj = jlo(k):jhi(k)
+      [A, b] = pin(A, b, i_top, jj, ny, nx, Vk);
+    end
+  end
+  V_flat = spsolve(A, b);
+  V_grid = reshape(V_flat, ny, nx);
+end
+
+# === Charge integral around trace i (tight pillbox) ===
+function Q = trace_Q(V, eps_map, eps0, dx, dy, i_top, j_lo, j_hi)
+  Q_top = 0;  Q_bot = 0;  Q_l = 0;  Q_r = 0;
+  for jj = j_lo:j_hi
+    e_t = (eps_map(i_top + 1, jj) + eps_map(i_top, jj)) / 2;
+    e_b = (eps_map(i_top - 1, jj) + eps_map(i_top, jj)) / 2;
+    Q_top = Q_top + eps0 * e_t * (-(V(i_top + 1, jj) - V(i_top, jj)) / dy) * dx;
+    Q_bot = Q_bot + eps0 * e_b * (-(V(i_top - 1, jj) - V(i_top, jj)) / dy) * dx;
+  end
+  e_l = (eps_map(i_top, j_lo - 1) + eps_map(i_top, j_lo)) / 2;
+  e_r = (eps_map(i_top, j_hi + 1) + eps_map(i_top, j_hi)) / 2;
+  Q_l = eps0 * e_l * (-(V(i_top, j_lo - 1) - V(i_top, j_lo)) / dx) * dy;
+  Q_r = eps0 * e_r * (-(V(i_top, j_hi + 1) - V(i_top, j_hi)) / dx) * dy;
+  Q = Q_top + Q_bot + Q_l + Q_r;
+end
+
+# === Build the 3×3 Maxwell matrix ===
+C_M = zeros(3, 3);
+for k_drive = 1:3
+  V_k = solve_drive(A_g, b_g, ny, nx, i_top, jlo, jhi, k_drive);
+  for i_trace = 1:3
+    C_M(i_trace, k_drive) = real(trace_Q(V_k, eps_map, eps0, dx, dy, i_top, jlo(i_trace), jhi(i_trace)));
+  end
+end
+
+print("Maxwell C matrix (pF/m):");
+print(C_M * 1e12);
+
+# === Reciprocity & symmetry checks ===
+asym = max(max(abs(C_M - transpose(C_M))));
+print(asym * 1e12);                            # off-diagonal asymmetry in pF/m
+# Adjacent (trace 1-2) coupling = trace 2-3 coupling by mirror symmetry;
+# distant (trace 1-3) coupling is smaller.
+print(C_M(1, 2) * 1e12);                       # adjacent
+print(C_M(2, 3) * 1e12);                       # adjacent (= 1-2 by symmetry)
+print(C_M(1, 3) * 1e12);                       # next-nearest
+
+# === Convert Maxwell → mutual (SPICE-style) ===
+# c_ij_mutual = -C_M(i, j) for i ≠ j
+# c_i0        = ∑_k C_M(i, k)        (row sum of Maxwell matrix)
+c_mut = -C_M;
+c_to_gnd = zeros(1, 3);
+for i = 1:3
+  c_to_gnd(i) = sum(C_M(i, :));
+  c_mut(i, i) = 0;                              # diagonal of mutual matrix is unused
+end
+
+print("Mutual pair-caps (pF/m), upper triangle:");
+print(c_mut(1, 2) * 1e12);                     # adjacent pair
+print(c_mut(1, 3) * 1e12);                     # outer pair
+print(c_mut(2, 3) * 1e12);                     # adjacent pair (= 1-2)
+
+print("Trace-to-ground caps (pF/m):");
+print(c_to_gnd * 1e12);
+
+# === Heatmap of the Maxwell matrix ===
+figure();
+imagesc(real(C_M) * 1e12, "viridis");
+title("Maxwell capacitance matrix C_{ij}'  (pF/m)");
+xlabel("driven trace j");
+ylabel("sensed trace i");
+savefig("three_trace_C_matrix.svg");
+
+# === Field snapshot with the middle trace driven ===
+V_mid = solve_drive(A_g, b_g, ny, nx, i_top, jlo, jhi, 2);
+figure();
+imagesc(real(V_mid), "viridis");
+title("V (trace 2 = 1 V, 1 & 3 = 0) — equal coupling to both neighbours");
+xlabel("x cell"); ylabel("y cell");
+savefig("three_trace_V_middle.svg");
+
+print(1)

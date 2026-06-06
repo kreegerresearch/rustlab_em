@@ -1,0 +1,125 @@
+# tunable_C_force.rlab — Electrostatic force on a parallel-plate
+# capacitor from F = ½ V² ∂C/∂x.
+#
+# The virtual-work identity at fixed V says
+#   F = +½ V² ∂C/∂x         (force in the +x direction is attractive
+#                            because moving the plates closer raises C)
+# For an idealised infinite parallel-plate of plate width L and gap d
+# (per unit out-of-plane length z):
+#   C' = ε₀ L / d,    ∂C'/∂d = −ε₀ L / d²,    F' = −½ ε₀ L V² / d²
+# i.e. the famous −P · A pressure with P = ε₀ V² / (2 d²).
+#
+# We run a 2-D Laplace solve for each gap d in a sweep, extract C'
+# per unit length via the Gauss-pillbox method, then estimate ∂C'/∂d
+# by finite difference and plot it against the analytic curve.
+#
+# Units: SI. C' in pF/m; F' in N/m (force per unit z-length).
+#
+# Reference: ../../notebooks/15-lumped-capacitance.md.
+
+eps0 = 8.854187817e-12;
+
+nx = 121;
+ny = 61;
+dx = 0.1e-3;
+dy = dx;
+V0 = 1.0;
+
+# Plate footprint (cells)
+plate_w_cells = 40;                           # 4 mm wide plates
+j_centre = round(nx / 2);
+j_lo = j_centre - round(plate_w_cells / 2) + 1;
+j_hi = j_lo + plate_w_cells - 1;
+
+# ε = 1 everywhere (air). Use the uniform laplacian_2d.
+L_lap = laplacian_2d(nx, ny, dx, dy);
+A_base = -1 * L_lap;
+N = nx * ny;
+
+function [A_out, b_out] = pin(A, b, i, j, ny, nx, V_val)
+  k = ij2k(i, j, ny);
+  A(k, k) = 1.0;
+  if i > 1;   A(k, ij2k(i-1, j, ny)) = 0.0; end
+  if i < ny;  A(k, ij2k(i+1, j, ny)) = 0.0; end
+  if j > 1;   A(k, ij2k(i, j-1, ny)) = 0.0; end
+  if j < nx;  A(k, ij2k(i, j+1, ny)) = 0.0; end
+  b(k) = V_val;
+  A_out = A;
+  b_out = b;
+end
+
+# === Cap-extraction wrapper ===
+function C_pul = solve_C(A_base, ny, nx, j_lo, j_hi, i_bot, i_top, V0, eps0, dx, dy)
+  A = A_base;
+  b = zeros(1, nx * ny);
+  for jj = j_lo:j_hi
+    [A, b] = pin(A, b, i_top, jj, ny, nx, +V0 / 2);
+    [A, b] = pin(A, b, i_bot, jj, ny, nx, -V0 / 2);
+  end
+  V = reshape(spsolve(A, b), ny, nx);
+  # Gauss pillbox around top plate.
+  # Top face above plate: row i_top + 1.
+  Q_top = 0;  Q_bot = 0;
+  for jj = j_lo:j_hi
+    En_top = -(V(i_top + 1, jj) - V(i_top, jj)) / dy;
+    En_bot = -(V(i_top - 1, jj) - V(i_top, jj)) / dy;
+    Q_top = Q_top + eps0 * En_top * dx;
+    Q_bot = Q_bot + eps0 * En_bot * dx;
+  end
+  En_left  = -(V(i_top, j_lo - 1) - V(i_top, j_lo)) / dx;
+  En_right = -(V(i_top, j_hi + 1) - V(i_top, j_hi)) / dx;
+  Q_l = eps0 * En_left  * dy;
+  Q_r = eps0 * En_right * dy;
+  C_pul = real(Q_top + Q_bot + Q_l + Q_r) / V0;
+end
+
+# === Sweep gap d (in cells) ===
+i_centre = round(ny / 2);
+gap_cells = [4, 6, 8, 10, 14, 20];
+C_pul = zeros(1, length(gap_cells));
+d_phys = zeros(1, length(gap_cells));
+for q = 1:length(gap_cells)
+  g = gap_cells(q);
+  i_bot = i_centre - round(g / 2);
+  i_top = i_bot + g;
+  d_phys(q) = (i_top - i_bot) * dy;
+  C_pul(q) = solve_C(A_base, ny, nx, j_lo, j_hi, i_bot, i_top, V0, eps0, dx, dy);
+end
+
+print(d_phys * 1e3)                           # gap (mm)
+print(C_pul * 1e12)                           # C' (pF/m)
+
+# === Finite-difference ∂C'/∂d via central diff on the sweep grid ===
+dCdd = zeros(1, length(gap_cells));
+for q = 2:length(gap_cells)-1
+  dCdd(q) = (C_pul(q + 1) - C_pul(q - 1)) / (d_phys(q + 1) - d_phys(q - 1));
+end
+# Endpoints use one-sided diff
+dCdd(1) = (C_pul(2) - C_pul(1)) / (d_phys(2) - d_phys(1));
+dCdd(length(gap_cells)) = (C_pul(length(gap_cells)) - C_pul(length(gap_cells)-1)) / (d_phys(length(gap_cells)) - d_phys(length(gap_cells)-1));
+
+F_per_z = 0.5 * V0 * V0 * dCdd;               # N/m (per unit out-of-plane z)
+print(F_per_z * 1e9)                          # nN/m
+
+# === Analytic baseline (per unit z) ===
+L_plate = plate_w_cells * dx;                 # 4 mm
+F_analytic = -0.5 * eps0 * L_plate * V0 * V0 ./ (d_phys .^ 2);
+print(F_analytic * 1e9)                       # nN/m
+
+# Match check at the broadest (most-ideal) gap entry away from endpoints.
+qm = round(length(gap_cells) / 2);
+print(F_per_z(qm) / F_analytic(qm))           # ≈ 1 at moderate L/d
+
+# === Plot ===
+figure();
+hold on;
+plot(d_phys * 1e3, F_per_z * 1e9, "numerical F'");
+plot(d_phys * 1e3, F_analytic * 1e9, "analytic −ε₀ L V² / (2 d²)");
+hold off;
+xlabel("gap d (mm)");
+ylabel("F' (nN/m)");
+title("Electrostatic force per unit z on a tunable parallel-plate cap");
+legend("numerical", "analytic");
+savefig("tunable_C_force.svg");
+
+print(1)
