@@ -1,0 +1,99 @@
+# patch_antenna_smith.rlab — Read the resonant behaviour of a patch
+# antenna off a Smith chart.
+#
+# Background: the Lesson 14 capstone runs a 2-D FDTD of a microstrip
+# patch and reports |E_z(f)| at the feed probe — *spectral magnitude*,
+# not a port S₁₁. To turn that into a clean Smith picture without
+# replumbing the FDTD, we model the patch's input impedance with the
+# standard textbook narrow-band approximation:
+#
+#     Z_in(f) ≈ R_0 / (1 + j Q (f/f_0 − f_0/f))    (series RLC sketch)
+#
+# with f_0 ≈ 2.45 GHz, Q ≈ 30 (typical FR-4 patch), and R_0 = 40 Ω
+# slightly off the 50 Ω feed (well-tuned but not perfectly matched).
+# This is the same locus a measurement port would trace on a VNA —
+# the characteristic "resonant loop" near the chart centre.
+#
+# We then package the synthetic S₁₁(f) into a 1-port `sparameters`
+# struct, render it with smith(...), and use s2td(...) to recover the
+# step-response — the time-domain shape used elsewhere in the course.
+#
+# Units: SI.
+#
+# Reference: ../../notebooks/16-smith-chart.md.
+
+Z0 = 50.0;
+
+f0_patch = 2.45e9;
+Q_patch  = 30.0;
+R0_patch = 40.0;
+
+# === Frequency grid: dense around resonance ===
+fs = linspace(1.0, 5.0, 801) * 1e9;
+
+# Series-RLC sketch (one resonance).
+Zin = R0_patch ./ (1 + j * Q_patch * (fs / f0_patch - f0_patch ./ fs));
+G   = (Zin - Z0) ./ (Zin + Z0);
+
+# === Build a single-port sparameters struct ===
+# Tensor3 of shape (n_freqs, 1, 1) carries the S₁₁ samples.
+N = length(fs);
+S_tens = zeros3(N, 1, 1);
+for k = 1:N
+  S_tens(k, 1, 1) = G(k);
+end
+s_patch = sparameters(S_tens, fs, Z0);
+print(nports(s_patch))                       # 1
+disp(s_patch);
+
+# === Resonance + bandwidth read-out ===
+mag = abs(G);
+mag_dB = 20 * log10(mag + 1e-12);
+[mag_min, k_res] = min(mag);
+f_res = fs(k_res);
+print(f_res / 1e9)                            # ≈ 2.45 GHz
+print(mag_dB(k_res))                          # deep null at resonance
+
+in_band = mag < 0.3162;                       # |S₁₁| < −10 dB
+idx     = find(in_band);
+if length(idx) > 0
+  f_lo = fs(idx(1));
+  f_hi = fs(idx(length(idx)));
+  bw   = f_hi - f_lo;
+  print(f_lo / 1e9)                           # lower edge
+  print(f_hi / 1e9)                           # upper edge
+  print(bw / f_res * 100)                     # fractional BW (%)
+end
+
+# === |S₁₁|(f) plot ===
+figure();
+plot(fs / 1e9, mag_dB, "|S_{11}|  dB");
+hold on;
+yline(-10);
+hold off;
+xlabel("frequency  (GHz)");
+ylabel("|S_{11}|  (dB)");
+title("Patch antenna model — |S_{11}(f)| with −10 dB threshold");
+legend("|S_{11}|", "−10 dB");
+savefig("patch_smith_s11_db.svg");
+
+# === Smith-chart locus ===
+figure();
+smith(s_patch);
+marker(G(1),     sprintf("f = %.1f GHz", fs(1) / 1e9));
+marker(G(k_res), sprintf("resonance %.2f GHz", f_res / 1e9));
+marker(G(end),   sprintf("f = %.1f GHz", fs(end) / 1e9));
+title("Patch antenna S_{11}(f) on the Smith chart");
+savefig("patch_smith_locus.svg");
+
+# === Time-domain step response via s2td ===
+# Frequency grid is uniform (linspace) so s2td accepts it directly.
+[t, y_step] = s2td(s_patch, 1, 1, "step");
+figure();
+plot(t * 1e9, y_step, "step response");
+xlabel("t  (ns)");
+ylabel("y_{step}(t)");
+title("S_{11} step response via s2td — ring-down at the patch resonance");
+savefig("patch_smith_step_response.svg");
+
+print(1)

@@ -1,0 +1,141 @@
+# l_match_synthesis.rlab — Design an L-section matching network
+# from Z_L = 30 + j50 Ω to Z_0 = 50 Ω at f = 1 GHz.
+#
+# Two reactive elements (one series, one shunt) match any complex
+# load to a real Z_0. The geometry on the Smith chart:
+#   • series jX moves along a constant-r circle;
+#   • shunt jB moves along a constant-g circle on the admittance grid.
+# When R_L < Z_0 (here 30 < 50) the load's constant-r circle does NOT
+# intersect the g = 1 circle from the shunt-first direction, so only
+# the series-then-shunt ordering works — but with two sign choices,
+# giving two distinct networks. Pozar §5.1.
+#
+# Closed-form (series jX then shunt jB):
+#   X + X_L = ±√(R_L (Z_0 − R_L))           Re(Y') = 1/Z_0
+#   B       = ∓ √((Z_0 − R_L) / R_L) / Z_0  cancel residual susceptance
+# Sign pair (+/−) → Solution A, (−/+) → Solution B.
+#
+# Units: SI. Z, X in Ω; B in S; C in F; L in H.
+#
+# Reference: ../../notebooks/16-smith-chart.md.
+
+Z0 = 50.0;
+f0 = 1.0e9;
+w0 = 2 * pi * f0;
+ZL = 30 + j * 50;
+R_L = real(ZL);
+X_L = imag(ZL);
+
+GL = (ZL - Z0) / (ZL + Z0);
+print(abs(GL))                                # |Γ_L| ≈ 0.62
+print(real(GL))                               # ≈ 0.0625
+print(imag(GL))                               # ≈ 0.625
+
+# === Closed-form solution pair ===
+disc = sqrt(R_L * (Z0 - R_L));                # 24.495
+# Solution A: X+X_L = +disc → X = -25.5 (series C); B = -disc/(R_L*Z0)*... actually compute below
+X_A = +disc - X_L;                            # -25.5
+X_B = -disc - X_L;                            # -74.5
+
+# After adding X_A in series: Z'_A = R_L + j(X_L + X_A) = R_L + j·disc
+Zp_A = R_L + j * (X_L + X_A);                 # 30 + j 24.495
+Yp_A = 1 / Zp_A;                              # 0.02 − j 0.01633
+B_A  = -imag(Yp_A);                           # shunt-B cancels residual: +0.01633
+
+Zp_B = R_L + j * (X_L + X_B);
+Yp_B = 1 / Zp_B;
+B_B  = -imag(Yp_B);                           # opposite sign
+
+# === Convert to component values at 1 GHz ===
+# Series element: X<0 → capacitor (X_C = -1/(ωC));  X>0 → inductor (X_L = ωL)
+# Shunt element : B>0 → capacitor (B_C =  ωC);     B<0 → inductor  (B_L = -1/(ωL))
+function [kind, val] = reactance_to_component(react, kind_axis, w)
+  # kind_axis: "X" (impedance) or "B" (admittance)
+  if kind_axis == "X"
+    if react < 0
+      kind = "C_series (pF)";
+      val  = 1 / (w * abs(react)) * 1e12;
+    else
+      kind = "L_series (nH)";
+      val  = react / w * 1e9;
+    end
+  else
+    if react > 0
+      kind = "C_shunt (pF)";
+      val  = react / w * 1e12;
+    else
+      kind = "L_shunt (nH)";
+      val  = 1 / (w * abs(react)) * 1e9;
+    end
+  end
+end
+
+[kind_sA, val_sA] = reactance_to_component(X_A, "X", w0);
+[kind_pA, val_pA] = reactance_to_component(B_A, "B", w0);
+[kind_sB, val_sB] = reactance_to_component(X_B, "X", w0);
+[kind_pB, val_pB] = reactance_to_component(B_B, "B", w0);
+
+print(kind_sA)                                # C_series (pF)
+print(val_sA)                                 # 6.24
+print(kind_pA)                                # C_shunt (pF)
+print(val_pA)                                 # 2.60
+
+print(kind_sB)                                # C_series (pF)
+print(val_sB)                                 # 2.14
+print(kind_pB)                                # L_shunt (nH)
+print(val_pB)                                 # 9.75
+
+# === Verify both solutions match exactly at the design frequency ===
+G_after_sA   = (Zp_A - Z0) / (Zp_A + Z0);
+Yfinal_A     = Yp_A + j * B_A;
+Zfinal_A     = 1 / Yfinal_A;
+Gfinal_A     = (Zfinal_A - Z0) / (Zfinal_A + Z0);
+print(abs(Gfinal_A))                          # ≈ 0  (machine ε)
+
+Yfinal_B     = Yp_B + j * B_B;
+Gfinal_B     = (1 / Yfinal_B - Z0) / (1 / Yfinal_B + Z0);
+print(abs(Gfinal_B))                          # ≈ 0
+
+# === Trajectories on the Smith chart ===
+lams = linspace(0, 1, 80);                    # element-strength sweep
+
+function Gs = series_path(R_L, X_L, X_tgt, lams, Z0)
+  Z = R_L + j * (X_L + lams * X_tgt);
+  Gs = (Z - Z0) ./ (Z + Z0);
+end
+
+function Gs = shunt_path(Y_start, B_tgt, lams, Z0)
+  Y = Y_start + j * lams * B_tgt;
+  Z = 1 ./ Y;
+  Gs = (Z - Z0) ./ (Z + Z0);
+end
+
+Gs_seriesA = series_path(R_L, X_L, X_A, lams, Z0);
+Gs_shuntA  = shunt_path(Yp_A, B_A, lams, Z0);
+Gs_seriesB = series_path(R_L, X_L, X_B, lams, Z0);
+Gs_shuntB  = shunt_path(Yp_B, B_B, lams, Z0);
+
+figure();
+smith(Gs_seriesA);
+hold on;
+smith(Gs_shuntA);
+marker(GL,           "Z_L = 30 + j50");
+marker(G_after_sA,   "after series-C");
+marker(Gfinal_A,     "matched");
+hold off;
+title("Solution A: series C (6.24 pF) → shunt C (2.60 pF)");
+savefig("l_match_solution_A.svg");
+
+figure();
+G_after_sB = (Zp_B - Z0) / (Zp_B + Z0);
+smith(Gs_seriesB);
+hold on;
+smith(Gs_shuntB);
+marker(GL,           "Z_L = 30 + j50");
+marker(G_after_sB,   "after series-C");
+marker(Gfinal_B,     "matched");
+hold off;
+title("Solution B: series C (2.14 pF) → shunt L (9.75 nH)");
+savefig("l_match_solution_B.svg");
+
+print(1)

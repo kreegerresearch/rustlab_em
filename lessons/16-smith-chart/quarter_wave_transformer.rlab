@@ -1,0 +1,80 @@
+# quarter_wave_transformer.rlab — Match a real load Z_L = 100 Ω to
+# Z_0 = 50 Ω at f_0 = 1 GHz with a single λ_0/4 section of
+# characteristic impedance Z_T = √(Z_0 · Z_L) = √5000 ≈ 70.71 Ω.
+#
+# At f = f_0 the line length L_t = λ_0/4 makes tan(β L_t) → ∞, and the
+# input impedance of a TL of length L_t with characteristic impedance
+# Z_T terminated in Z_L is
+#     Z_in(f) = Z_T · (Z_L + j Z_T tan(β L_t)) / (Z_T + j Z_L tan(β L_t))
+# which simplifies to Z_T² / Z_L = Z_0 at the design frequency.
+#
+# Off-resonance, tan(β L_t) ≠ ∞ and Z_in drifts; the −10 dB matching
+# bandwidth quantifies how narrow the transformer is.
+#
+# Units: SI.  Pozar §5.5.
+#
+# Reference: ../../notebooks/16-smith-chart.md.
+
+Z0 = 50.0;
+Z_L = 100.0;
+Z_T = sqrt(Z0 * Z_L);
+print(Z_T)                                    # 70.71 Ω
+
+c0   = 2.998e8;
+f0   = 1.0e9;
+lam0 = c0 / f0;
+L_t  = lam0 / 4;                              # physical line length
+
+# At f_0, verify Z_in = Z_0 exactly.
+function Zin = qwt_zin(Z_T, Z_L, beta_Lt)
+  t = sin(beta_Lt) / cos(beta_Lt);            # tan(β L_t)
+  Zin = Z_T * (Z_L + j * Z_T * t) / (Z_T + j * Z_L * t);
+end
+print(real(qwt_zin(Z_T, Z_L, pi / 2)))        # ≈ Z_0 = 50
+
+# === Frequency sweep ===
+# A 2:1 Z_L/Z_0 mismatch is quite broadband (single-section); sweep
+# wide enough to see the −10 dB band edges.
+fs   = linspace(0.2, 1.8, 801) * 1e9;
+beta_Lt = 2 * pi * fs * L_t / c0;             # ω L_t / c
+
+Zin = arrayfun(@(bL) qwt_zin(Z_T, Z_L, bL), beta_Lt);
+G   = (Zin - Z0) ./ (Zin + Z0);
+mag = abs(G);
+mag_dB = 20 * log10(mag + 1e-12);
+
+# === −10 dB bandwidth ===
+in_band = mag < 0.3162;                       # |Γ| = 10^(-10/20)
+idx     = find(in_band);
+if length(idx) > 0
+  f_lo = fs(idx(1));
+  f_hi = fs(idx(length(idx)));
+  bw   = f_hi - f_lo;
+  print(f_lo / 1e9)                           # lower edge (GHz)
+  print(f_hi / 1e9)                           # upper edge (GHz)
+  print(bw / f0 * 100)                        # fractional BW (%)
+end
+
+# === |Γ|(f) plot ===
+figure();
+plot(fs / 1e9, mag, "|Γ(f)|");
+hold on;
+yline(0.3162);                                # −10 dB threshold
+hold off;
+xlabel("frequency  (GHz)");
+ylabel("|Γ|");
+title("λ/4 transformer: |Γ| vs f  (design point at 1 GHz)");
+legend("|Γ|", "|Γ| = 10^{−10/20}");
+savefig("qwt_gamma_vs_f.svg");
+
+# === Smith-chart locus over the sweep ===
+k_design = argmin(abs(fs - f0));
+figure();
+smith(G);
+marker(G(1),               sprintf("f = %.2f GHz", fs(1) / 1e9));
+marker(G(k_design),        "f = 1.0 GHz (matched)");
+marker(G(end),             sprintf("f = %.2f GHz", fs(end) / 1e9));
+title("λ/4 transformer Γ locus");
+savefig("qwt_smith_locus.svg");
+
+print(1)

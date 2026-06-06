@@ -1,0 +1,75 @@
+# tline_transformation.rlab — "Translate along a TL → rotate on a
+# constant-|Γ| circle." A lossless line of length d transforms a load
+# Γ_L into
+#     Γ(d) = Γ_L · exp(−2 j β d)
+# i.e. clockwise rotation by 2 β d on the Smith chart. The radius
+# (which equals |Γ_L|) is preserved — this is *the* geometric content
+# that makes the chart useful for matching.
+#
+# We sweep d/λ ∈ [0, 0.5] (one full chart rotation) for four canonical
+# loads at Z_0 = 50 Ω and overlay all four loci on one chart.
+#
+# Units: SI (Z in Ω). λ is just a normaliser — only β d matters.
+#
+# Reference: ../../notebooks/16-smith-chart.md.
+
+Z0 = 50.0;
+
+# === Loads — short, matched, mismatched real, pure reactive ===
+Z_loads = [25.0, 100.0, 100 * j, 25 - 50 * j];
+labels  = {"Z_L = 25 Ω", "Z_L = 100 Ω", "Z_L = j100 Ω", "Z_L = 25 − j50 Ω"};
+
+# === Distance sweep — half-wavelength = one full chart loop ===
+d_over_lambda = linspace(0, 0.5, 361);
+beta_d        = 2 * pi * d_over_lambda;
+
+figure();
+hold on;
+for k = 1:length(Z_loads)
+  ZL  = Z_loads(k);
+  GL  = (ZL - Z0) / (ZL + Z0);
+  Gd  = GL * exp(-2 * j * beta_d);
+
+  # Draw locus + endpoint markers.
+  smith(Gd);
+  marker(Gd(1), labels(k));
+end
+hold off;
+title("Γ(d) loci for four loads — constant-|Γ| rotation");
+savefig("tline_transformation_loci.svg");
+
+# === Print one quantitative check ===
+# Z_L = 25 Ω → Γ_L = −1/3 (real, negative). Rotated by 2 β (λ/4) = π,
+# Γ lands at +1/3, which corresponds to Z_in = 2 Z_0 = 100 Ω. This is
+# the textbook "λ/4 transformer inverts impedance" identity, here as
+# a single chart-half rotation.
+ZL_check = 25.0;
+GL_check = (ZL_check - Z0) / (ZL_check + Z0);
+beta_d_quarter = 2 * pi * 0.25;                          # β·d at d = λ/4
+G_quarter = GL_check * exp(-2 * j * beta_d_quarter);     # 2βd = π → flip sign
+Z_quarter = Z0 * (1 + G_quarter) / (1 - G_quarter);
+print(real(GL_check))                                    # -0.333
+print(real(G_quarter))                                   #  0.333
+print(real(Z_quarter))                                   #  100   Ω
+
+# === Bonus: explicit VSWR overlay on each load's circle ===
+# Each load traces a constant-VSWR circle. For Z_L = 25 Ω, VSWR = 2.
+figure();
+hold on;
+for k = 1:length(Z_loads)
+  ZL = Z_loads(k);
+  GL = (ZL - Z0) / (ZL + Z0);
+  Gd = GL * exp(-2 * j * beta_d);
+  smith(Gd);
+end
+vswrs = [2.0, 2.0, 1e9, 4.0];                            # |Γ| → VSWR
+for k = 1:length(Z_loads)
+  ZL = Z_loads(k);
+  GL = (ZL - Z0) / (ZL + Z0);
+  smith_circle(0, abs(GL), sprintf("VSWR ≈ %.2f", vswrs(k)));
+end
+hold off;
+title("Loci + constant-VSWR circles");
+savefig("tline_transformation_vswr.svg");
+
+print(1)

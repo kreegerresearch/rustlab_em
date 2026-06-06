@@ -24,8 +24,8 @@ The curriculum targets a "mini Ansys" endpoint: given arbitrary geometry plus ma
 | 12 | Waveguides, Cavity Eigenmodes & Radiation | Drafted |
 | 13 | Transmission Lines, S-Parameters & Antennas | Drafted |
 | 14 | Capstone — End-to-End Device Simulation | Drafted |
-| 15 | Lumped Capacitance Extraction | Planned |
-| 16 | Smith Chart & Impedance Matching | Planned |
+| 15 | Lumped Capacitance Extraction | Drafted |
+| 16 | Smith Chart & Impedance Matching | Drafted |
 | 17 | Lumped Inductance Extraction | Planned |
 
 **Build order:** Lessons 01–14 are a strictly sequential arc that ends at the patch-antenna capstone. Lessons 15–17 are **post-capstone applied-engineering extensions** that depend on the existing toolkit but are *not* prerequisites for each other:

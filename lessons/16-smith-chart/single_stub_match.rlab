@@ -1,0 +1,127 @@
+# single_stub_match.rlab — Algorithmic single-stub tuner.
+#
+# Place a shunt short-circuited stub of length ℓ on the main line at
+# distance d from the load. Two unknowns (d, ℓ), two equations
+# (Re(y) = 1, Im(y) + y_stub = 0). Procedure:
+#
+#   1. Convert Z_L → normalised y_L = Z_0 / Z_L.
+#   2. Walk toward the generator on the chart (rotate Γ by −2 β d).
+#      At distance d, normalised admittance is y(d) = (1 − Γ(d))/(1 + Γ(d)).
+#   3. Pick the *smallest* d where Re(y(d)) = 1. (Two solutions per
+#      half-wavelength; the algorithm below returns both.)
+#   4. The residual susceptance b_d is cancelled by a shunt short-
+#      circuited stub of input admittance −j cot(β ℓ); set
+#      cot(β ℓ) = b_d  →  ℓ = arctan(1 / b_d) / β        (one of two)
+#
+# Load: Z_L = 60 − j 80 Ω, Z_0 = 50 Ω, f = 1 GHz.  Pozar §5.2.
+#
+# Units: SI. d, ℓ in metres; β = 2π/λ.
+#
+# Reference: ../../notebooks/16-smith-chart.md.
+
+Z0 = 50.0;
+c0 = 2.998e8;
+f0 = 1.0e9;
+lam0 = c0 / f0;
+beta = 2 * pi / lam0;
+
+ZL = 60 - j * 80;
+yL = Z0 / ZL;
+GL = (ZL - Z0) / (ZL + Z0);
+print(real(yL))                              # 0.3
+print(imag(yL))                              # 0.4
+
+# === Step 1: find d such that Re(y(d)) = 1 ===
+# Solve algebraically. With Γ(d) = Γ_L e^{-2 j β d}, write
+#     y(d) = (1 − Γ(d)) / (1 + Γ(d)).
+# Sweep β d ∈ [0, π] (one chart loop = λ/2 of line) on a fine grid,
+# find the first crossing of Re(y(d)) = 1, then refine.
+N      = 4001;
+bds    = linspace(0, pi, N);
+Gd     = GL * exp(-2 * j * bds);
+yd     = (1 - Gd) ./ (1 + Gd);
+
+# Two crossings — the chart's g=1 admittance circle intersects every
+# constant-|Γ| circle at two points. Find both via sign change of
+# (Re(y(d)) − 1).
+res    = real(yd) - 1;
+sgn    = sign(res);
+diffs  = sgn(2:N) - sgn(1:N-1);
+hits   = find(abs(diffs) > 0.5);
+print(length(hits))                          # 2
+
+# Linear interpolation on each bracket.
+function bd_hit = refine(res, bds, k)
+  a = res(k);
+  b = res(k + 1);
+  t = a / (a - b);
+  bd_hit = bds(k) + t * (bds(k + 1) - bds(k));
+end
+
+bd_sol1 = refine(res, bds, hits(1));
+bd_sol2 = refine(res, bds, hits(2));
+d_sol1  = bd_sol1 / beta;                    # metres
+d_sol2  = bd_sol2 / beta;
+print(d_sol1 / lam0)                         # d_1 / λ
+print(d_sol2 / lam0)                         # d_2 / λ
+
+# Residual susceptance at each solution.
+yd1 = (1 - GL * exp(-2 * j * bd_sol1)) / (1 + GL * exp(-2 * j * bd_sol1));
+yd2 = (1 - GL * exp(-2 * j * bd_sol2)) / (1 + GL * exp(-2 * j * bd_sol2));
+b1  = imag(yd1);                             # ≈ + something
+b2  = imag(yd2);                             # ≈ − something
+print(real(yd1))                             # 1.0
+print(imag(yd1))                             # b1
+print(real(yd2))                             # 1.0
+print(imag(yd2))                             # b2
+
+# === Step 2: stub length ===
+# Short-circuited stub input admittance y_stub = −j cot(β ℓ).
+# Need y_stub = −j b_d  →  cot(β ℓ) = b_d  →  ℓ/λ = atan(1/b_d) / (2π).
+# Map negative arguments into the next half-period so ℓ > 0.
+function l_over_lam = stub_length(b_d)
+  bl = atan(1 / b_d);
+  if bl < 0
+    bl = bl + pi;
+  end
+  l_over_lam = bl / (2 * pi);
+end
+
+l1_over_lam = stub_length(b1);
+l2_over_lam = stub_length(b2);
+print(l1_over_lam)                           # ≈ ℓ_1/λ
+print(l2_over_lam)                           # ≈ ℓ_2/λ
+
+# === Step 3: verify Γ_in of the matched network ===
+# At the stub plane just-after the shunt addition. cot(x) = cos(x)/sin(x).
+function c = cot(x)
+  c = cos(x) / sin(x);
+end
+y_after1 = yd1 + j * (-cot(2 * pi * l1_over_lam));
+y_after2 = yd2 + j * (-cot(2 * pi * l2_over_lam));
+print(abs(y_after1 - 1))                     # ≈ 0
+print(abs(y_after2 - 1))                     # ≈ 0
+
+# === Smith-chart picture for solution 1 ===
+# Plot the load Γ_L, the constant-|Γ| arc from Γ_L to Γ(d_1), then
+# the stub's susceptance walk along the g=1 circle to the centre.
+Gd_arc = GL * exp(-2 * j * linspace(0, bd_sol1, 100));
+
+# Stub walk: y goes from yd1 to 1 along Re=1; Γ traces an arc on the
+# g=1 admittance circle.
+ys_walk = 1 + j * linspace(imag(yd1), 0, 100);
+zs_walk = 1 ./ ys_walk;
+Gs_walk = (zs_walk - 1) ./ (zs_walk + 1);
+
+figure();
+smith(Gd_arc);
+hold on;
+smith(Gs_walk);
+marker(GL,             "Γ_L (load)");
+marker(GL * exp(-2 * j * bd_sol1), sprintf("d = %.3f λ", d_sol1 / lam0));
+marker(0,              "matched");
+hold off;
+title(sprintf("Single-stub match — solution 1 (d = %.3fλ, ℓ = %.3fλ)", d_sol1 / lam0, l1_over_lam));
+savefig("single_stub_solution_1.svg");
+
+print(1)

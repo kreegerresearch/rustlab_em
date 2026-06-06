@@ -1,0 +1,154 @@
+# double_stub_match.rlab — Two shunt short-circuited stubs at fixed
+# spacing d_12 (here λ/8). Eliminates the variable-position constraint
+# of the single-stub tuner — useful when the stub locations are fixed
+# at fab time.
+#
+# Procedure:
+#   1. Load admittance y_L = Z_0 / Z_L.
+#   2. Add shunt jb_1 at stub-1 plane:   y_1  = g_L + j(b_L + b_1).
+#   3. Transform d_12 toward generator:  Γ_2' = Γ_1 · exp(−2 j β d_12).
+#      Recover y_2 = (1 − Γ_2')/(1 + Γ_2').
+#   4. Require Re(y_2) = 1 → quadratic in b_1, two real solutions if
+#      the discriminant
+#               D(g_L) = g_L (1 + cot²(β d_12)) − g_L²
+#      is non-negative. D ≥ 0 ⇔ g_L ≤ 1/sin²(β d_12).
+#   5. Add shunt jb_2 at stub-2 plane to cancel Im(y_2).
+#
+# Forbidden region: g_L > 1/sin²(β d_12). For d_12 = λ/8 the cutoff is
+# g_L > 2. Loads with R_L < Z_0/2 (here R_L < 25 Ω) can't be matched
+# at this spacing — you'd swap the spacing or use a single-stub tuner.
+#
+# We demonstrate both regimes:
+#   succeeds:  Z_L = 100 + j100  Ω  (y_L = 0.25 − j0.25,  g_L = 0.25)
+#   fails:     Z_L = 10           Ω  (y_L = 5,             g_L = 5)
+#
+# Units: SI.  Pozar §5.3.
+#
+# Reference: ../../notebooks/16-smith-chart.md.
+
+Z0 = 50.0;
+c0 = 2.998e8;
+f0 = 1.0e9;
+lam0 = c0 / f0;
+beta = 2 * pi / lam0;
+d12_over_lam = 1 / 8;
+beta_d12 = 2 * pi * d12_over_lam;
+
+# Forbidden threshold.
+g_forbidden = 1 / (sin(beta_d12) * sin(beta_d12));
+print(g_forbidden)                            # = 2 for d_12 = λ/8
+
+# === Brute-force root-finder for b_1 such that Re(y_2) = 1 ===
+function b1_roots = find_b1(yL, beta_d12)
+  bs   = linspace(-20, 20, 8001);
+  gL   = real(yL);
+  bL   = imag(yL);
+  y1   = gL + j * (bL + bs);
+  G1   = (1 - y1) ./ (1 + y1);
+  G2p  = G1 * exp(-2 * j * beta_d12);
+  y2   = (1 - G2p) ./ (1 + G2p);
+  err  = real(y2) - 1;
+  sgn  = sign(err);
+  d    = sgn(2:length(sgn)) - sgn(1:length(sgn)-1);
+  hits = find(abs(d) > 0.5);
+  if length(hits) == 0
+    b1_roots = [];
+    return;
+  end
+  # Linear interpolation at each bracket.
+  b1_roots = zeros(1, length(hits));
+  for k = 1:length(hits)
+    kk = hits(k);
+    t  = err(kk) / (err(kk) - err(kk + 1));
+    b1_roots(k) = bs(kk) + t * (bs(kk + 1) - bs(kk));
+  end
+end
+
+# === Case A: succeeds ===
+ZL_a = 100 + j * 100;
+yL_a = Z0 / ZL_a;
+gL_a = real(yL_a);
+print(gL_a)                                   # 0.25  (< 2 → solvable)
+
+b1_a = find_b1(yL_a, beta_d12);
+print(length(b1_a))                           # 2
+
+# Pick the solution with the smaller |b_1| (smaller stub).
+[b1_min_val, pick] = min(abs(b1_a));
+b1_sel = b1_a(pick);
+y1_sel = gL_a + j * (imag(yL_a) + b1_sel);
+G1_sel = (1 - y1_sel) / (1 + y1_sel);
+G2_pre = G1_sel * exp(-2 * j * beta_d12);
+y2_sel = (1 - G2_pre) / (1 + G2_pre);
+b2_sel = -imag(y2_sel);
+
+print(b1_sel)                                 # selected b_1
+print(real(y2_sel))                           # 1.0
+print(imag(y2_sel))                           # what b_2 cancels
+print(b2_sel)                                 # selected b_2
+
+# Stub-1 length (short stub, y_stub = −j cot(β ℓ) → cot(β ℓ) = −b_1).
+function l_over_lam = stub_length(b_stub)
+  bl = atan(-1 / b_stub);
+  if bl < 0
+    bl = bl + pi;
+  end
+  l_over_lam = bl / (2 * pi);
+end
+l1_over_lam = stub_length(b1_sel);
+l2_over_lam = stub_length(b2_sel);
+print(l1_over_lam)
+print(l2_over_lam)
+
+# === Verify Γ_in at the input of the matched network ===
+function c = cot(x)
+  c = cos(x) / sin(x);
+end
+y_at_stub2 = y2_sel + j * (-cot(2 * pi * l2_over_lam));
+print(abs(y_at_stub2 - 1))                    # ≈ 0  (matched)
+
+# === Smith-chart picture (case A) ===
+G_L     = (ZL_a - Z0) / (ZL_a + Z0);
+G_after1 = (1 - y1_sel) / (1 + y1_sel);
+G_arc    = G_after1 * exp(-2 * j * linspace(0, beta_d12, 80));
+# Stub-2 walk along g=1 admittance circle from y_2 to 1.
+y_walk   = 1 + j * linspace(imag(y2_sel), 0, 80);
+G_walk   = (1 - y_walk) ./ (1 + y_walk);
+
+figure();
+smith(G_arc);
+hold on;
+smith(G_walk);
+marker(G_L,       "Z_L = 100 + j100 Ω");
+marker(G_after1,  "after stub 1");
+marker(G2_pre,    sprintf("after λ/8 line, Re(y) = 1"));
+marker(0,         "matched");
+hold off;
+title(sprintf("Double-stub match — Case A succeeds (g_L = %.2f < 2)", gL_a));
+savefig("double_stub_case_A.svg");
+
+# === Case B: fails (load inside forbidden region) ===
+ZL_b = 10.0;
+yL_b = Z0 / ZL_b;
+gL_b = real(yL_b);
+print(gL_b)                                   # 5  (> 2 → forbidden)
+
+b1_b = find_b1(yL_b, beta_d12);
+print(length(b1_b))                           # 0  (no real solutions)
+
+# Render Case B: just the load on the chart, plus the forbidden
+# constant-g boundary at g = 1/sin²(β d_12).  Constant-g circle on the
+# impedance Γ-plane has centre −g/(g+1) and radius 1/(g+1).
+g_thr = g_forbidden;
+G_L_b = (ZL_b - Z0) / (ZL_b + Z0);
+figure();
+smith(G_L_b);
+hold on;
+smith_circle(-g_thr / (g_thr + 1), 1 / (g_thr + 1), sprintf("forbidden boundary (g = %.0f)", g_thr));
+marker(G_L_b, "Z_L = 10 Ω (g_L = 5)");
+marker(0,     "matched (unreachable)");
+hold off;
+title("Double-stub match — Case B fails: load inside the forbidden region");
+savefig("double_stub_case_B.svg");
+
+print(1)

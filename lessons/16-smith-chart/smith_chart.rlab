@@ -1,0 +1,74 @@
+# smith_chart.rlab — Tour of rustlab's Smith-chart primitives.
+#
+# Physical content: the Smith chart is the bilinear transform
+#     Γ = (z − 1) / (z + 1),     z = Z / Z_0   (normalised impedance)
+# rendered on the complex Γ-plane. The unit disk |Γ| ≤ 1 is the
+# entire space of passive loads; constant-r circles run vertically,
+# constant-x circles run horizontally, and matched (Z = Z_0) sits at
+# the origin.
+#
+# rustlab ships smith(...) / marker(...) / smith_circle(...) — this
+# helper just exercises every form so the later L16 scripts can lean
+# on them without re-deriving the geometry.
+#
+# Units: Γ is dimensionless; Z_0 = 50 Ω (default).
+#
+# Reference: ../../notebooks/16-smith-chart.md.
+
+Z0 = 50.0;
+
+# === 1. The four canonical loads ===
+# Print Γ = (Z − Z_0) / (Z + Z_0) at the textbook landmarks.
+Z_match = Z0;          G_match = (Z_match - Z0) / (Z_match + Z0);     # → 0
+Z_open  = 1e12;        G_open  = (Z_open  - Z0) / (Z_open  + Z0);     # → +1
+Z_short = 0;           G_short = (Z_short - Z0) / (Z_short + Z0);     # → -1
+Z_pure  = j * Z0;      G_pure  = (Z_pure  - Z0) / (Z_pure  + Z0);     # |Γ|=1, top edge
+
+print(real(G_match))                                   # 0
+print(real(G_open))                                    # ~1
+print(real(G_short))                                   # -1
+print(abs(G_pure))                                     # 1
+
+figure();
+# A bare smith() with a single Γ value seeds the chart background.
+smith(G_match);
+marker(G_match, "matched");
+marker(G_open,  "open");
+marker(G_short, "short");
+marker(G_pure,  "Z = jZ_0");
+title("Smith chart — canonical loads");
+savefig("smith_chart_landmarks.svg");
+
+# === 2. Constant-|Γ| (VSWR) circles ===
+# A lossless line of length d rotates Γ by exp(-2 j β d), so the
+# locus stays on the circle |Γ| = |Γ_L|. VSWR = (1+|Γ|)/(1-|Γ|).
+G_mags = [0.2, 0.5, 0.8];
+ths    = linspace(0, 2 * pi, 360);
+
+figure();
+smith(0);                                               # background only
+hold on;
+for k = 1:length(G_mags)
+  Gm = G_mags(k);
+  vswr = (1 + Gm) / (1 - Gm);
+  smith_circle(0, Gm, sprintf("VSWR = %.2f", vswr));
+end
+hold off;
+title("Constant-|Γ| circles → constant-VSWR contours");
+savefig("smith_chart_vswr.svg");
+
+# === 3. A complex-vector trajectory ===
+# Sweep z = 0.5 + jx for x ∈ [-3, 3] — a constant-resistance arc.
+xs = linspace(-3, 3, 200);
+zs = 0.5 + j * xs;
+Gs = (zs - 1) ./ (zs + 1);
+
+figure();
+smith(Gs);
+marker(Gs(1),       "x = -3");
+marker(Gs(100),     "x =  0");
+marker(Gs(end),     "x = +3");
+title("Constant-r locus at r = 0.5  →  arc inside the chart");
+savefig("smith_chart_r_arc.svg");
+
+print(1)
