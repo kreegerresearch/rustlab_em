@@ -1,0 +1,134 @@
+# inductance_transformer.rlab — Two concentric solenoids as a transformer.
+#
+# Geometry:   primary  = N1 turns, radius R1, wire a, spread over length ℓ.
+#             secondary = N2 turns, radius R2 = 1.1 R1 (wound just outside),
+#             same length ℓ, coaxial. Both treated as stacks of coaxial
+#             single-turn loops.
+# Method:     pairwise mutual inductance of coaxial loops via the exact
+#             elliptic-integral kernel (a turn's self term uses the thin-
+#             wire loop formula). Sum over turn pairs:
+#                 L1 = ΣΣ M(turn_i, turn_k)  over the primary stack,
+#                 L2 = ΣΣ M(turn_j, turn_l)  over the secondary stack,
+#                 M  = ΣΣ M(turn_i, turn_j)  primary × secondary.
+# Verifies:   in the long dense-solenoid limit the open-circuit voltage
+#             ratio V2/V1 = M/L1 → the ideal turns ratio N2/N1 (M and L1
+#             both scale as the inner radius², so the radius gap cancels),
+#             while the coupling k = M/√(L1L2) saturates at ≈ R1/R2 set by
+#             the winding radius gap. The sweep holds the turns-per-length
+#             density fixed and grows ℓ/R1 to reach that limit.
+#
+# Reference: ../../notebooks/17-lumped-inductance.md.
+
+mu0 = 4 * pi * 1e-7;
+R1 = 0.02;
+R2 = 0.022;                                    # secondary wound just outside
+a  = 0.2e-3;                                   # wire radius
+turns_per_R = 6.0;                             # primary winding density (turns per R1 of length)
+ratio = 2.0;                                   # N2/N1
+
+# --- Complete elliptic integrals K(m), E(m) via AGM (m = k²) ---
+function [K, E] = ellipke_agm(m)
+  a = 1.0;  b = sqrt(1.0 - m);  c = sqrt(m);
+  s = 0.5 * c^2;  pw = 1.0;
+  for it = 1:12
+    an = 0.5 * (a + b);  bn = sqrt(a * b);  cn = 0.5 * (a - b);
+    s = s + pw * cn^2;  pw = pw * 2.0;
+    a = an;  b = bn;  c = cn;
+  end
+  K = pi / (2.0 * a);
+  E = K * (1.0 - s);
+end
+
+# --- Exact mutual inductance of two coaxial loops (radii R1,R2, axial gap d) ---
+function M = mutual_exact(Ra, Rb, d, mu0)
+  k2 = 4.0 * Ra * Rb / ((Ra + Rb)^2 + d^2);
+  kk = sqrt(k2);
+  [K, E] = ellipke_agm(k2);
+  M = mu0 * sqrt(Ra * Rb) * ((2.0 / kk - kk) * K - (2.0 / kk) * E);
+end
+
+# --- Stack self-inductance: ΣΣ over turn pairs (diagonal = single-turn self) ---
+function L = stack_self(zc, Rc, a, mu0)
+  Nt = length(zc);
+  L_turn = mu0 * Rc * (log(8 * Rc / a) - 2);
+  L = 0;
+  for i = 1:Nt
+    for k = 1:Nt
+      if i == k
+        L = L + L_turn;
+      else
+        L = L + mutual_exact(Rc, Rc, abs(zc(i) - zc(k)), mu0);
+      end
+    end
+  end
+end
+
+# --- Cross mutual between two stacks ---
+function M = stack_mutual(z1, R1, z2, R2, mu0)
+  M = 0;
+  for i = 1:length(z1)
+    for j = 1:length(z2)
+      M = M + mutual_exact(R1, R2, abs(z1(i) - z2(j)), mu0);
+    end
+  end
+end
+
+# === Headline transformer: long, densely wound (ℓ/R1 = 16) ===
+ellR_head = 16.0;
+ell = ellR_head * R1;
+N1 = round(turns_per_R * ellR_head);           # 24 primary turns
+N2 = round(ratio * N1);                        # 48 secondary turns
+z1 = linspace(-ell/2, ell/2, N1);
+z2 = linspace(-ell/2, ell/2, N2);
+L1 = stack_self(z1, R1, a, mu0);
+L2 = stack_self(z2, R2, a, mu0);
+M  = stack_mutual(z1, R1, z2, R2, mu0);
+k  = M / sqrt(L1 * L2);
+Vratio = M / L1;                               # open-circuit V2/V1
+
+print(N1); print(N2);
+print(real(L1) * 1e6)                          # µH
+print(real(L2) * 1e6)                          # µH
+print(real(M)  * 1e6)                          # µH
+print(real(k))                                  # coupling coefficient → ≈ R1/R2
+print(R1 / R2)                                  # radius-gap ceiling on k
+print(real(Vratio))                             # V2/V1 → N2/N1
+print(N2 / N1)                                  # ideal turns ratio
+
+# === Sweep length at FIXED winding density: V2/V1 → N2/N1 ===
+ellR = [2.0, 4.0, 8.0, 16.0, 24.0];
+kk_s = zeros(1, length(ellR));
+Vr_s = zeros(1, length(ellR));
+for q = 1:length(ellR)
+  Lq = ellR(q) * R1;
+  n1 = round(turns_per_R * ellR(q));
+  n2 = round(ratio * n1);
+  za = linspace(-Lq/2, Lq/2, n1);
+  zb = linspace(-Lq/2, Lq/2, n2);
+  La = stack_self(za, R1, a, mu0);
+  Lb = stack_self(zb, R2, a, mu0);
+  Mq = stack_mutual(za, R1, zb, R2, mu0);
+  kk_s(q) = real(Mq / sqrt(La * Lb));
+  Vr_s(q) = real(Mq / La);
+end
+print(ellR)
+print(kk_s)
+print(Vr_s)
+
+figure();
+hold on;
+plot(ellR, Vr_s, "V2/V1 = M/L1 (numerical)");
+plot(ellR, (N2 / N1) * ones(1, length(ellR)), "ideal N2/N1");
+hold off;
+xlabel("solenoid length  ℓ / R1");
+ylabel("open-circuit voltage ratio");
+title("Transformer voltage ratio approaches N2/N1 with tighter coupling");
+legend("M/L1", "N2/N1");
+savefig("transformer_vratio.svg");
+
+figure();
+plot(ellR, kk_s, "k = M / √(L1 L2)");
+xlabel("solenoid length  ℓ / R1");
+ylabel("coupling coefficient k");
+title("Coupling coefficient vs. winding length");
+savefig("transformer_k.svg");

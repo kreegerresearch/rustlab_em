@@ -1,0 +1,163 @@
+# ind_matrix_microstrip.rlab — Per-unit-length 2×2 inductance matrix
+# for two coplanar microstrip traces above a ground plane.
+#
+# Magnetic dual of L15's cap_matrix_microstrip.rlab. Same cross-section,
+# same grid — only the physics swaps V → Az, ε → 1/μ, charge → flux:
+#
+#       ┌──────────────── air (μ_r = 1) ──────┐
+#       │   ┌─trace 1─┐         ┌─trace 2─┐    │
+#       │   |  J_z=I  |         |  J_z=I  |    │
+#       │   └─────────┘         └─────────┘    │
+#       │                                      │
+#       └──────────────  PEC ground  ──────────┘
+#
+# Method:  solve  ∇·((1/μ)∇Az) = -μ₀ Jz  with Az = 0 on the PEC ground
+#          plane and the outer box (the return-current boundary). Drive
+#          trace k with a unit current (Jz over its cross-section), leave
+#          the other trace open (Jz = 0). In 2-D the flux per unit length
+#          linking conductor i with the ground return is just Az(i), so
+#              L_ij = λ_i / I_j = mean(Az over trace i)   (I_j = 1 A).
+#
+# Cached LU:  unlike the capacitance case (where pinning each driven trace
+#          changed the operator A), driving with a *current source* only
+#          changes the right-hand side. The operator is identical across
+#          all N drives → factor once with lu(A), back-solve per drive.
+#          This is the textbook factor-once-solve-many of every commercial
+#          parasitic-extraction tool.
+#
+# Units: SI. L' in nH/m (printed) — typical microstrip scale.
+#
+# Reference: ../../notebooks/17-lumped-inductance.md.
+
+mu0 = 4 * pi * 1e-7;
+
+# === Grid (identical to cap_matrix_microstrip.rlab) ===
+nx = 161;
+ny = 81;
+dx = 0.1e-3;                                  # 0.1 mm cells
+dy = dx;
+
+i_ground = 5;                                 # ground-plane row
+i_top    = i_ground + 12;                     # trace row (substrate gap 1.2 mm)
+trace_w  = 10;                                # trace width in cells (1 mm)
+sep_cells = 30;                               # centre-to-centre spacing (3 mm)
+
+j_centre = round(nx / 2);
+j_t1     = j_centre - round(sep_cells / 2);
+j_t2     = j_centre + round(sep_cells / 2);
+j_t1_lo  = j_t1 - round(trace_w / 2) + 1;
+j_t1_hi  = j_t1_lo + trace_w - 1;
+j_t2_lo  = j_t2 - round(trace_w / 2) + 1;
+j_t2_hi  = j_t2_lo + trace_w - 1;
+
+# === Operator: -∇² on a uniform grid (μ_r = 1 everywhere) ===
+# A Az = μ₀ Jz   with   A = -laplacian_2d.
+L_lap = laplacian_2d(nx, ny, dx, dy);
+A_base = -1 * L_lap;
+N = nx * ny;
+
+# Pin function — set a Dirichlet cell (Az = val) in the operator.
+function [A_out, b_out] = pin(A, b, i, j, ny, nx, val)
+  k = ij2k(i, j, ny);
+  A(k, k) = 1.0;
+  if i > 1;   A(k, ij2k(i-1, j, ny)) = 0.0; end
+  if i < ny;  A(k, ij2k(i+1, j, ny)) = 0.0; end
+  if j > 1;   A(k, ij2k(i, j-1, ny)) = 0.0; end
+  if j < nx;  A(k, ij2k(i, j+1, ny)) = 0.0; end
+  b(k) = val;
+  A_out = A;
+  b_out = b;
+end
+
+# Pin the PEC ground plane Az = 0 (same operator for every drive).
+A_g = A_base;
+b_zero = zeros(1, N);
+for jj = 1:nx
+  [A_g, b_zero] = pin(A_g, b_zero, i_ground, jj, ny, nx, 0.0);
+end
+
+# === Factor ONCE — the dominant cost — then back-solve per drive ===
+F = lu(A_g);
+
+# Build the current-source RHS for a trace spanning [j_lo, j_hi] at row i_top.
+# Total current I split over trace_w cells: Jz = I / (trace_w·dx·dy).
+function b = drive_rhs(b_zero, ny, nx, i_top, j_lo, j_hi, mu0, dx, dy, Itot)
+  b = b_zero;
+  ncell = j_hi - j_lo + 1;
+  Jz = Itot / (ncell * dx * dy);
+  for jj = j_lo:j_hi
+    k = ij2k(i_top, jj, ny);
+    b(k) = mu0 * Jz;
+  end
+end
+
+# Mean Az over a trace cross-section = flux linkage per unit length (Az_gnd = 0).
+function lam = flux_linkage(Az, i_top, j_lo, j_hi)
+  s = 0;
+  for jj = j_lo:j_hi
+    s = s + Az(i_top, jj);
+  end
+  lam = s / (j_hi - j_lo + 1);
+end
+
+# === Drive #1: I_1 = 1 A in trace 1, trace 2 open ===
+b1 = drive_rhs(b_zero, ny, nx, i_top, j_t1_lo, j_t1_hi, mu0, dx, dy, 1.0);
+Az1 = reshape(solve(F, b1), ny, nx);
+L11 = flux_linkage(Az1, i_top, j_t1_lo, j_t1_hi);
+L21 = flux_linkage(Az1, i_top, j_t2_lo, j_t2_hi);
+
+# === Drive #2: I_2 = 1 A in trace 2, trace 1 open ===
+b2 = drive_rhs(b_zero, ny, nx, i_top, j_t2_lo, j_t2_hi, mu0, dx, dy, 1.0);
+Az2 = reshape(solve(F, b2), ny, nx);
+L12 = flux_linkage(Az2, i_top, j_t1_lo, j_t1_hi);
+L22 = flux_linkage(Az2, i_top, j_t2_lo, j_t2_hi);
+
+# === Report (nH/m) ===
+print(real(L11) * 1e9)                        # self-inductance, trace 1
+print(real(L22) * 1e9)                        # ≈ L11 by symmetry
+print(real(L12) * 1e9)                        # mutual
+print(real(L21) * 1e9)                        # = L12 by reciprocity
+print(abs(L12 - L21) / max(abs(L12), 1e-30))  # reciprocity error → ~machine ε
+
+# === Field snapshot ===
+figure();
+hold on;
+imagesc(real(Az1), "viridis");
+title("Az (I_1 = 1 A, trace 2 open) — flux wraps both traces");
+xlabel("x cell"); ylabel("y cell");
+hold off;
+savefig("microstrip_Az_drive1.svg");
+
+# === Spacing sweep — mutual vs. centre-to-centre distance ===
+# Operator unchanged across the sweep → reuse the single LU factor F.
+sweep_seps = [20, 30, 40, 60, 80];
+L11_s = zeros(1, length(sweep_seps));
+L12_s = zeros(1, length(sweep_seps));
+for q = 1:length(sweep_seps)
+  s_q = sweep_seps(q);
+  jt1q = j_centre - round(s_q / 2);
+  jt2q = j_centre + round(s_q / 2);
+  jt1_lo = jt1q - round(trace_w / 2) + 1;
+  jt1_hi = jt1_lo + trace_w - 1;
+  jt2_lo = jt2q - round(trace_w / 2) + 1;
+  jt2_hi = jt2_lo + trace_w - 1;
+  bq = drive_rhs(b_zero, ny, nx, i_top, jt1_lo, jt1_hi, mu0, dx, dy, 1.0);
+  Azq = reshape(solve(F, bq), ny, nx);
+  L11_s(q) = flux_linkage(Azq, i_top, jt1_lo, jt1_hi);
+  L12_s(q) = flux_linkage(Azq, i_top, jt2_lo, jt2_hi);
+end
+seps_mm = sweep_seps * dx * 1e3;
+print(seps_mm)
+print(real(L11_s) * 1e9)                      # nH/m
+print(real(L12_s) * 1e9)                      # mutual nH/m (positive)
+
+figure();
+hold on;
+plot(seps_mm, real(L11_s) * 1e9, "L_{11} (self)");
+plot(seps_mm, real(L12_s) * 1e9, "L_{12} (mutual)");
+hold off;
+xlabel("trace-to-trace centre spacing  (mm)");
+ylabel("L'  (nH/m)");
+title("Coplanar-microstrip L-matrix vs. trace spacing");
+legend("L_{11}", "L_{12}");
+savefig("microstrip_ind_vs_spacing.svg");

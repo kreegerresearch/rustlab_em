@@ -1,0 +1,73 @@
+# lumped_L_loop.rlab — Self-inductance of a single circular wire loop.
+#
+# Geometry:   thin circular loop, radius R = 5 cm, wire radius a = 1 mm,
+#             current I = 1 A, lying in the z = 0 plane.
+# Method:     Biot-Savart gives the on-plane axial field Bz(r) for r < R.
+#             The self-flux of a filament diverges at the wire, so the
+#             flux integral is cut at the inner wire edge r = R - a:
+#                 Phi = int_0^{R-a} Bz(r) 2 pi r dr,   L = Phi / I.
+# Verifies:   L matches the textbook thin-wire loop self-inductance
+#                 L = mu0 R [ln(8R/a) - 2]
+#             (external inductance; high-frequency / surface-current limit).
+#
+# Reference: ../../notebooks/17-lumped-inductance.md.
+
+mu0 = 4 * pi * 1e-7;
+Iloop = 1.0;
+R = 0.05;
+a = 1.0e-3;                                  # wire radius, a/R = 0.02
+
+# === On-plane axial field Bz(r) via the exact azimuthal Biot-Savart integral ===
+# For a point (r, 0, 0) in the loop plane, the z-component of
+# dl x (r - r') / |r - r'|^3 integrates to
+#   Bz(r) = (mu0 I / 4pi) int_0^{2pi} (R^2 - R r cos f) / D(r,f)^{3/2} df,
+#   D = r^2 + R^2 - 2 R r cos f.
+# The integrand peaks sharply near f = 0 as r -> R - a (closest approach a),
+# so the azimuthal grid is deliberately fine.
+N_phi = 4000;
+phi   = linspace(0, 2*pi, N_phi + 1);
+phi   = phi(1:N_phi);
+dphi  = 2 * pi / N_phi;
+cosf  = cos(phi);
+
+# Radial sample points up to the inner wire edge.
+Nr = 1500;
+rs = linspace(0, R - a, Nr);
+
+Bz = zeros(Nr);
+for ir = 1:Nr
+  r = rs(ir);
+  D = r^2 + R^2 - 2 * R * r * cosf;
+  integ = (R^2 - R * r * cosf) ./ (D .^ 1.5);
+  Bz(ir) = sum(integ) * dphi;
+end
+Bz = Bz * mu0 * Iloop / (4 * pi);
+
+# === Flux through the interior disk and self-inductance ===
+flux_integrand = Bz .* (2 * pi * rs);
+Phi  = trapz(rs, flux_integrand);
+L_num = Phi / Iloop;
+
+L_analytic = mu0 * R * (log(8 * R / a) - 2);
+
+print(real(L_num))                           # numerical self-inductance (H)
+print(real(L_analytic))                       # mu0 R [ln(8R/a) - 2]
+print(real(L_num / L_analytic))               # ratio -> ~1
+
+# === Plots ===
+figure();
+plot(rs * 100, real(Bz), "Bz(r) in the loop plane");
+xlabel("radius r (cm)");
+ylabel("Bz (T)");
+title("On-plane axial field of a current loop (diverges toward the wire)");
+savefig("loop_Bz_profile.svg");
+
+# Inductance vs wire radius a — the ln(8R/a) signature.
+a_sweep = [0.5e-3, 1.0e-3, 2.0e-3, 4.0e-3];
+L_ana_sweep = mu0 * R * (log(8 * R ./ a_sweep) - 2);
+figure();
+plot(a_sweep * 1e3, real(L_ana_sweep) * 1e6, "L(a) = mu0 R[ln(8R/a) - 2]");
+xlabel("wire radius a (mm)");
+ylabel("L (uH)");
+title("Loop self-inductance vs wire radius");
+savefig("loop_L_vs_a.svg");

@@ -1,0 +1,117 @@
+# tunable_L_force.rlab — Force on a movable solenoid core (plunger).
+#
+# Magnetic dual of L15's tunable_C_force.rlab. A solenoid (N turns, radius
+# R, length ℓ) carries current I; a high-μ ferromagnetic plunger of the
+# same cross-section is inserted an axial distance x. The virtual-work
+# identity at fixed current gives the pull-in force
+#       F = +½ I² ∂L/∂x          (positive ⇒ the plunger is pulled in).
+#
+# Confined-field model.  Inside a long solenoid the field is axial and
+# confined, so the flux follows a simple magnetic circuit: the inserted
+# core (length x) and the remaining air (length ℓ−x) are reluctances in
+# series. Flux continuity fixes B the same in both (full cross-section A):
+#       R_air  = (ℓ−x)/(μ₀ A),   R_core = x/(μ₀ μr A),
+#       Φ = N I / (R_air + R_core),   L(x) = N Φ / I = N² / (R_air+R_core).
+# This reluctance computation is the workhorse of actuator/relay design.
+#
+# Verifies:   (i) the energy method L = 2U_M/I², U_M = ½∫B²/μ dV, agrees
+#             with the reluctance L = N²/R to machine precision;
+#             (ii) the finite-difference force ½I² ΔL/Δx matches the
+#             closed-form  F = ½ I² N² μ₀ A (1−1/μr) / [(ℓ−x)+x/μr]².
+#
+# Reference: ../../notebooks/17-lumped-inductance.md.
+
+mu0 = 4 * pi * 1e-7;
+R   = 0.01;                                    # solenoid radius (1 cm)
+A   = pi * R^2;                                # cross-section
+ell = 0.10;                                    # solenoid length (10 cm)
+N   = 200;                                     # turns
+I0  = 1.0;                                     # drive current
+mur = 1000.0;                                  # plunger relative permeability
+
+# --- L(x) via the series-reluctance magnetic circuit ---
+function L = induct_reluctance(x, ell, A, N, mu0, mur)
+  R_air  = (ell - x) / (mu0 * A);
+  R_core = x / (mu0 * mur * A);
+  L = N^2 / (R_air + R_core);
+end
+
+# --- L(x) via the field-energy method on an axial cell grid ---
+# B is uniform along the bore (flux continuity, full cross-section), but
+# the energy density ½B²/μ differs between the air and core sections, so
+# the integral is summed cell-by-cell — the same machinery that would
+# handle a non-uniform bore.
+function L = induct_energy(x, ell, A, N, I0, mu0, mur)
+  R_air  = (ell - x) / (mu0 * A);
+  R_core = x / (mu0 * mur * A);
+  Phi = N * I0 / (R_air + R_core);
+  B   = Phi / A;
+  Ncell = 400;
+  dz = ell / Ncell;
+  U = 0;
+  for c = 1:Ncell
+    zc = (c - 0.5) * dz;                        # cell centre along the bore
+    if zc < x
+      mu_c = mu0 * mur;                          # inside the plunger
+    else
+      mu_c = mu0;                                # air
+    end
+    U = U + 0.5 * B^2 / mu_c * A * dz;
+  end
+  L = 2 * U / I0^2;
+end
+
+# === Sweep plunger insertion x ===
+xs = [0.01, 0.02, 0.03, 0.05, 0.07, 0.085, 0.095] * (ell / 0.10);
+nX = length(xs);
+L_rel = zeros(1, nX);
+L_en  = zeros(1, nX);
+for q = 1:nX
+  L_rel(q) = induct_reluctance(xs(q), ell, A, N, mu0, mur);
+  L_en(q)  = induct_energy(xs(q), ell, A, N, I0, mu0, mur);
+end
+
+print(xs * 1e3)                                 # insertion (mm)
+print(L_rel * 1e6)                              # L via reluctance (µH)
+print(L_en  * 1e6)                              # L via energy (µH)
+print(max(abs(L_rel - L_en) ./ L_rel))          # agreement → machine ε
+
+# === Force: finite-difference ½I² dL/dx vs the closed form ===
+dxf = 1.0e-4;                                   # 0.1 mm derivative step
+F_num = zeros(1, nX);
+F_ana = zeros(1, nX);
+for q = 1:nX
+  x = xs(q);
+  Lp = induct_reluctance(x + dxf, ell, A, N, mu0, mur);
+  Lm = induct_reluctance(x - dxf, ell, A, N, mu0, mur);
+  F_num(q) = 0.5 * I0^2 * (Lp - Lm) / (2 * dxf);
+  denom = (ell - x) + x / mur;
+  F_ana(q) = 0.5 * I0^2 * N^2 * mu0 * A * (1 - 1 / mur) / denom^2;
+end
+
+print(F_num)                                    # N (numerical, > 0 ⇒ pull-in)
+print(F_ana)                                    # N (closed form)
+print(max(abs(F_num - F_ana) ./ abs(F_ana)))    # max rel. error → tiny
+
+# === Plots ===
+figure();
+hold on;
+plot(xs * 1e3, real(L_rel) * 1e6, "L reluctance");
+plot(xs * 1e3, real(L_en)  * 1e6, "L energy method");
+hold off;
+xlabel("plunger insertion x (mm)");
+ylabel("L (µH)");
+title("Solenoid inductance vs. plunger insertion");
+legend("reluctance N²/R", "energy 2U/I²");
+savefig("tunable_L_inductance.svg");
+
+figure();
+hold on;
+plot(xs * 1e3, real(F_num), "numerical ½I² ΔL/Δx");
+plot(xs * 1e3, real(F_ana), "closed form");
+hold off;
+xlabel("plunger insertion x (mm)");
+ylabel("pull-in force F (N)");
+title("Magnetic pull-in force on a solenoid plunger");
+legend("numerical", "analytic");
+savefig("tunable_L_force.svg");

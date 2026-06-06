@@ -1,0 +1,119 @@
+# mutual_inductance_coil_pair.rlab — Mutual inductance of two coaxial loops.
+#
+# Geometry:   two coaxial single-turn loops, radius R = 5 cm, wire radius
+#             a = 1 mm, coaxial along z, separation d swept over d/R ∈ [0.5, 4].
+# Method:     loop 1 carries I₁ = 1 A. Biot-Savart gives the axial field
+#             Bz(r) it produces on the plane of loop 2 (height d); the flux
+#             through loop 2 is Φ₂ = ∫₀^R Bz(r) 2πr dr, so M = Φ₂ / I₁.
+# Verifies:   M matches the exact coaxial-loop elliptic-integral formula
+#                 M = μ₀√(R₁R₂)[(2/k − k)K(k) − (2/k)E(k)],
+#                 k² = 4R₁R₂/((R₁+R₂)² + d²),
+#             to < 0.1 %, and approaches the magnetic-dipole asymptote
+#             M_dip = μ₀πR⁴/(2d³) only slowly as d/R grows. The coupling
+#             coefficient k_c = M/√(L₁L₂) decays monotonically with d/R
+#             (k_c ≈ 0.22 at d/R = 0.5 for these thin single-turn loops —
+#             thin filaments self-link a lot of flux, so k_c stays modest).
+#
+# Reference: ../../notebooks/17-lumped-inductance.md.
+
+mu0 = 4 * pi * 1e-7;
+I1 = 1.0;
+R  = 0.05;
+a  = 1.0e-3;
+
+# Self-inductance of each identical loop (thin-wire external form).
+L_self = mu0 * R * (log(8 * R / a) - 2);
+
+# === Azimuthal Biot-Savart for Bz(r) on a plane at height d ===
+# Bz(r, d) = (μ₀ I / 4π) ∫₀^{2π} (R² - R r cos f) / D^{3/2} df,
+#   D = r² + R² - 2 R r cos f + d².
+N_phi = 2000;
+phi   = linspace(0, 2*pi, N_phi + 1);
+phi   = phi(1:N_phi);
+dphi  = 2 * pi / N_phi;
+cosf  = cos(phi);
+
+Nr = 1000;
+rs = linspace(0, R, Nr);
+
+# Complete elliptic integrals K(m), E(m) (parameter m = k²) via the
+# arithmetic-geometric mean — quadratic convergence, no library needed.
+function [K, E] = ellipke_agm(m)
+  a = 1.0;
+  b = sqrt(1.0 - m);
+  c = sqrt(m);
+  s = 0.5 * c^2;                                # running E correction
+  pw = 1.0;
+  for it = 1:12
+    an = 0.5 * (a + b);
+    bn = sqrt(a * b);
+    cn = 0.5 * (a - b);
+    s = s + pw * cn^2;                          # weight 2^{it-1} c_it²
+    pw = pw * 2.0;
+    a = an; b = bn; c = cn;
+  end
+  K = pi / (2.0 * a);
+  E = K * (1.0 - s);
+end
+
+# Exact mutual inductance of two coaxial loops, radii R1, R2, gap d.
+function M = mutual_exact(R1, R2, d, mu0)
+  k2 = 4.0 * R1 * R2 / ((R1 + R2)^2 + d^2);
+  kk = sqrt(k2);
+  [K, E] = ellipke_agm(k2);
+  M = mu0 * sqrt(R1 * R2) * ((2.0 / kk - kk) * K - (2.0 / kk) * E);
+end
+
+function M = mutual_M(rs, cosf, dphi, Nr, R, d, mu0, I1)
+  Bz = zeros(Nr);
+  for ir = 1:Nr
+    r = rs(ir);
+    D = r^2 + R^2 - 2 * R * r * cosf + d^2;
+    integ = (R^2 - R * r * cosf) ./ (D .^ 1.5);
+    Bz(ir) = sum(integ) * dphi;
+  end
+  Bz = Bz * mu0 * I1 / (4 * pi);
+  Phi = trapz(rs, Bz .* (2 * pi * rs));
+  M = Phi / I1;
+end
+
+# === Sweep separation ===
+dR = [0.5, 0.75, 1.0, 1.5, 2.0, 3.0, 4.0];
+M_num = zeros(1, length(dR));
+M_ex  = zeros(1, length(dR));
+M_dip = zeros(1, length(dR));
+kc    = zeros(1, length(dR));
+for q = 1:length(dR)
+  d = dR(q) * R;
+  Mq = mutual_M(rs, cosf, dphi, Nr, R, d, mu0, I1);
+  M_num(q) = real(Mq);
+  M_ex(q)  = mutual_exact(R, R, d, mu0);
+  M_dip(q) = mu0 * pi * R^4 / (2 * d^3);
+  kc(q)    = real(Mq) / L_self;                # k = M / √(L₁L₂), L₁=L₂
+end
+
+print(M_num * 1e9)                              # numerical flux nH
+print(M_ex  * 1e9)                              # exact elliptic nH
+print(max(abs(M_num - M_ex) ./ M_ex))           # max rel. error vs exact → < 1e-3
+print(M_dip * 1e9)                              # dipole-asymptote nH
+print(kc)                                        # coupling coefficient
+
+# === Plots ===
+figure();
+hold on;
+plot(dR, M_num * 1e9, "M numerical (flux integration)");
+plot(dR, M_ex  * 1e9, "M exact (elliptic integrals)");
+plot(dR, M_dip * 1e9, "M dipole asymptote  μ₀πR⁴/(2d³)");
+hold off;
+xlabel("separation  d / R");
+ylabel("M  (nH)");
+title("Coaxial-loop mutual inductance vs. separation");
+legend("numerical", "exact", "dipole asymptote");
+savefig("coil_pair_M.svg");
+
+figure();
+plot(dR, kc, "k = M / √(L₁L₂)");
+xlabel("separation  d / R");
+ylabel("coupling coefficient k");
+title("Coupling coefficient vs. coaxial-loop separation");
+savefig("coil_pair_k.svg");
