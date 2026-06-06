@@ -383,4 +383,3 @@ Run all three with `make lesson-02` from the repo root, or one at a time via `ru
 ## What's next
 
 Lesson 03 introduces *Gauss's law* — the integral statement that the total flux of $\vec E$ through any closed surface equals the enclosed charge over $\varepsilon_0$ — and its differential form $\nabla\cdot\vec E = \rho/\varepsilon_0$. Symmetry then collapses the multi-charge sum we struggled with here into one-line analytic expressions for spherical, cylindrical, and planar charge distributions. Along the way we introduce the *electric potential* $V$, a scalar field whose gradient gives back $\vec E = -\nabla V$, and verify it numerically with the Lesson 01 `gradient` operator.
-

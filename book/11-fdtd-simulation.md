@@ -342,4 +342,3 @@ Run all five with `make lesson-11`, or one script at a time via `rustlab run les
 ## What's next
 
 Lesson 12 returns to closed structures with a more principled tool: instead of sweeping frequency through a sparse FDFD solve (Lesson 10) or watching a transient ring down in FDTD (this lesson), the **generalised sparse eigensolver** `eigs(A, B, n)` solves the cavity mode problem $A\phi = k_c^2\phi$ directly. Lesson 12 then extends the same idea to radiation via the **near-field-to-far-field (NF→FF)** transform, paving the way for the antenna pattern calculations in Lesson 14's capstone.
-

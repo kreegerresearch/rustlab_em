@@ -351,4 +351,3 @@ Run all five with `make lesson-12`, or one script at a time via `rustlab run les
 ## What's next
 
 Lesson 13 closes the curriculum's "what's actually in a network analyser" loop. It uses Lesson 05's Laplace solver to compute coaxial / twin-wire characteristic impedance, Lesson 11's FDTD machinery to extract S-parameters via time-gating and FFT, and this lesson's far-field tools to compute a dipole's radiation resistance from a standing-wave current. Lesson 14 then assembles every solver this curriculum has built into a single end-to-end patch-antenna simulation.
-

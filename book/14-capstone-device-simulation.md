@@ -172,4 +172,3 @@ The fourteen lessons span:
 - **Lesson 14**: composition — this capstone
 
 Every script in this curriculum sits in `lessons/<id>-<name>/` as a runnable artefact; every notebook in `notebooks/<id>-<name>.md` documents the physics with interleaved theory and example. The rendered curriculum is at `book/`. The two upstream-feature requests we filed and saw landed — animation export (`frame()`/`saveanim()`) and the SC-PML helpers in `lessons/_shared/em.rlab` — close the loop on the original "what rustlab needs to support the curriculum" survey from `dev/rustlab/requests/em_requests.md`. The remaining 3-D Yee + SC-PML graduation to native Rust waits on the triggers documented in [`yee-and-pml-builders.md`](../dev/rustlab/requests/yee-and-pml-builders.md); until then, the scripted library is the curriculum-side answer.
-

@@ -341,4 +341,3 @@ Run all three with `make lesson-07`, or one at a time via `rustlab run lessons/0
 ## What's next
 
 Lesson 08 closes Maxwell's equations: the displacement-current correction $\partial\vec D/\partial t$ on the right-hand side of Ampère's law makes the four equations self-consistent and predicts electromagnetic waves. Faraday and Ampère together — both with time derivatives — are what the entire FDFD (Lesson 10) and FDTD (Lesson 11) machinery discretises. From Lesson 08 onward time is no longer an afterthought; it's a first-class coordinate that the solver steps through.
-

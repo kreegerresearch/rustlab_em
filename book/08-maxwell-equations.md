@@ -377,4 +377,3 @@ Run all three with `make lesson-08`, or one at a time via `rustlab run lessons/0
 ## What's next
 
 Lesson 09 takes the curl-curl elimination one step further: $\nabla\times(\nabla\times\vec E) = -\partial_t\nabla\times\vec B$ feeds directly into the vector wave equation $\nabla^2\vec E = \mu_0\varepsilon_0\,\partial_t^2\vec E$ in source-free regions. Plane waves, polarisation states, dispersion relations in matter, and reflection from a perfect conductor all live there. The displacement-current term and the Poynting flux from this lesson are the two pieces of physics those derivations rest on; from Lesson 10 on, every full-wave solver discretises the same four equations on a Yee grid and time-steps them by the same logic we used here.
-

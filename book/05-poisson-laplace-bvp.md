@@ -624,4 +624,3 @@ Run all five with `make lesson-05`, or one at a time via `rustlab run lessons/05
 ## What's next
 
 Lesson 06 swaps electrostatics for magnetostatics: $\vec B = \nabla\!\times\!\vec A$ with $\nabla^2\vec A = -\mu_0\vec J$. In two dimensions with $\vec J = J_z(x,y)\hat z$ this is *the same scalar Poisson equation* solved here, with $V \to A_z$ and $\rho/\varepsilon_0 \to \mu_0 J_z$. Exactly the same `laplacian_2d` + `spsolve` pipeline reappears with a different right-hand side. For magnetic materials with piecewise $\mu_r$, the variable-coefficient form $\nabla\!\cdot\!(\mu^{-1}\nabla A_z)$ uses `laplacian_eps_2d` (passing $1/\mu$). This lesson built the machine; Lesson 06 is the first time a different physics walks through the same door.
-

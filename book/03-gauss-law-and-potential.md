@@ -374,4 +374,3 @@ Run all three with `make lesson-03`, or one at a time via `rustlab run lessons/0
 ## What's next
 
 Lesson 04 changes the language. Until now charges were a list and the geometry was implicit — pick a formula, evaluate it. Real devices (capacitors with dielectric slabs, antennas on substrates, coax cables) are described by *spatial arrays* of $\varepsilon(x,y)$, $\mu(x,y)$, $\sigma(x,y)$ specifying the material at each grid cell. Lesson 04 builds the toolkit for turning a "drawing" — a list of geometric primitives plus material assignments — into those arrays. Every numerical solver from Lesson 05 onward consumes them directly.
-

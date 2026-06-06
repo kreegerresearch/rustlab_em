@@ -393,4 +393,3 @@ Run all three with `make lesson-01` from the repo root (or `rustlab run lessons/
 ## What's next
 
 Lesson 02 introduces the electric field from discrete charges — literally summing the contributions of individual point sources — and uses this lesson's machinery to plot $\vec E$ as a quiver field, draw equipotentials of $V$ as contours, and confirm numerically that $\vec E = -\nabla V$.
-

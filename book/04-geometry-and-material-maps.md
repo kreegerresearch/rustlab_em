@@ -462,4 +462,3 @@ Run all four with `make lesson-04`, or one at a time via `rustlab run lessons/04
 ## What's next
 
 Lesson 05 is the first numerical PDE: solve $\nabla\cdot(\varepsilon\nabla V) = -\rho$ on a grid with mixed Dirichlet/Neumann boundaries, using the variable-coefficient Laplacian builder `laplacian_eps_2d`. The $\varepsilon$ map it consumes is exactly the one we just built. Every static, frequency-domain, and time-domain solver from Lesson 05 onward is a different operator on top of the same material-map data structure — Lesson 04 is the last lesson where the geometry and the physics can be treated separately.
-

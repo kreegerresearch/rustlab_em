@@ -520,4 +520,3 @@ Run the lesson with `make lesson-10`, or one script at a time via `rustlab run l
 ## What's next
 
 Lesson 11 takes the same Yee grid into the **time domain**: the FDTD algorithm time-steps $\vec E$ and $\vec H$ via leapfrog updates with no linear solves at all, naturally handles broadband sources and nonlinearities, and uses a closely related (split-field Bérenger) PML at the boundaries. The two methods cover overlapping physics with complementary trade-offs: FDFD is one solve per frequency and resolves narrow resonances cleanly; FDTD is one run for the entire frequency response via Fourier transform, and reads transient phenomena directly. Lesson 14's capstone runs an FDTD-driven patch-antenna simulation that closes the loop on every solver this curriculum has built.
-

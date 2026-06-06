@@ -388,4 +388,3 @@ Run all three with `make lesson-09`, or one at a time via `rustlab run lessons/0
 ## What's next
 
 Lesson 10 turns the single-frequency wave equation into a numerical solver: the **frequency-domain finite-difference (FDFD)** method discretises the curl-curl operator on a Yee grid, swaps $\partial_t \to -i\omega$, and hands a single sparse complex linear system to `spsolve`. Lesson 11 takes the dual route: keep time as a coordinate and march the Yee staggered fields forward via leapfrog updates — the **finite-difference time-domain (FDTD)** algorithm that powers most of commercial electromagnetic simulation. Both pick up where this lesson leaves off: Lesson 09's analytic plane wave is the test source they validate against, and the standing wave is the simplest geometry whose numerical reflection coefficient must come out right before tackling anything bigger.
-

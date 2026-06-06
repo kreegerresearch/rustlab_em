@@ -380,4 +380,3 @@ Run all seven with `make lesson-13`, or one script at a time via `rustlab run le
 ## What's next
 
 Lesson 14 is the capstone: one device, one script, end-to-end. A microstrip-fed patch antenna on FR-4 substrate at 2.45 GHz, with geometry from Lesson 04, FDTD core from Lesson 11, waveport excitation and $S_{11}$ extraction from this lesson, and NF→FF transform from Lesson 12. Everything the curriculum has built, finally composed.
-

@@ -526,4 +526,3 @@ Run all five with `make lesson-06`, or individually via `rustlab run lessons/06-
 ## What's next
 
 Lesson 07 introduces *time-varying* fields. Faraday's law $\oint\vec E\cdot d\vec\ell = -d\Phi_B/dt$ ties a *changing* magnetic flux to an induced electric field — the first dynamical coupling in the curriculum. The Lesson 06 solver computes the static $A_z$ that fixes $\Phi_B$; differentiating in time gives the EMF directly. Inductance ($L = \Phi_B/I$) becomes a geometric integral over a Lesson-06 field, and eddy currents in a thin conducting plate reduce to a 2-D scalar Laplace problem on the *stream function* of the induced current — yet again, the same `laplacian_2d` machinery wearing a different hat.
-
