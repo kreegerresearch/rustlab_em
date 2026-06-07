@@ -1,0 +1,105 @@
+# finite_solenoid.rlab — Finite-length solenoid inductance and end effects.
+#
+# Geometry:   single-layer solenoid, radius R = 2 cm, wire a = 0.2 mm,
+#             fixed winding density (12 turns per R of length), length ℓ
+#             swept over ℓ/R ∈ [1, 20]. Modelled as a stack of N coaxial
+#             single-turn loops.
+# Method:     L = ΣΣ M(turn_i, turn_k) via the exact coaxial-loop elliptic
+#             kernel (diagonal = thin-wire single-turn self-inductance).
+# Verifies:   L approaches the infinite-solenoid limit L∞ = μ₀ n² π R² ℓ
+#             (n = N/ℓ turns per metre) as ℓ/R → ∞, and the end-effect
+#             ratio K = L / L∞ matches Wheeler's current-sheet (Nagaoka)
+#             coefficient  K ≈ 1 / (1 + 0.9 R/ℓ)  to a couple of percent.
+#
+# Reference: ../../notebooks/17-lumped-inductance.md.
+
+mu0 = 4 * pi * 1e-7;
+R = 0.02;
+a = 0.2e-3;
+turns_per_R = 12.0;                            # dense single-layer winding
+
+# --- Complete elliptic integrals K(m), E(m) via AGM (m = k²) ---
+function [K, E] = ellipke_agm(m)
+  a = 1.0;  b = sqrt(1.0 - m);  c = sqrt(m);
+  s = 0.5 * c^2;  pw = 1.0;
+  for it = 1:12
+    an = 0.5 * (a + b);  bn = sqrt(a * b);  cn = 0.5 * (a - b);
+    s = s + pw * cn^2;  pw = pw * 2.0;
+    a = an;  b = bn;  c = cn;
+  end
+  K = pi / (2.0 * a);
+  E = K * (1.0 - s);
+end
+
+# --- Exact mutual inductance of two coaxial loops, axial gap d ---
+function M = mutual_exact(Ra, Rb, d, mu0)
+  k2 = 4.0 * Ra * Rb / ((Ra + Rb)^2 + d^2);
+  kk = sqrt(k2);
+  [K, E] = ellipke_agm(k2);
+  M = mu0 * sqrt(Ra * Rb) * ((2.0 / kk - kk) * K - (2.0 / kk) * E);
+end
+
+# --- Stack self-inductance: ΣΣ over turn pairs ---
+function L = stack_self(zc, Rc, a, mu0)
+  Nt = length(zc);
+  L_turn = mu0 * Rc * (log(8 * Rc / a) - 2);
+  L = 0;
+  for i = 1:Nt
+    for k = 1:Nt
+      if i == k
+        L = L + L_turn;
+      else
+        L = L + mutual_exact(Rc, Rc, abs(zc(i) - zc(k)), mu0);
+      end
+    end
+  end
+end
+
+# === Sweep length-to-radius ratio ===
+ellR = [1.0, 2.0, 3.0, 4.0, 6.0, 10.0, 15.0, 20.0];
+L_num  = zeros(1, length(ellR));
+L_inf  = zeros(1, length(ellR));
+K_num  = zeros(1, length(ellR));
+K_whee = zeros(1, length(ellR));
+for q = 1:length(ellR)
+  lr  = ellR(q);
+  ell = lr * R;
+  N   = round(turns_per_R * lr);
+  n   = N / ell;                               # turns per metre
+  zc  = linspace(-ell/2, ell/2, N);
+  Lq  = stack_self(zc, R, a, mu0);
+  Li  = mu0 * n^2 * pi * R^2 * ell;            # infinite-solenoid limit
+  L_num(q)  = real(Lq);
+  L_inf(q)  = Li;
+  K_num(q)  = real(Lq) / Li;
+  K_whee(q) = 1.0 / (1.0 + 0.9 / lr);
+end
+
+print(ellR)
+print(K_num)                                    # numerical end-effect factor
+print(K_whee)                                   # Wheeler/Nagaoka current-sheet form
+print(max(abs(K_num - K_whee)))                 # max deviation → ~0.01
+print(K_num(8))                                 # K at ℓ/R = 20 → ~0.96
+
+# === Plots ===
+figure();
+hold on;
+plot(ellR, real(L_num) * 1e6, "L numerical (turn-stack)");
+plot(ellR, real(L_inf) * 1e6, "L∞ = μ₀ n² π R² ℓ");
+hold off;
+xlabel("aspect ratio  ℓ / R");
+ylabel("L  (µH)");
+title("Solenoid inductance vs. length (fixed winding density)");
+legend("numerical", "infinite-solenoid limit");
+savefig("solenoid_L.svg");
+
+figure();
+hold on;
+plot(ellR, K_num,  "K numerical = L / L∞");
+plot(ellR, K_whee, "Wheeler  1/(1 + 0.9 R/ℓ)");
+hold off;
+xlabel("aspect ratio  ℓ / R");
+ylabel("Nagaoka end-effect coefficient K");
+title("Finite-solenoid end-effect correction approaches 1");
+legend("numerical", "Wheeler current-sheet");
+savefig("solenoid_nagaoka.svg");
