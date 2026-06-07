@@ -9,6 +9,8 @@ Lesson 10 turned the time-harmonic Maxwell equations into a single complex spars
 - Vectorise per-step updates via slice-cat rebuilds (since rustlab v0.3's strict 1-D vector type does not yet accept slice assignment)
 - Measure reflection / transmission off a dielectric slab and compare to the analytic Fresnel coefficients
 - Extend the Yee step with a polarisation-current ADE for a Drude metal; observe the qualitative response above and below the plasma frequency $\omega_p$
+- Inject a clean plane wave with a total-field/scattered-field (TF/SF) source and confirm the scattered zone stays at machine zero
+- Terminate the grid with a Bérenger split-field PML and measure how the residual reflection falls with absorber depth
 - Use rustlab's animation builtins to record a propagating-pulse movie
 
 ## Background
@@ -283,6 +285,59 @@ legend("before film", "after film")
 
 Comparing the source frequency to the plasma frequency tells the story: at $f_{\rm src} = 2$ GHz $< f_p = 3$ GHz, the transmitted amplitude is suppressed by roughly $5\times$ relative to the incident. Re-running with $f_{\rm src} > f_p$ (e.g. 5 GHz) would yield near-unity transmission. The qualitative point — a frequency-selective filter that the same FDTD code captures without any pre-set $\varepsilon(\omega)$ — is what gives FDTD its broad reach into photonics, antennas, plasmas, and biomedical EM.
 
+## Total-Field / Scattered-Field Plane-Wave Injection
+
+### Theory
+
+Scattering problems want a *clean* incident plane wave that exists only where it should. The **total-field/scattered-field (TF/SF)** technique splits the grid with a closed box: inside, the fields are the total (incident + scattered); outside, only the scattered. The incident wave is added to the update equations on the box faces alone, so with **no scatterer inside the box the scattered region must stay at exactly zero**. The one subtlety is numerical dispersion — if the injected incident field does not propagate at the grid's (slightly wrong) numerical speed, residual leaks past the box. Driving the faces from an **auxiliary 1-D Yee grid** that shares the 2-D grid's $\Delta x$, $\Delta t$ makes the dispersion match exactly, so the cancellation is good to round-off.
+
+### Example — 60×60 vacuum, no scatterer
+
+`fdtd_tfsf_validation.rlab` launches a $+x$ modulated-Gaussian plane wave into an empty TF box and probes the four scattered-field faces. With nothing to scatter, those probes should read machine zero.
+
+```rustlab
+clf;
+% From fdtd_tfsf_validation.rlab — scattered-zone leakage at four probes
+% vs the incident amplitude that fills the TF box interior.
+probes   = [1, 2, 3, 4];                      % top, bottom, right, left
+leak     = [1.52e-15, 1.52e-15, 1.42e-15, 1.63e-15];
+inc_peak = 0.999;
+hold on;
+semilogy(probes, leak, "scattered-zone |E_z| max");
+semilogy(probes, inc_peak * ones(4), "incident peak inside box");
+hold off;
+xlabel("probe   (1=top  2=bottom  3=right  4=left)");
+ylabel("|E_z|");
+title("TF/SF injection: scattered zone stays at machine zero");
+legend("leakage ~1e-15", "incident ~1");
+```
+
+The scattered-field probes sit at $\sim 1.5\times10^{-15}$ while the incident wave inside the box has unit amplitude — a **15-order-of-magnitude** separation, i.e. perfect injection. Inside the box the recorded wave matches the analytic incident to $\sim 10^{-15}$ as well. Exercise 2 shows that swapping the auxiliary grid for an analytic accessor degrades the leak to $\sim 10^{-3}$ — the dispersion residual the auxiliary-grid trick removes.
+
+## Split-Field PML Depth Sweep
+
+### Theory
+
+An open-domain simulation needs the grid edge to *absorb* outgoing waves. Bérenger's **split-field perfectly matched layer (PML)** replaces a band of boundary cells with anisotropic absorbing media, impedance-matched at the inner edge (zero analytic reflection) and lossy through the layer. The split-field form decomposes $E_z$ into $E_{zx} + E_{zy}$, each damped by the conductivity along its own axis, with the magnetic conductivity $\sigma^* = \sigma\mu_0/\varepsilon_0$ chosen for matching. A cubic $\sigma$ ramp keeps the impedance gradient smooth; deeper layers attenuate more, so the residual reflection falls roughly exponentially with depth.
+
+### Example — depth sweep $d \in \{4, 8, 16\}$
+
+`fdtd_pml_depth.rlab` runs a centred point source (all incidence angles at once) and compares the interior field to a reference on a much larger grid where reflections never return within the run.
+
+```rustlab
+clf;
+% From fdtd_pml_depth.rlab — residual reflection |R| = |E_resid|/|E_inc|.
+depths = [4, 8, 16];
+refl   = [0.1595, 0.0728, 0.0259];
+semilogy(depths, refl, "|R(d)| residual reflection");
+xlabel("PML depth  (cells)");
+ylabel("|R|");
+title("Berenger split-field PML reflection vs depth");
+legend("|R(d)|");
+```
+
+Doubling the layer depth drops the residual reflection by roughly a factor of ~2.5 each time (0.16 → 0.073 → 0.026), the exponential trend a cubic $\sigma$ profile predicts. Even a modest 16-cell PML pushes spurious wall reflections below 3 % — enough for the open-domain radiation problems of Lessons 12 and 14.
+
 ## Standalone Scripts
 
 | Script | What it computes |
@@ -304,6 +359,8 @@ Run all five with `make lesson-11`, or one script at a time via `rustlab run les
 | 2-D PEC shadow depth (in lee, $|E_z|$) | $\sim 0.1 \cdot$ source peak |
 | Drude transmitted/incident below $\omega_p$ (2 GHz vs 3 GHz) | $\sim 0.2$ |
 | Drude transmitted/incident above $\omega_p$ (exercise) | $\to 1$ |
+| TF/SF scattered-zone $\lvert E_z\rvert$ (empty box) | $\sim 1.5\times10^{-15}$ (machine zero) |
+| PML residual reflection at $d = 4 / 8 / 16$ | $0.160 / 0.073 / 0.026$ |
 
 ## Exercises
 
