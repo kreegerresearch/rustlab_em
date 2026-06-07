@@ -16,6 +16,8 @@ The antenna package (standing-wave current, radiation resistance, NF→FF) folds
 - Propagate a Gaussian pulse on a 1-D telegrapher leapfrog with arbitrary terminations and verify $\Gamma$ for matched / open / short / mismatched loads
 - Read VSWR off a steady-state CW envelope and confirm $\text{VSWR} = (1+|\Gamma|)/(1-|\Gamma|)$
 - Recognise the same Yee-leapfrog machinery from Lesson 11 transferring directly to 1-D circuit problems
+- Extract two-port S-parameters from a 1-D FDTD impedance step and check $\lvert S_{11}\rvert^2 + \lvert S_{21}\rvert^2 = 1$
+- Build the dipole standing-wave current as an open-ended stub and integrate its far field to recover $R_{\rm rad}\approx 73\,\Omega$
 
 ## Background
 
@@ -112,6 +114,48 @@ ylabel("y cell")
 ```
 
 The 2-D potential matches the analytic $\ln(b/r)/\ln(b/a)$ shape to grid precision in the bulk; near the rasterised circular conductors a staircase error of a few percent shows up in the extracted $C'$ and propagates into $Z_0$. Refining the grid drops the error like $h^2$.
+
+## Twin-Wire Line — Parallel Conductors
+
+### Theory
+
+The same energy-method recipe handles an open two-conductor geometry. Two parallel wires of radius $a$ with centres a distance $d$ apart, held at $\pm V_0/2$, have the TEM transverse field obeying $\nabla^2 V = 0$ in the surrounding vacuum. The per-unit-length capacitance follows from $C' = 2U_E'/V_0^2$, and the TEM identity $L'C' = \mu_0\varepsilon_0$ closes the impedance:
+
+$$Z_0 = \frac{\sqrt{\mu_0\varepsilon_0}}{C'} = \frac{\eta_0}{\pi}\cosh^{-1}\!\frac{d}{2a} \;\xrightarrow{\,d\gg a\,}\; \frac{\eta_0}{\pi}\ln\frac{d}{a} \approx 120\ln\frac{d}{a}\;\Omega.$$
+
+### Example — $d/2a = 2$ twin-wire
+
+`twin_wire_impedance.rlab` solves the two-disk cross-section on a box ~5$d$ wide (the Dirichlet edge stands in for infinity), integrates the field energy outside the conductors, and converts to $Z_0$. The plot overlays the analytic $\cosh^{-1}$ law and its large-spacing approximation with the single numerical point.
+
+```rustlab
+clf;
+eta0_tw = 376.730313;
+% Numerical solve from twin_wire_impedance.rlab at d/2a = 2 (i.e. d/a = 4):
+C_num_tw  = 20.13;     % pF/m  (energy method on the two-disk cross-section)
+Z0_num_tw = 165.67;    % Ohm   (via the TEM identity L'C' = mu0 eps0)
+
+% Analytic Z0 = (eta0/pi) cosh^-1(d/2a) over a d/a sweep (cosh^-1 via log).
+function y = acosh_tw(x); y = log(x + sqrt(x .* x - 1)); end
+da = [2.0, 3.0, 4.0, 6.0, 10.0, 20.0, 50.0];
+Z0_exact = zeros(1, length(da));
+Z0_appr  = zeros(1, length(da));
+for kr = 1:length(da)
+  Z0_exact(kr) = eta0_tw / pi * acosh_tw(da(kr) / 2);
+  Z0_appr(kr)  = 120 * log(da(kr));
+end
+
+hold on;
+plot(da, Z0_exact, "Z_0 = (eta0/pi) cosh^-1(d/2a)");
+plot(da, Z0_appr,  "120 ln(d/a) approx");
+scatter(4.0, Z0_num_tw, "numerical (energy method)");
+hold off;
+xlabel("d / a");
+ylabel("Z_0  (Ohm)");
+title("Twin-wire characteristic impedance vs spacing");
+legend("exact cosh^-1", "large-d/a approx", "numerical");
+```
+
+The numerical point lands at $Z_0 \approx 166\,\Omega$ — about 5 % above the exact $\cosh^{-1}$ value of 157.9 Ω at this *close* $d/2a = 2$ spacing. The staircased disks and finite box are least accurate when the conductors nearly touch (proximity effect crowds the surface charge); the agreement tightens at larger $d/a$, which Exercise 1 confirms by running the solver at several spacings.
 
 ## Pulse Propagation on a 1-D Telegrapher Leapfrog
 
@@ -296,6 +340,123 @@ title("Standing-wave envelope on a Z_L = 2 Z_0 line — VSWR ≈ 2")
 
 The envelope is a $\lambda/2$-periodic sequence of peaks and valleys. The ratio of maxima to minima nails the analytic VSWR of 2 to within 0.1 % — and demonstrates that everything a slotted line measures *is*, in the discrete world, just an FDTD time average.
 
+## S-Parameters from a 1-D Impedance Step
+
+### Theory
+
+A multiport network analyser measures **scattering parameters** — the reflected and transmitted *power-wave* amplitudes at each port. The simplest two-port is a single impedance step $Z_{0,1}\to Z_{0,2}$ on an otherwise uniform line. At the junction,
+
+$$S_{11} = \Gamma = \frac{Z_{0,2}-Z_{0,1}}{Z_{0,2}+Z_{0,1}}, \qquad \lvert S_{21}\rvert = \frac{2\sqrt{Z_{0,1}Z_{0,2}}}{Z_{0,1}+Z_{0,2}}, \qquad \lvert S_{11}\rvert^2 + \lvert S_{21}\rvert^2 = 1\ \text{(lossless)}.$$
+
+To extract these from a simulation, run the 1-D leapfrog twice — once on the uniform reference line, once with the step — and difference the probe records: $V_{\rm refl} = V_{\rm step} - V_{\rm ref}$ at a probe before the junction, $V_{\rm trans}$ at a probe after it. The ratios of peak amplitudes (or of their FFTs) give the scattering parameters, with a $\sqrt{Z_{0,1}/Z_{0,2}}$ factor converting voltage waves to power waves.
+
+### Example — 50 → 100 Ω step
+
+`s_parameters_tline.rlab` drives a carrier-modulated Gaussian at the magic time step ($S=1$, zero numerical dispersion in 1-D) so the reflected pulse keeps the incident shape exactly. For $Z_{0,1}=50$, $Z_{0,2}=100\,\Omega$: $\Gamma = 1/3$ and $\lvert S_{21}\rvert = 2\sqrt{5000}/150 \approx 0.943$.
+
+```rustlab
+clf;
+% From s_parameters_tline.rlab — 50 -> 100 Ohm step.
+labels = [1, 2];                      % 1 = |S11|, 2 = |S21|
+S_analytic   = [0.3333, 0.9428];      % Gamma = 1/3, 2 sqrt(Z1 Z2)/(Z1+Z2)
+S_timedomain = [0.3346, 0.9437];      % FDTD peak-ratio extraction
+hold on;
+plot(labels, S_analytic,   "analytic");
+plot(labels, S_timedomain, "FDTD time-domain");
+hold off;
+xlabel("1 = |S_11|     2 = |S_21|");
+ylabel("magnitude");
+title("S-parameters of a 50->100 Ohm step: FDTD vs analytic");
+legend("analytic", "time-domain");
+```
+
+The time-domain peak-ratio extraction matches the analytic values to sub-percent ($\lvert S_{11}\rvert = 0.335$, $\lvert S_{21}\rvert = 0.944$) and conserves energy ($0.335^2 + 0.944^2 = 1.00$). The script also reports a single-bin **FFT** estimate; at a *sharp* impedance step the staggered-grid junction biases that estimate substantially (it does not conserve energy), which is why production solvers taper the junction over several cells — the subject of Exercise 2. For a clean step, trust the time-domain peak ratio.
+
+## Dipole Current as an Open-Ended Stub
+
+### Theory
+
+A centre-fed dipole is just an open-ended transmission-line stub: the feed current reflects at the open ends $z=\pm L/2$ with $\Gamma = +1$, and the steady-state superposition is a standing wave with current nodes at the tips,
+
+$$I(z) = I_0\,\sin\!\bigl[k(L/2 - \lvert z\rvert)\bigr], \qquad -L/2 \le z \le L/2.$$
+
+For the half-wave case $L=\lambda/2$ this collapses to the textbook $I(z) = I_0\cos(kz)$; for $L\to 0$ it becomes the triangular short-dipole profile.
+
+### Example — current profiles and the half-wave limit
+
+```rustlab
+clf;
+I0 = 1.0; lambda = 1.0; k = 2 * pi / lambda; N_z = 401;
+ratios = [0.1, 0.3, 0.5, 0.7, 1.0];
+hold on;
+for kr = 1:length(ratios)
+  L_dip = ratios(kr) * lambda;
+  zs = linspace(-L_dip / 2, L_dip / 2, N_z);
+  I_std = I0 * sin(k * (L_dip / 2 - abs(zs)));
+  plot(zs / lambda, real(I_std));
+end
+hold off;
+xlabel("z / lambda");
+ylabel("I(z) / I_0");
+title("Centre-fed dipole standing-wave current");
+legend("L/λ = 0.1", "L/λ = 0.3", "L/λ = 0.5", "L/λ = 0.7", "L/λ = 1.0");
+```
+
+```rustlab
+% L = λ/2 must reduce to I(z) = I_0 cos(kz) — check to machine precision.
+L_half = 0.5 * lambda;
+zs_h = linspace(-L_half / 2, L_half / 2, N_z);
+err = max(abs(real(I0 * sin(k * (L_half / 2 - abs(zs_h)))) - real(I0 * cos(k * zs_h))));
+print(err)                            % ~ 2e-16
+```
+
+The $L=\lambda/2$ profile reproduces $\cos(kz)$ to $\sim 10^{-16}$. Note the $L=\lambda$ curve has a current *node at the feed* ($z=0$) — the pathological full-wave dipole whose feed impedance blows up, which is exactly why it is avoided in practice.
+
+## Radiation Resistance
+
+### Theory
+
+Feeding the standing-wave current into the far-field integral gives the E-plane pattern $F(\theta) = [\cos(\tfrac{kL}{2}\cos\theta) - \cos\tfrac{kL}{2}]/\sin\theta$ and, referred to the input current $I_{\rm in}=I_0\sin(kL/2)$, the **radiation resistance**
+
+$$R_{\rm rad} = \frac{\eta_0}{2\pi\sin^2(kL/2)}\int_0^\pi \lvert F(\theta)\rvert^2 \sin\theta\,d\theta.$$
+
+Two limits anchor it: the half-wave dipole gives Carson's $R_{\rm rad}\approx 73.13\,\Omega$, and the short dipole gives $R_{\rm rad}\approx 20\pi^2(L/\lambda)^2$.
+
+### Example — $R_{\rm rad}(L/\lambda)$ and the half-wave value
+
+```rustlab
+clf;
+eta0 = 376.730313;
+N_th = 901; ths = linspace(1e-6, pi - 1e-6, N_th);
+rr = linspace(0.02, 0.8, 60);
+R_in = zeros(1, length(rr));
+R_short = zeros(1, length(rr));
+for kr = 1:length(rr)
+  kL = 2 * pi * rr(kr);
+  F = (cos((kL / 2) * cos(ths)) - cos(kL / 2)) ./ sin(ths);
+  R_in(kr) = eta0 / (2 * pi * sin(kL / 2) ^ 2) * trapz(ths, F .^ 2 .* sin(ths));
+  R_short(kr) = 20 * pi ^ 2 * rr(kr) ^ 2;
+end
+hold on;
+plot(rr, real(R_in), "R_rad (input-referred)");
+plot(rr, R_short, "20 pi^2 (L/lambda)^2");
+hold off;
+xlabel("L / lambda");
+ylabel("R_rad  (Ohm)");
+title("Dipole radiation resistance vs length");
+legend("numerical integration", "short-dipole limit");
+```
+
+```rustlab
+% Half-wave value: integrate the pattern at L = lambda/2.
+kL = pi;
+Fh = (cos((kL / 2) * cos(ths)) - cos(kL / 2)) ./ sin(ths);
+R_half = eta0 / (2 * pi * sin(kL / 2) ^ 2) * trapz(ths, Fh .^ 2 .* sin(ths));
+print(real(R_half))                   % ~ 73.08 Ohm  (Carson 73.13)
+```
+
+The integral returns $73.08\,\Omega$ at $L=\lambda/2$ — within 0.07 % of Carson's classic 73.13 Ω — and tracks the $20\pi^2(L/\lambda)^2$ short-dipole law at small lengths (0.49 Ω at $L/\lambda=0.05$, sub-percent). This 73 Ω is the number every half-wave-dipole and folded-dipole design starts from.
+
 ## Standalone Scripts
 
 | Script | What it computes |
@@ -316,12 +477,16 @@ Run all seven with `make lesson-13`, or one script at a time via `rustlab run le
 |---|---|
 | Coax $C'$, $b/a = 4$ | $40.1\,\text{pF/m}$ (analytic) |
 | Coax $Z_0$, $b/a = 4$ | $\approx 83.2\,\Omega$ |
-| Twin-wire $Z_0$, $d/2a = 2$ | $\approx 157.9\,\Omega$ (analytic) |
+| Twin-wire $Z_0$, $d/2a = 2$ | $157.9\,\Omega$ analytic; $\approx 166\,\Omega$ numerical |
 | Numerical-vs-analytic $Z_0$ error (either) | $\sim 5\text{–}7\,\%$ (staircase rasterisation + finite-box BC) |
 | Open-load reflected pulse amplitude | $\approx$ source peak |
 | Matched-load reflected amplitude | $\approx 0$ |
 | Mismatched ($Z_L = 2 Z_0$) reflected | $\approx$ source peak $/ 3$ |
 | VSWR from $|V|_{env}$ at $Z_L = 2 Z_0$ | $\approx 2.000$ |
+| S-params of 50→100 Ω step (time-domain) | $\lvert S_{11}\rvert = 0.335$, $\lvert S_{21}\rvert = 0.944$ |
+| Dipole $\cos(kz)$ recovery at $L=\lambda/2$ | $\lesssim 10^{-15}$ |
+| $R_{\rm rad}$ at $L=\lambda/2$ | $73.08\,\Omega$ (Carson 73.13) |
+| $R_{\rm rad}$ at $L/\lambda = 0.05$ | $\approx 0.49\,\Omega$ ($20\pi^2(L/\lambda)^2$) |
 
 ## Exercises
 
