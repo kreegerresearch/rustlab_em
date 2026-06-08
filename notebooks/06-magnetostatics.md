@@ -396,7 +396,7 @@ print(mu0 * 1.0 / (2 * pi * 0.09))
 ```rustlab
 clf;
 imagesc(real(Bmag), "viridis");
-title("|B|(x, y): bright ring is the iron, exterior is shielded")
+title("|B|(x, y): bright ring is the iron, exterior is bare-wire-like")
 ```
 
 The iron ring carries roughly three orders of magnitude more $|\vec B|$ than the surrounding vacuum — that's the flux concentration that makes transformer cores possible. The exterior field at $r = 7$ cm and $r = 9$ cm is essentially the bare-wire $\mu_0 I/(2\pi r)$ result: in this *cylindrically symmetric* geometry, Ampère's law applied to a circular contour gives $H = I/(2\pi r)$ regardless of $\mu_r$, so the exterior $B = \mu_0 H$ is independent of the iron. True external shielding requires either an external applied field (so that the iron has flux to short-circuit) or a non-axisymmetric source — Exercise 5 walks through the high-$\mu$ shielding setup that exploits this.
@@ -418,11 +418,11 @@ Run all five with `make lesson-06`, or individually via `rustlab run lessons/06-
 | Variable | Expected Value |
 |---|---|
 | Loop $B_z(0)$ via Biot–Savart | $\mu_0 I/(2R) \approx 1.257\times10^{-5}$ T |
-| Solenoid centre $B_z$ | just under $\mu_0 n I = 50\mu_0 \approx 6.28\times10^{-5}$ T |
+| Solenoid centre $B_z$ | just under $\mu_0 n I \approx 6.28\times10^{-4}$ T ($n = 500$ turns/m) |
 | Helmholtz $B_{\rm off}/B_0$ ratio at $d/R = 1$ | closest to 1 across the three cases |
 | Two-wire $B_x$ above midpoint | analytic / numerical agree within a few percent |
-| $\lvert B\rvert$ in iron shell | $\sim 100\times$ larger than just outside |
-| $\lvert B\rvert$ outside iron at $r = 7$ cm | well below $\mu_0 I/(2\pi r)$ reference |
+| $\lvert B\rvert$ in iron shell | $\sim 1000\times$ larger than just outside |
+| $\lvert B\rvert$ outside iron at $r = 7$ cm | close to the $\mu_0 I/(2\pi r)$ reference |
 
 ## Exercises
 

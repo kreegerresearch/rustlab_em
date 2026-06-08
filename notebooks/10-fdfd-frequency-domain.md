@@ -47,7 +47,7 @@ $$\frac{\partial}{\partial x} \to \frac{1}{s_x(x)}\,\frac{\partial}{\partial x},
 
 Inside the PML, $\sigma_x > 0$ gives $s_x$ a positive imaginary part. An outgoing plane wave $E_z\propto e^{ik_xx}$ with $k_x > 0$ becomes $e^{ik_x\,\tilde x}$ where $\tilde x = \int s_x(x)\,dx$, so it picks up an exponentially decaying real factor $e^{-k_x\,\sigma_x\,x/(\omega\varepsilon_0)}$. The crucial property of SC-PML is that there is *no impedance mismatch* between the interior and the PML when both use the same $\varepsilon$ and $\mu$: the stretching factor cancels in the reflection coefficient. The textbook cubic-polynomial $\sigma$ profile
 
-$$\sigma(d) = \sigma_{\max}\,(d/d_{\rm PML})^3, \qquad \sigma_{\max} = \frac{(m+1)\,\varepsilon_0\,c_0}{2\,\Delta x}\;\text{(typical, with }m=3)$$
+$$\sigma(d) = \sigma_{\max}\,(d/d_{\rm PML})^3, \qquad \sigma_{\max} = \frac{(m+1)\,\varepsilon_0\,c_0}{\Delta x}\;\text{(as implemented, with }m=3\Rightarrow 4\varepsilon_0 c_0/\Delta x)$$
 
 ramps gently from zero at the PML inner edge to $\sigma_{\max}$ at the outer edge, suppressing the discrete reflection at the inner edge to ~ 60–80 dB depending on PML thickness.
 

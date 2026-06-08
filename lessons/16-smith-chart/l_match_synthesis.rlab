@@ -27,9 +27,9 @@ R_L = real(ZL);
 X_L = imag(ZL);
 
 GL = (ZL - Z0) / (ZL + Z0);
-print(abs(GL))                                # |Γ_L| ≈ 0.62
-print(real(GL))                               # ≈ 0.0625
-print(imag(GL))                               # ≈ 0.625
+print(abs(GL))                                # |Γ_L| ≈ 0.571
+print(real(GL))                               # ≈ 0.101
+print(imag(GL))                               # ≈ 0.562
 
 # === Closed-form solution pair ===
 disc = sqrt(R_L * (Z0 - R_L));                # 24.495

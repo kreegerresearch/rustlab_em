@@ -9,7 +9,7 @@ The first lesson where time enters the picture. So far the curriculum has been *
 - State Faraday's law in both integral $\oint\vec E\cdot d\vec\ell = -d\Phi_B/dt$ and differential $\nabla\times\vec E = -\partial\vec B/\partial t$ forms
 - Compute the induced EMF in a loop placed in a sinusoidal $\vec B(t)$
 - Express mutual inductance $M = \Phi_2/I_1$ as a geometric integral and compute it numerically via the Lesson-06 Biot-Savart pipeline
-- Derive the stream-function Laplace problem for eddy currents in a thin conducting plate, solve it on a disk, and observe Lenz's law in the recovered current pattern
+- Derive the stream-function Poisson problem for eddy currents in a thin conducting plate, solve it on a disk, and observe Lenz's law in the recovered current pattern
 
 ## Background
 

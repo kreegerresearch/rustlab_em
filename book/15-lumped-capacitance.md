@@ -8,7 +8,7 @@ Lesson 13 extracted per-unit-length $C'$ from an infinite 2-D transmission-line 
 
 - Extract a single-conductor lumped capacitance $C$ from a 3-D Laplace solve via both **energy** ($C = 2 U_E / V^2$) and **Gauss** ($C = Q / V$) methods, and read the discretisation tradeoff between them.
 - Quantify the **fringing-field correction** to the textbook $C = \varepsilon A / d$ for a finite parallel-plate capacitor and bracket the analytic Kirchhoff form between the two extraction methods.
-- Build the **multi-conductor capacitance matrix** $C_{ij}$ by solving $N$ Laplace problems with $V_k = 1$ on conductor $k$ and 0 on all others; check **reciprocity** ($C_{ij} = C_{ji}$) to machine precision.
+- Build the **multi-conductor capacitance matrix** $C_{ij}$ by solving $N$ Laplace problems with $V_k = 1$ on conductor $k$ and 0 on all others; check **reciprocity** ($C_{ij} = C_{ji}$) as a sanity check.
 - Recognise the difference between the **Maxwell** ("short-circuit") and **mutual** ("partial") capacitance conventions, and convert between them by row sums.
 - Compute the **electrostatic force** on a capacitor plate from $F = \tfrac12 V^2 \,\partial C/\partial x$ and verify against the analytic $-\tfrac12 \varepsilon A V^2/d^2$.
 
@@ -93,7 +93,7 @@ $$Q_i = \sum_{j=1}^{N} C_{ij}\,V_j, \qquad C_{ij} = \left.\frac{\partial Q_i}{\p
 
 **The short-circuit procedure.** Drive $V_j = 1$, hold the rest at 0, solve once, integrate $Q_i$ on every conductor. Repeat for each $j$. The $N$ Laplace solves share the **same** sparse operator $A$ — only the right-hand side changes. A cached LU factorisation (factor once, back-solve $N$ times) is the workhorse trick of every commercial parasitic-extraction tool. rustlab's `spsolve` re-factors per call today; a cached entry point is on the upstream feature-request list. The script structure already reflects the pattern.
 
-**Reciprocity.** Because the system is self-adjoint (the variable-$\varepsilon$ Laplacian is symmetric), $C_{ij} = C_{ji}$ to machine precision. This is a free sanity check.
+**Reciprocity.** Because the system is self-adjoint (the variable-$\varepsilon$ Laplacian is symmetric), $C_{ij} = C_{ji}$ holds exactly in principle. The Gauss-pillbox charge extraction is not perfectly symmetric on the discrete grid, so numerically it is recovered to $\sim 10^{-3}$ pF/m — a few parts in $10^4$ of the mutual terms. Still a useful free sanity check.
 
 **Maxwell vs. mutual.** Two conventions describe the same physical network:
 
@@ -134,7 +134,7 @@ $C_{11}$ levels off at ≈ 89.5 pF/m — the self-cap to ground saturates once t
 
 ### Example — Three-trace bus and Maxwell ↔ mutual conversion
 
-Three traces over ground gives a 3×3 Maxwell matrix. The script `cap_matrix_three_trace.rlab` solves the three drive cases, prints the matrix, verifies $C_{ij} = C_{ji}$ to $\sim 10^{-15}$ pF/m, and converts to the mutual form.
+Three traces over ground gives a 3×3 Maxwell matrix. The script `cap_matrix_three_trace.rlab` solves the three drive cases, prints the matrix, verifies $C_{ij} = C_{ji}$ to $\sim 10^{-3}$ pF/m (a few parts in $10^4$ of the mutual terms), and converts to the mutual form.
 
 ```rustlab
 clf;
@@ -302,7 +302,7 @@ Run all six with `make lesson-15`, or one at a time via `rustlab run lessons/15-
 | Parallel plate $L/d = 5$, $C_{\rm Gauss} / C_0$ | $\approx 1.41$ (over-shoots Kirchhoff by ~10%) |
 | Microstrip $C_{11}'$ at 3 mm spacing | $\approx 89.6\,\text{pF/m}$ |
 | Microstrip $-C_{12}'$ at 3 mm spacing | $\approx 3.1\,\text{pF/m}$ |
-| Three-trace reciprocity error | $\lesssim 10^{-15}\,\text{pF/m}$ (machine $\varepsilon$) |
+| Three-trace reciprocity error | $\sim 10^{-3}\,\text{pF/m}$ (~0.04 % of the mutual terms) |
 | Three-trace middle trace-to-ground vs. outer | middle $\approx 82.4$, outer $\approx 85.7\,\text{pF/m}$ |
 | MIM $C_{\rm Gauss}$ for 10 µm × 10 µm / 100 nm / $\varepsilon_r = 25$ | $\approx 223\,\text{fF}$ (analytic 221) |
 | Bond pad 8 µm × 8 µm / 500 nm oxide | $\approx 3.8\,\text{fF}$ |
