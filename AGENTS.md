@@ -128,24 +128,27 @@ After editing `notebooks/<slug>.md`, run `make notebooks` and commit both the so
 
 ## Lesson Roadmap
 
-The curriculum targets a "mini Ansys" endpoint: starting from vector calculus, students build up through static, quasi-static, frequency-domain, and time-domain PDE solvers, then put geometry and materials together to simulate real devices. Lesson 14 is a full end-to-end device capstone.
+The curriculum targets a "mini Ansys" endpoint: starting from vector calculus, students build up through static, quasi-static, frequency-domain, and time-domain PDE solvers, then put geometry and materials together to simulate real devices. Lesson 14 is the end-to-end device capstone; Lessons 15–17 are post-capstone applied-engineering extensions (lumped $C$/$L$ extraction and Smith-chart matching). `dev/plans.md` is the authoritative lesson plan and status source.
 
 | # | Title | Focus | Status |
 |---|-------|-------|--------|
-| 01 | Vector Calculus & Fields | Grad, div, curl, Stokes', divergence theorem on grids | Drafted |
-| 02 | Electrostatics & Coulomb's Law | Point/dipole/ring fields, superposition, field lines | Drafted |
-| 03 | Gauss's Law & Electric Potential | Flux, $\nabla\cdot\vec{E}=\rho/\varepsilon_0$, equipotentials | Drafted |
-| 04 | Geometry & Material Maps | Rasterizing shapes into $\varepsilon(x,y)$, $\mu(x,y)$, $\sigma(x,y)$ arrays; region masks; boolean ops | Drafted |
-| 05 | Poisson & Laplace BVP — Dielectrics & Conductors | $\nabla\!\cdot\!(\varepsilon\nabla V) = -\rho$, FD relaxation, sparse solve, capacitor + dielectric-slab geometries | Drafted |
-| 06 | Magnetostatics & Vector Potential | Biot-Savart, Ampère, $\nabla^2\vec A = -\mu_0\vec J$ BVP with material $\mu_r$, solenoid, Helmholtz | Drafted |
-| 07 | Faraday's Law & Induction | Induced EMF, inductance, eddy currents | Drafted |
-| 08 | Maxwell's Equations | Displacement current, Poynting vector, energy flow | Planned |
-| 09 | EM Wave Equation & Plane Waves | $c = 1/\sqrt{\mu_0\varepsilon_0}$, polarization, standing waves | Planned |
-| 10 | FDFD — Frequency-Domain Maxwell Solver | Complex-valued sparse Helmholtz/Maxwell solve, layered transmission, scattering | Planned |
-| 11 | FDTD — Time-Domain, Dispersive Materials, PML | Yee grid, leapfrog, TF/SF source, Drude/Debye/Lorentz via ADE, split-field PML | Planned |
-| 12 | Waveguides, Cavity Eigenmodes & Radiation | Numerical generalized eigenvalue problem, rectangular modes, NF→FF transform, Hertzian + half-wave dipole | Planned |
-| 13 | Transmission Lines, S-Parameters & Antennas | Coax/twin-wire $Z_0$, telegrapher + VSWR, multiport S-parameters via waveport excitation, 73 Ω radiation resistance | Planned |
-| 14 | Capstone — End-to-End Device Simulation | Patch antenna + microstrip line: geometry → material map → FDTD → $S_{11}$ + gain pattern | Planned |
+| 01 | Vector Calculus & Fields | Grad, div, curl, Stokes', divergence theorem on grids | Reviewed |
+| 02 | Electrostatics & Coulomb's Law | Point/dipole/ring fields, superposition, field lines | Reviewed |
+| 03 | Gauss's Law & Electric Potential | Flux, $\nabla\cdot\vec{E}=\rho/\varepsilon_0$, equipotentials | Reviewed |
+| 04 | Geometry & Material Maps | Rasterizing shapes into $\varepsilon(x,y)$, $\mu(x,y)$, $\sigma(x,y)$ arrays; region masks; boolean ops | Reviewed |
+| 05 | Poisson & Laplace BVP — Dielectrics & Conductors | $\nabla\!\cdot\!(\varepsilon\nabla V) = -\rho$, FD relaxation, sparse solve, capacitor + dielectric-slab geometries | Reviewed |
+| 06 | Magnetostatics & Vector Potential | Biot-Savart, Ampère, $\nabla^2\vec A = -\mu_0\vec J$ BVP with material $\mu_r$, solenoid, Helmholtz | Reviewed |
+| 07 | Faraday's Law & Induction | Induced EMF, inductance, eddy currents | Reviewed |
+| 08 | Maxwell's Equations | Displacement current, Poynting vector, energy flow | Reviewed |
+| 09 | EM Wave Equation & Plane Waves | $c = 1/\sqrt{\mu_0\varepsilon_0}$, polarization, standing waves | Reviewed |
+| 10 | FDFD — Frequency-Domain Maxwell Solver | Complex-valued sparse Helmholtz/Maxwell solve, layered transmission, scattering | Reviewed |
+| 11 | FDTD — Time-Domain, Dispersive Materials, PML | Yee grid, leapfrog, TF/SF source, Drude/Debye/Lorentz via ADE, split-field PML | Reviewed |
+| 12 | Waveguides, Cavity Eigenmodes & Radiation | Numerical generalized eigenvalue problem, rectangular modes, NF→FF transform, Hertzian + half-wave dipole | Reviewed |
+| 13 | Transmission Lines, S-Parameters & Antennas | Coax/twin-wire $Z_0$, telegrapher + VSWR, multiport S-parameters via waveport excitation, 73 Ω radiation resistance | Reviewed |
+| 14 | Capstone — End-to-End Device Simulation | Patch antenna + microstrip line: geometry → material map → FDTD → $S_{11}$ + gain pattern | Reviewed |
+| 15 | Lumped Capacitance Extraction | 3-D / multi-conductor $C$, capacitance matrix via cached LU, fringing correction, MEMS force | Reviewed |
+| 16 | Smith Chart & Impedance Matching | Bilinear $\Gamma$ map, L-match / stub / $\lambda/4$ synthesis, $S_{11}$ locus | Reviewed |
+| 17 | Lumped Inductance Extraction | Loop / solenoid $L$, mutual-inductance matrix, transformer coupling $k$, Nagaoka end-effect | Reviewed |
 
 ## Rustlab Feature Recommendations
 

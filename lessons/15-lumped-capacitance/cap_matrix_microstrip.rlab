@@ -22,8 +22,9 @@
 # you ground all other ports.
 #
 # Re-using a single LU factorisation across the N right-hand sides
-# would be ideal here; rustlab's spsolve refactors per call (open
-# upstream request). The script structure already shows the pattern.
+# would be ideal here. rustlab ships lu(A) + solve(F, b) for this
+# (since 0.3.6); this script keeps the simpler per-drive spsolve, while
+# L17's ind_matrix_microstrip.rlab uses the cached factor-once path.
 #
 # Units: SI. C' in pF/m (printed) — typical microstrip scale.
 #

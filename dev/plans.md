@@ -10,23 +10,25 @@ The curriculum targets a "mini Ansys" endpoint: given arbitrary geometry plus ma
 
 | # | Title | Status |
 |---|-------|--------|
-| 01 | Vector Calculus & Fields | Drafted |
-| 02 | Electrostatics & Coulomb's Law | Drafted |
-| 03 | Gauss's Law & Electric Potential | Drafted |
-| 04 | Geometry & Material Maps | Drafted |
-| 05 | Poisson & Laplace BVP — Dielectrics & Conductors | Drafted |
-| 06 | Magnetostatics & Vector Potential | Drafted |
-| 07 | Faraday's Law & Induction | Drafted |
-| 08 | Maxwell's Equations | Drafted |
-| 09 | EM Wave Equation & Plane Waves | Drafted |
-| 10 | FDFD — Frequency-Domain Maxwell Solver | Drafted |
-| 11 | FDTD — Time-Domain, Dispersive Materials, PML | Drafted |
-| 12 | Waveguides, Cavity Eigenmodes & Radiation | Drafted |
-| 13 | Transmission Lines, S-Parameters & Antennas | Drafted |
-| 14 | Capstone — End-to-End Device Simulation | Drafted |
-| 15 | Lumped Capacitance Extraction | Drafted |
-| 16 | Smith Chart & Impedance Matching | Drafted |
-| 17 | Lumped Inductance Extraction | Drafted |
+| 01 | Vector Calculus & Fields | Reviewed |
+| 02 | Electrostatics & Coulomb's Law | Reviewed |
+| 03 | Gauss's Law & Electric Potential | Reviewed |
+| 04 | Geometry & Material Maps | Reviewed |
+| 05 | Poisson & Laplace BVP — Dielectrics & Conductors | Reviewed |
+| 06 | Magnetostatics & Vector Potential | Reviewed |
+| 07 | Faraday's Law & Induction | Reviewed |
+| 08 | Maxwell's Equations | Reviewed |
+| 09 | EM Wave Equation & Plane Waves | Reviewed |
+| 10 | FDFD — Frequency-Domain Maxwell Solver | Reviewed |
+| 11 | FDTD — Time-Domain, Dispersive Materials, PML | Reviewed |
+| 12 | Waveguides, Cavity Eigenmodes & Radiation | Reviewed |
+| 13 | Transmission Lines, S-Parameters & Antennas | Reviewed |
+| 14 | Capstone — End-to-End Device Simulation | Reviewed |
+| 15 | Lumped Capacitance Extraction | Reviewed |
+| 16 | Smith Chart & Impedance Matching | Reviewed |
+| 17 | Lumped Inductance Extraction | Reviewed |
+
+**Status vocabulary:** *Planned* → outlined only; *Drafted* → notebook + scripts written and rendering clean; *Reviewed* → drafted **and** numeric-verified against live script output with a prose/equation pass (the 2026-06 review, see `dev/lesson-completion-checklist.md`). All 17 lessons are currently *Reviewed*.
 
 **Build order:** Lessons 01–14 are a strictly sequential arc that ends at the patch-antenna capstone. Lessons 15–17 are **post-capstone applied-engineering extensions** that depend on the existing toolkit but are *not* prerequisites for each other:
 
