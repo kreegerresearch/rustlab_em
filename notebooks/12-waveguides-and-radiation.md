@@ -9,6 +9,7 @@ Two pillars of applied EM live in this lesson. **Guided modes** of waveguides an
 - Compare numerical cutoff / resonant frequencies to the analytic $\omega_{mn} = c\pi\sqrt{(m/a)^2 + (n/b)^2}$ formula
 - Compute the far-field radiation pattern of a Hertzian dipole analytically and verify the $\sin^2\theta$ doughnut and the radiation-resistance integral
 - Extend to a half-wave dipole via numerical integration over the sinusoidal current distribution; recover the textbook $R_{\rm rad} \approx 73.13\,\Omega$ to 0.1 %
+- Apply a near-field-to-far-field (NF→FF) surface integral (Love's equivalence) and recover the dipole $\sin\theta$ pattern from tangential fields on an enclosing box
 
 ## Background
 
@@ -85,6 +86,8 @@ A 2-D imagesc of the lowest mode shows a single antinode at the cross-section ce
 ### Theory
 
 A closed metal box $a\times b$ has the same mode equation as the waveguide cross-section, but the physical interpretation flips: instead of a *cutoff* below which the mode evanesces, the eigenvalue gives the *resonant* frequency of a standing wave that fills the cavity. Lesson 10's `fdfd_resonator` reached the same answer by sweeping frequency through an FDFD solve and watching for Lorentzian peaks; here we just solve the eigenvalue problem directly, one call.
+
+### Example — TM modes of a 100×75 mm cavity
 
 ```rustlab
 clf;
@@ -236,6 +239,40 @@ print(R_rad)                  % ~ 73.13 Ω
 
 The two polar traces almost coincide — both peak at $\theta = \pi/2$, both null on-axis — but the half-wave's shape (slightly elongated lobes) is a real physical effect that improves antenna gain by $\approx 0.4$ dB. The numerical $R_{\rm rad}$ matches the textbook $73.13\,\Omega$ to four significant figures.
 
+## Near-Field to Far-Field Transform
+
+### Theory
+
+A full-wave solver only ever computes fields in a finite box, yet the antenna pattern lives at infinity. **Love's equivalence principle** bridges the gap: the tangential $\vec E$, $\vec H$ on *any* closed surface $S$ enclosing the sources are replaced by equivalent surface currents $\vec J_s = \hat n\times\vec H$, $\vec M_s = -\hat n\times\vec E$, whose radiation integral gives the exterior far field
+
+$$\vec F(\hat r) \propto \int_S\bigl[\eta_0\vec J_s + \hat r\times\vec M_s\bigr]\,e^{-jk\hat r\cdot\vec r'}\,dS',$$
+
+projected onto the plane $\perp\hat r$. So a single near-zone solve yields the entire 3-D pattern — the technique Lesson 14's capstone uses to turn a patch antenna's FDTD near field into a gain pattern.
+
+### Example — recovering $\sin\theta$ from a Hertzian near field
+
+`nf2ff_transform.rlab` samples the analytic Hertzian-dipole near field on a cube of half-side $\lambda/4$ (well inside the reactive near zone, so the $1/(kr)^2$ and $1/(kr)^3$ terms are large), forms the Love currents, and integrates. The E-plane cut should reproduce the textbook $\sin\theta$ — a clean unit test of the kernel, isolated from any solver.
+
+```rustlab
+clf;
+% Baked E-plane cut from nf2ff_transform.rlab's surface integral
+% (cube half-side lambda/4); compared to the analytic sin(theta).
+th_deg = [0, 15, 30, 45, 60, 75, 90, 105, 120, 135, 150, 165, 180];
+E_ff   = [0.0, 0.2498, 0.4856, 0.6939, 0.8589, 0.9641, 1.0, ...
+          0.9641, 0.8589, 0.6939, 0.4856, 0.2498, 0.0];
+analytic = sin(th_deg * pi / 180);
+hold on;
+plot(th_deg, E_ff,     "NF->FF surface integral");
+plot(th_deg, analytic, "analytic sin(theta)");
+hold off;
+xlabel("theta  (deg)");
+ylabel("|E_ff| / max");
+title("NF->FF transform recovers the Hertzian sin(theta) pattern");
+legend("NF->FF integral", "sin(theta)");
+```
+
+At full resolution the integral matches $\sin\theta$ to a maximum error of $\approx 1.5\,\%$, and the equatorial ($\theta=\pi/2$) cut is flat in $\varphi$ to $\approx 6\,\%$ — confirming the kernel is both accurate and rotationally symmetric. The residual is the cube's finite sampling; refining the surface mesh tightens it. This is exactly the transform that converts the capstone's boxed near field into a radiation pattern.
+
 ## Standalone Scripts
 
 | Script | What it computes |
@@ -260,6 +297,8 @@ Run all five with `make lesson-12`, or one script at a time via `rustlab run les
 | Hertzian $P_{\rm rad}$ ($I_0=1\,\text{A}$, $d\ell=1\,\text{cm}$, $f=1\,\text{GHz}$) | $\approx 0.439\,\text{W}$ |
 | Half-wave pattern numerical-vs-analytic max error | $\sim 10^{-5}$ |
 | Half-wave $R_{\rm rad}$ | $\approx 73.08\,\Omega$ |
+| NF→FF $\sin\theta$ recovery (E-plane max error) | $\approx 1.5\,\%$ |
+| NF→FF equatorial $\varphi$ flatness | $\approx 6\,\%$ |
 
 ## Exercises
 
