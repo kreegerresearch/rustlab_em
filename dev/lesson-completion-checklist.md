@@ -4,6 +4,8 @@
 
 **Last full audit:** 2026-06-07 (after L17 merged). Re-run the verification commands below before trusting the checkmarks — they reflect the audit date, not necessarily HEAD.
 
+**Review pass:** 2026-06-07 — a 17-lesson parallel review verified every script's live output against its Expected-Outputs table and baked numbers, plus a prose/equation scan. Fixes landed on branch `feat/build-out-drafts` (commit `cc159a5`): factor-of-2 (L02), factor-of-10 (L06), unit (L03 45 kV), direction (L04 under/overshoot), formula (L10), and ~half a dozen prose/claim corrections across L02–L16. L01/L05/L08/L09/L17 were clean. **All 17 lessons are now numeric-verified and prose-reviewed.** The remaining work is only the two cross-cutting doc fixes below + promoting the `dev/plans.md` status.
+
 ---
 
 ## How this repo is structured (recap)
@@ -103,4 +105,5 @@ For **L01–L10, L15, L16, L17** the structure is complete. Each still needs, be
 
 1. ~~L13 / L11 / L12 example blocks~~ — **done** 2026-06-07 (branch `feat/build-out-drafts`). Every standalone script across all 17 lessons now has a worked example.
 2. Cross-cutting doc fixes (cheap, ~1 commit): `AGENTS.md` roadmap sync + L15 `lu/solve` note (the cached factorisation shipped in rustlab 0.3.6).
-3. Numeric-table + review pass across all 17, promoting status as each clears the DoD. This is now the only substantive remaining work — no lesson has a structural content gap.
+3. ~~Numeric-table + review pass across all 17~~ — **done** 2026-06-07 (commit `cc159a5`). Every lesson is numeric-verified and prose-reviewed; all found errors fixed.
+4. Remaining: the two cross-cutting doc fixes (step 2) and bumping `dev/plans.md` statuses past `Drafted`. No lesson content work remains.
