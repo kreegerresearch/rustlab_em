@@ -94,9 +94,9 @@ For **L01–L10, L15, L16, L17** the structure is complete. Each still needs, be
 
 ## Cross-cutting tasks (not lesson-specific)
 
-- [ ] **`AGENTS.md` roadmap table is stale** — it lists only lessons 01–14, marks 08–14 as "Planned" (they're Drafted), and omits 15–17. Sync it to `dev/plans.md`, or delete it and point to `dev/plans.md` as the single source.
-- [ ] **Define a post-Drafted status** — `dev/plans.md` only has Planned/Drafted. Add `Reviewed` (or `Final`) and apply as lessons pass the DoD, so this checklist has a target state to write.
-- [ ] **Resolve a stale rustlab feature request** — `lu(A)` / `solve(F,b)` cached factorisation **shipped** in rustlab 0.3.6 (used in L17's `ind_matrix_microstrip`). L15's notebook prose and the backlog still describe it as unavailable. Update L15's note and close/annotate the corresponding entry in `dev/rustlab/requests/`.
+- [x] **`AGENTS.md` roadmap table** — *done 2026-06-08.* Extended to all 17 lessons, statuses corrected to `Reviewed`, and a pointer added naming `dev/plans.md` as the authoritative source.
+- [x] **Post-Drafted status defined** — *done 2026-06-08.* `dev/plans.md` now documents Planned → Drafted → `Reviewed`, and all 17 lessons are marked `Reviewed`.
+- [x] **Stale `lu`/`solve` references** — *done 2026-06-08.* The cached factor handles `lu(A)`/`solve(F,b)` shipped in rustlab 0.3.6; L15's Theory prose, exercise 2, and `cap_matrix_microstrip.rlab` header now say so (cross-linked to L17), and `dev/rustlab/requests/em_requests.md` §2.3 notes the follow-on.
 - [ ] **Optional: smith-chart builtin** — `dev/rustlab/requests/smith-chart.md` is still open; L16 hand-rolls the background. Not blocking.
 
 ---
@@ -104,6 +104,6 @@ For **L01–L10, L15, L16, L17** the structure is complete. Each still needs, be
 ## Suggested order of attack
 
 1. ~~L13 / L11 / L12 example blocks~~ — **done** 2026-06-07 (branch `feat/build-out-drafts`). Every standalone script across all 17 lessons now has a worked example.
-2. Cross-cutting doc fixes (cheap, ~1 commit): `AGENTS.md` roadmap sync + L15 `lu/solve` note (the cached factorisation shipped in rustlab 0.3.6).
+2. ~~Cross-cutting doc fixes~~ — **done** 2026-06-08: `AGENTS.md` roadmap sync, L15 `lu/solve` note, and `dev/plans.md` status bump to `Reviewed`.
 3. ~~Numeric-table + review pass across all 17~~ — **done** 2026-06-07 (commit `cc159a5`). Every lesson is numeric-verified and prose-reviewed; all found errors fixed.
-4. Remaining: the two cross-cutting doc fixes (step 2) and bumping `dev/plans.md` statuses past `Drafted`. No lesson content work remains.
+4. **Curriculum is content-complete and reviewed.** Only the optional smith-chart builtin (non-blocking) remains open.

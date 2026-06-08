@@ -11,7 +11,7 @@ filed as standalone specs. The em_requests sweep is **closed**.
 | § | Item | Status | Commit / Notes |
 |---|---|---|---|
 | §2.5 | rasterization masks (`rect_mask`, `disk_mask`, `polygon_mask`) | ✅ **shipped** | `5791ec0` → `gallery/masks.md` |
-| §2.3 | sparse `spsolve` (Cholesky + LU + AMD ordering, hand-rolled pure Rust) | ✅ **shipped** | `6623496` + `e9283b7` + `5feef19` → `gallery/sparse_solve.md`, `gallery/sparse_scaling.md`, `gallery/electrostatics.md`, `gallery/sparse_complex.md`. Per-phase plan: `dev/plans/sparse_solve_handroll.md` (closed). Perf: `perf/sparse_solve_phase1to4.md`. |
+| §2.3 | sparse `spsolve` (Cholesky + LU + AMD ordering, hand-rolled pure Rust) | ✅ **shipped** | `6623496` + `e9283b7` + `5feef19` → `gallery/sparse_solve.md`, `gallery/sparse_scaling.md`, `gallery/electrostatics.md`, `gallery/sparse_complex.md`. Per-phase plan: `dev/plans/sparse_solve_handroll.md` (closed). Perf: `perf/sparse_solve_phase1to4.md`. Follow-on: reusable factor handles `lu(A)` / `chol(A)` + `solve(F, b)` for factor-once-solve-many shipped in 0.3.6 (used by L17 `ind_matrix_microstrip.rlab`). |
 | §2.1 + §2.2 | Laplacian boundary conditions, 1-D / 3-D variants, `laplacian_eps_2d` | ✅ **shipped** | `26954a3` → `gallery/laplacian_bc.md`, `gallery/dielectric.md`. Same commit also closed several pre-existing doc-coverage gaps via an audit pass. |
 | §2.4 | sparse `eigs(A, n)` and `eigs(A, B, n)` | ✅ **shipped** | `7eb5672` → `gallery/eigs.md`. Hand-rolled Lanczos + Arnoldi on top of rustlab-core `SparseChol` / `SparseLU`. |
 | §4 | real-typed elem-ops (Option A pragmatic fix) | ✅ **shipped** | `6d7ff20` |
