@@ -171,7 +171,7 @@ r2  = X .^ 2 + Y .^ 2 + 1e-12;
 r3  = r2 .^ 1.5;
 V   = ke * p * X ./ r3;
 
-% Bounded by ~ k_e p / dx² ≈ 45 V on this grid — no clip needed.
+% Bounded by ~ k_e p / dx² ≈ 45 kV on this grid — no clip needed.
 clf;
 hold on;
 imagesc(V, "viridis");
@@ -254,8 +254,8 @@ V0    = E_in * d;              % voltage across (V)
 C     = eps0 * A / d;          % capacitance (F)
 
 print(sigma)                   % 1e-7 C/m²
-print(E_in)                    % ≈ 11293 V/m
-print(V0)                      % ≈ 113 V
+print(E_in)                    % ≈ 11294 V/m
+print(V0)                      % ≈ 112.9 V
 print(C)                       % ≈ 8.854e-12 F = 8.854 pF
 print(Q / V0)                  % independent check:  Q/V = C
 ```
@@ -350,7 +350,7 @@ Run all three with `make lesson-03`, or one at a time via `rustlab run lessons/0
 
 | Variable | Expected Value |
 |---|---|
-| `Er(1)` (sphere, near $r=0$) | ≈ 0 (linear in $r$) |
+| `Er(1)` (sphere, near $r=0$) | ≈ 71.9 V/m (small, grows linearly in $r$) |
 | `Er` at $r \approx R$ | ≈ $k_e Q / R^2$ ≈ 3595 V/m |
 | `V_r(1)` (sphere, near $r=0$) | ≈ $3 k_e Q / (2R)$ ≈ 269.6 V |
 | $k_e Q / R$ (sphere surface) | ≈ 179.75 V |

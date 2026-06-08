@@ -80,11 +80,11 @@ title("disk_mask: centre (0, 0), radius 1.0")
 ```
 
 ```rustlab
-print(sum(sum(D)) * dx * dy)        % ≈ 3.135 (overshoots π by ≈ 0.2 %)
+print(sum(sum(D)) * dx * dy)        % ≈ 3.135 (undershoots π by ≈ 0.2 %)
 print(pi)                            % 3.14159...
 ```
 
-The overshoot is the staircase artefact: `disk_mask` is *closed* (the boundary cells are included), and on a 200-cell grid the rim is a few cells thick.
+The small undershoot is the staircase artefact: `disk_mask` keeps a cell only when its *centre* satisfies $(X-x_c)^2 + (Y-y_c)^2 \le r^2$, so on a 200-cell grid the jagged rim falls a touch inside the smooth circle — the rim cells it drops cover slightly more area than the partial cells it keeps.
 
 ### Example — Polygon
 
@@ -289,7 +289,7 @@ title("Conformal α(x, y) for unit disk (K = 8 subsamples)")
 A_stair = sum(sum(D_unit)) * dx * dy;    % from the binary mask
 A_conf  = sum(sum(alpha))  * dx * dy;    % from the α map
 A_true  = pi;                             % analytic
-print(A_stair)                            % ≈ 3.135  — staircase overshoot
+print(A_stair)                            % ≈ 3.135  — staircase undershoot
 print(A_conf)                             % ≈ 3.1417 — conformal, far closer
 print(A_true)                             % 3.14159...
 print(abs(A_stair - A_true) / A_true)     % staircase relative error ≈ 2e-3
@@ -329,12 +329,12 @@ Run all four with `make lesson-04`, or one at a time via `rustlab run lessons/04
 | `size(X)` | `[200, 200]` |
 | `dx` | $\approx 0.01508$ m |
 | Rectangle area | $\approx 0.60$ m² |
-| Disk area (staircase) | $\approx 3.135$ m² (≈ 0.2 % over $\pi$) |
+| Disk area (staircase) | $\approx 3.135$ m² (≈ 0.2 % under $\pi$) |
 | Annulus area (staircase) | $\approx 2.351$ m² (analytic $\pi(1 - 0.25) = 2.356$) |
 | `eps_r` in copper cell | $1.0$ (metal overwrote substrate) |
 | `eps_r` in substrate cell | $4.4$ |
 | `sigma` in copper cell | $5.8 \times 10^7$ S/m |
-| Disk area (conformal, $K=8$) | $\approx 3.1414$ (≈ $10^{-5}$ relative error) |
+| Disk area (conformal, $K=8$) | $\approx 3.1417$ (≈ $2.4\times10^{-5}$ relative error) |
 | Conformal-vs-staircase error ratio | $\approx 100\times$ better |
 
 ## Exercises

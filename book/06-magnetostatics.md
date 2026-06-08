@@ -482,11 +482,11 @@ print(mu0 * 1.0 / (2 * pi * 0.09))
 ```rustlab
 clf;
 imagesc(real(Bmag), "viridis");
-title("|B|(x, y): bright ring is the iron, exterior is shielded")
+title("|B|(x, y): bright ring is the iron, exterior is bare-wire-like")
 ```
 
 <!-- rustlab:output-start -->
-![plot 9](plots/06-magnetostatics/plot-9-75c5ab3d.svg)
+![plot 9](plots/06-magnetostatics/plot-9-18f91080.svg)
 
 <!-- rustlab:output-end -->
 
@@ -509,11 +509,11 @@ Run all five with `make lesson-06`, or individually via `rustlab run lessons/06-
 | Variable | Expected Value |
 |---|---|
 | Loop $B_z(0)$ via Biot–Savart | $\mu_0 I/(2R) \approx 1.257\times10^{-5}$ T |
-| Solenoid centre $B_z$ | just under $\mu_0 n I = 50\mu_0 \approx 6.28\times10^{-5}$ T |
+| Solenoid centre $B_z$ | just under $\mu_0 n I \approx 6.28\times10^{-4}$ T ($n = 500$ turns/m) |
 | Helmholtz $B_{\rm off}/B_0$ ratio at $d/R = 1$ | closest to 1 across the three cases |
 | Two-wire $B_x$ above midpoint | analytic / numerical agree within a few percent |
-| $\lvert B\rvert$ in iron shell | $\sim 100\times$ larger than just outside |
-| $\lvert B\rvert$ outside iron at $r = 7$ cm | well below $\mu_0 I/(2\pi r)$ reference |
+| $\lvert B\rvert$ in iron shell | $\sim 1000\times$ larger than just outside |
+| $\lvert B\rvert$ outside iron at $r = 7$ cm | close to the $\mu_0 I/(2\pi r)$ reference |
 
 ## Exercises
 

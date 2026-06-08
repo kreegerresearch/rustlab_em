@@ -37,7 +37,7 @@ The four pieces compose like this:
 
 1. **Material map.** Lesson 04's recipe: start with $\varepsilon_r(i, j) = 1$, fill a band of cells with $4.4$ for the FR-4 substrate, and set a `pec_mask(i, j) = 1` on the ground row and patch row. The Yee step multiplies $E_z$ by $(1 - \text{pec\_mask})$ after each E update — a one-line enforcement of the perfect-conductor condition.
 
-2. **Yee FDTD core.** Lesson 11's leapfrog updates $H_x$, $H_y$, $E_z$ on a staggered grid. The per-cell $\varepsilon_r$ coefficient enters as a precomputed `cE_map(i, j) = \Delta t / (\varepsilon_0\varepsilon_r(i,j)\Delta x)`. Bulk-loss absorbing strips at the lateral edges suppress reflection without a full Bérenger PML — adequate for a 1500-step run.
+2. **Yee FDTD core.** Lesson 11's leapfrog updates $H_x$, $H_y$, $E_z$ on a staggered grid. The per-cell $\varepsilon_r$ coefficient enters as a precomputed `cE_map(i, j) = \Delta t / (\varepsilon_0\varepsilon_r(i,j)\Delta x)`. Bulk-loss absorbing strips at the lateral edges suppress reflection without a full Bérenger PML — adequate for a 900-step run.
 
 3. **Pulsed feed.** A Gaussian-modulated $\sin(\omega_0 t)$ in a 1-column column of the substrate. The pulse's frequency content roughly covers 0–6 GHz so a single run probes the patch across its operating band.
 
@@ -106,7 +106,7 @@ The remaining cells of the loop — the Yee update, the source injection, the PE
 8. Plot the spectrum, the time trace, and the final |E_z| heatmap.
 ```
 
-The standalone script that implements this pattern is `patch_antenna.rlab`. Run it with `make lesson-14`; its 1500-step animation lands in ~ 90 seconds of interpreted-rustlab wall time. The dominant spectral peak sits within a few percent of $f_{\rm res} = c_0 / (2 L_{\rm patch}\sqrt{\varepsilon_{\rm eff}})$ — the textbook fundamental for a $\lambda/2$ patch on a high-permittivity substrate.
+The standalone script that implements this pattern is `patch_antenna.rlab`. Run it with `make lesson-14`; its 900-step animation lands in well under a minute of interpreted-rustlab wall time. The dominant spectral peak sits within a few percent of $f_{\rm res} = c_0 / (2 L_{\rm patch}\sqrt{\varepsilon_{\rm eff}})$ — the textbook fundamental for a $\lambda/2$ patch on a high-permittivity substrate.
 
 ## From 2-D to 3-D — What Would Change
 
@@ -139,8 +139,8 @@ Run it with `make lesson-14`, or directly via `rustlab run lessons/14-capstone-d
 | Patch length $L$ at $f_0 = 2.45\,\text{GHz}$ | $\lambda_0/(2\sqrt{\varepsilon_{\rm eff}}) \sim 30\,\text{mm}$ |
 | 2-D resonant peak frequency, this geometry | $\sim 3.7\,\text{GHz}$ — the 2-D side-view's cavity mode (a real 3-D patch with the same dimensions would resonate lower because of fringing-field length extension and the lateral $\hat y$ mode) |
 | Pulse half-width $\tau$ | $\approx 0.4\,\text{ns}$ |
-| Time-step ($S = 0.7$ Courant) | $\sim 1.75\,\text{ps}$ |
-| Total simulation time | $\sim 2.6\,\text{ns}$ (1500 steps × $\Delta t$) |
+| Time-step ($S = 0.7$ Courant) | $\sim 2.34\,\text{ps}$ ($\Delta x = 1$ mm) |
+| Total simulation time | $\sim 2.1\,\text{ns}$ (900 steps × $\Delta t$) |
 
 ## Exercises
 

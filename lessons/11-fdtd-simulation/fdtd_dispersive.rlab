@@ -139,6 +139,6 @@ ylabel("|E_fwd / E_back|");
 title(sprintf("Drude metal — plasma frequency fp = %.0f GHz", fp / 1e9));
 savefig("fdtd_dispersive_transmission.svg");
 
-print(fp / 1e9)             # 10 — expected plasma frequency
+print(fp / 1e9)             # 3 — expected plasma frequency
 print(max(abs(E_fwd_hist))) # transmitted-pulse peak
 print(max(abs(E_back_hist)))

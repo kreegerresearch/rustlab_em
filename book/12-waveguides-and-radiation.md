@@ -316,7 +316,7 @@ print(R_rad)                  % ~ 73.13 Ω
 
 <!-- rustlab:output-end -->
 
-The two polar traces almost coincide — both peak at $\theta = \pi/2$, both null on-axis — but the half-wave's shape (slightly elongated lobes) is a real physical effect that improves antenna gain by $\approx 0.4$ dB. The numerical $R_{\rm rad}$ matches the textbook $73.13\,\Omega$ to four significant figures.
+The two polar traces almost coincide — both peak at $\theta = \pi/2$, both null on-axis — but the half-wave's shape (slightly elongated lobes) is a real physical effect that improves antenna gain by $\approx 0.4$ dB. The numerical $R_{\rm rad}$ ($73.08\,\Omega$) matches the textbook $73.13\,\Omega$ to three significant figures (0.07 %).
 
 ## Near-Field to Far-Field Transform
 

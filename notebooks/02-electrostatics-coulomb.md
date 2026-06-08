@@ -181,7 +181,7 @@ r5  = r2 .^ 2.5;
 Exd = ke * p * (2 * X .^ 2 - Y .^ 2) ./ r5;
 Eyd = ke * p * (3 * X .* Y)            ./ r5;
 
-print(real(Exd(26, 36)))      % at (0.02, 0):  ≈ 22469 V/m  (= 2 k_e p / x³)
+print(real(Exd(26, 36)))      % at (0.02, 0):  ≈ 44937 V/m  (= 2 k_e p / x³)
 print(real(Eyd(26, 36)))      % ≈ 0  on the dipole axis
 ```
 
@@ -289,7 +289,7 @@ Run all three with `make lesson-02` from the repo root, or one at a time via `ru
 | `Ey_pt(26, 31)` | ≈ 0 |
 | `Ex(26, 26)` (dipole midpoint) | ≈ −179750 V/m |
 | `Ey(26, 26)` | ≈ 0 |
-| `Exd(26, 36)` (far-field on axis) | ≈ 22469 V/m |
+| `Exd(26, 36)` (far-field on axis) | ≈ 44937 V/m |
 | `Eyd(26, 36)` | ≈ 0 |
 | `err` (ring numerical–analytic max) | ≲ 1e-3 V/m |
 

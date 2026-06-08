@@ -299,7 +299,7 @@ print(max(abs(real(V_mis(20:80)))))       % ~ source peak / 3
 
 <!-- rustlab:output-end -->
 
-Four overlaid traces tell the story: the matched line has nothing left (the pulse was absorbed by the load), the open / short have a returning pulse with the *same* amplitude as the incident (with a sign flip for the short), and the 100 Ω termination has a one-third-amplitude returning pulse — exactly $\Gamma = 1/3$.
+Four overlaid traces tell the story: the matched line has only a negligible residual (a sub-percent reflection, ~0.001 V — the pulse is almost entirely absorbed by the load), the open / short have a returning pulse with the *same* amplitude as the incident (with a sign flip for the short), and the 100 Ω termination has a one-third-amplitude returning pulse — exactly $\Gamma = 1/3$.
 
 ## VSWR from a CW-Driven Standing Wave
 
