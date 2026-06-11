@@ -28,7 +28,7 @@ Linear superposition (currents add) makes the integral
 
 $$\vec B(\vec r) = \frac{\mu_0 I}{4\pi}\oint_C\frac{d\vec\ell\times(\vec r-\vec r{}')}{|\vec r-\vec r{}'|^3}$$
 
-a direct numerical recipe: parametrise the path $C$ by arc length, evaluate the integrand at each segment, sum. The $1/r^3$ falloff is sharper than Coulomb's $1/r^2$, so the field is dominated by the nearest source segment and a modest segment count (say $N \sim 100$) is plenty for engineering accuracy.
+a direct numerical recipe: parametrise the path $C$ by arc length, evaluate the integrand at each segment, sum. The kernel magnitude falls off as $1/r^2$, just like Coulomb's (the numerator carries an unnormalised displacement vector), and on a closed smooth path the integrand is smooth and periodic, so the segment sum converges rapidly — a modest segment count (say $N \sim 100$) is plenty for engineering accuracy.
 
 Numerically, the natural pattern in rustlab is to **vectorise over field points and loop over source segments**: for each segment, the displacement vector `(Xg - rxs(k), Yg - rys(k), Zg - rzs(k))` broadcasts over the entire grid in one elementwise expression, and the cross-product contribution accumulates onto an `Nm × Nm` matrix. Six lines of broadcast-style array math in one outer loop reads the same as the textbook sum and runs ~30× faster than three nested scalar loops.
 
@@ -98,7 +98,7 @@ ylabel("z (m)")
 
 <!-- rustlab:output-end -->
 
-The arrows trace the familiar dipole-like pattern with closed field lines through the loop. The on-axis numeric matches the closed form $B_z(0) = \mu_0 I/(2R)$ to machine precision; off-axis, the loop field falls off and reverses sign at points outside the loop's plane on the symmetry axis.
+The arrows trace the familiar dipole-like pattern with closed field lines through the loop. The on-axis numeric matches the closed form $B_z(0) = \mu_0 I/(2R)$ to machine precision; off-axis, the loop field falls off, and $B_z$ reverses sign at points in the loop's plane outside the wire ($|x| > R$), where the returning field lines point back down.
 
 ```rustlab
 % On-axis Bz vs closed form along the z-axis (x = 0, ix = 21).
@@ -173,12 +173,18 @@ end
 B_amp = mu0 * (N_l / L_s) * Isol;          % infinite-solenoid Ampère value
 print(real(Bz_axis(61)))                    % centre of the solenoid (z = 0)
 print(B_amp)                                % μ₀nI
+
+% Finite-solenoid closed form at the centre:
+% B(0) = μ₀ n I · (L/2) / sqrt((L/2)² + R²)  — ≈ 0.928 · μ₀nI here
+B_fin = B_amp * (L_s/2) / sqrt((L_s/2)^2 + Rs^2);
+print(B_fin)                                % ≈ 5.83e-4 T, ~1.7% above numerical
 ```
 
 <!-- rustlab:output-start -->
 ```text
 0.0005732925467861275
 0.0006283185307179586
+0.0005833791102228984
 ```
 
 <!-- rustlab:output-end -->
@@ -199,7 +205,7 @@ legend("Biot-Savart sum", "μ₀nI (∞ limit)")
 
 <!-- rustlab:output-end -->
 
-The interior field sits just below the infinite-solenoid value $\mu_0 n I$ (the finite ends leak a small amount of flux); at each end the field drops to roughly half, and outside the solenoid it falls off exponentially. This is the basis for every air-core inductor and every "uniform field" lab magnet.
+The interior field sits just below the infinite-solenoid value $\mu_0 n I$ — 8.8 % under here, because the finite ends leak flux. The finite-solenoid closed form $B(0) = \mu_0 n I\,(L/2)/\sqrt{(L/2)^2 + R^2}$ accounts for exactly that leakage (the geometric factor is $\approx 0.928$ for this $L/R = 5$ coil) and agrees with the Biot–Savart sum to ~1.7 % — the small residual comes from the discrete 50-loop stack standing in for a continuous winding. At each end the field drops to roughly half its central value, and beyond the ends the on-axis field decays algebraically, settling into the $1/z^3$ dipole tail of the whole coil far away. This is the basis for every air-core inductor and every "uniform field" lab magnet.
 
 ## Helmholtz Coils — Field Uniformity
 
@@ -207,7 +213,7 @@ The interior field sits just below the infinite-solenoid value $\mu_0 n I$ (the 
 
 Two coaxial loops of radius $R$ separated by distance $d$ produce on-axis fields that overlap. By symmetry the first derivative $dB_z/dz$ vanishes at the midplane; the **Helmholtz condition** is that the *second* derivative also vanishes there, giving an unusually flat field:
 
-$$\left.\frac{d^2 B_z}{dz^2}\right|_{z=d/2} = 0 \quad\Longleftrightarrow\quad d = R.$$
+$$\left.\frac{d^2 B_z}{dz^2}\right|_{z=0} = 0 \quad\Longleftrightarrow\quad d = R.$$
 
 The result is a small region around the midplane where $B_z$ varies only at fourth order in $z$ — useful as a calibration field source. Symbolically:
 
@@ -342,13 +348,13 @@ Bx_w = Az_y;
 By_w = -Az_x;
 
 clf;
-quiver(Xw, Yw, Bx_w, By_w, "B field from -∇×A");
+quiver(Xw, Yw, Bx_w, By_w, "B field from ∇×A");
 xlabel("x (m)");
 ylabel("y (m)")
 ```
 
 <!-- rustlab:output-start -->
-![plot 6](plots/06-magnetostatics/plot-6-24d5003a.svg)
+![plot 6](plots/06-magnetostatics/plot-6-603fd6f7.svg)
 
 <!-- rustlab:output-end -->
 
@@ -460,8 +466,9 @@ j_iron  = round((0.05  + Lx2/2) / dxi);   % inside the iron annulus (r ≈ 5 cm)
 j_outer = round((0.07  + Lx2/2) / dxi);   % just outside the iron (r ≈ 7 cm)
 j_far   = round((0.09  + Lx2/2) / dxi);   % well outside (r ≈ 9 cm)
 print(real(Bmag(i_c, j_iron)))    % ≈ 4×10⁻³ T — the iron carries huge flux
-print(real(Bmag(i_c, j_outer)))   % ≈ 3×10⁻⁶ T — close to bare-wire value at r=7cm
-print(real(Bmag(i_c, j_far)))     % ≈ 2.6×10⁻⁶ T — close to bare-wire at r=9cm
+print(real(Bmag(i_c, j_outer)))   % ≈ 3×10⁻⁶ T — within ~5% of bare-wire at r=7cm
+print(real(Bmag(i_c, j_far)))     % ≈ 2.6×10⁻⁶ T — ~19% above bare-wire at r=9cm
+                                  %   (grounded box boundary is only 1 cm away)
 
 % Reference: same wire with no iron — μ₀I/(2πr) at r = 0.07 m and r = 0.09 m.
 print(mu0 * 1.0 / (2 * pi * 0.07))
@@ -490,7 +497,7 @@ title("|B|(x, y): bright ring is the iron, exterior is bare-wire-like")
 
 <!-- rustlab:output-end -->
 
-The iron ring carries roughly three orders of magnitude more $|\vec B|$ than the surrounding vacuum — that's the flux concentration that makes transformer cores possible. The exterior field at $r = 7$ cm and $r = 9$ cm is essentially the bare-wire $\mu_0 I/(2\pi r)$ result: in this *cylindrically symmetric* geometry, Ampère's law applied to a circular contour gives $H = I/(2\pi r)$ regardless of $\mu_r$, so the exterior $B = \mu_0 H$ is independent of the iron. True external shielding requires either an external applied field (so that the iron has flux to short-circuit) or a non-axisymmetric source — Exercise 5 walks through the high-$\mu$ shielding setup that exploits this.
+The iron ring carries roughly three orders of magnitude more $|\vec B|$ than the surrounding vacuum — that's the flux concentration that makes transformer cores possible. The exterior field tracks the bare-wire $\mu_0 I/(2\pi r)$ result: in this *cylindrically symmetric* geometry, Ampère's law applied to a circular contour gives $H = I/(2\pi r)$ regardless of $\mu_r$, so the exterior $B = \mu_0 H$ is independent of the iron. The agreement is ~5 % at $r = 7$ cm, but the $r = 9$ cm sample reads ~19 % *above* bare-wire — that point sits only 1 cm from the grounded $A_z = 0$ box wall, which compresses the wire's return flux into the remaining gap. The boundary artefact, not the iron, is what spoils the far sample. True external shielding requires either an external applied field (so that the iron has flux to short-circuit) or a non-axisymmetric source — Exercise 5 walks through the high-$\mu$ shielding setup that exploits this.
 
 ## Standalone Scripts
 
@@ -509,18 +516,19 @@ Run all five with `make lesson-06`, or individually via `rustlab run lessons/06-
 | Variable | Expected Value |
 |---|---|
 | Loop $B_z(0)$ via Biot–Savart | $\mu_0 I/(2R) \approx 1.257\times10^{-5}$ T |
-| Solenoid centre $B_z$ | just under $\mu_0 n I \approx 6.28\times10^{-4}$ T ($n = 500$ turns/m) |
+| Solenoid centre $B_z$ | $\approx 5.73\times10^{-4}$ T, 8.8 % under $\mu_0 n I \approx 6.28\times10^{-4}$ T ($n = 500$ turns/m) |
+| Finite-solenoid closed form $B(0)$ | $\approx 5.83\times10^{-4}$ T (factor $\approx 0.928$); numerical agrees to ~1.7 % |
 | Helmholtz $B_{\rm off}/B_0$ ratio at $d/R = 1$ | closest to 1 across the three cases |
-| Two-wire $B_x$ above midpoint | analytic / numerical agree within a few percent |
+| Two-wire $B_y$ above midpoint | analytic / numerical agree within ~12 % (single-cell source + grounded box) |
 | $\lvert B\rvert$ in iron shell | $\sim 1000\times$ larger than just outside |
-| $\lvert B\rvert$ outside iron at $r = 7$ cm | close to the $\mu_0 I/(2\pi r)$ reference |
+| $\lvert B\rvert$ outside iron at $r = 7$ cm | within ~5 % of the $\mu_0 I/(2\pi r)$ reference ($r = 9$ cm reads ~19 % high — grounded-box effect) |
 
 ## Exercises
 
 1. **Off-axis loop field.** Modify the Biot–Savart loop example to plot $B_x(x, 0)$ and $B_z(x, 0)$ along a *radial* slice through the loop's plane. Verify that $B_z$ changes sign at $|x| = R$ (passing through the wire) and that the field magnitude diverges there (a numerical-integration limitation that disappears with finer segmentation or an analytic treatment via elliptic integrals).
 2. **Toroid field.** Build a toroidal stack of $N = 100$ small loops bent into a torus of major radius $R_{\rm tor} = 5$ cm. Show that the interior field is azimuthal with $B_\phi = \mu_0 N I/(2\pi r)$ (Ampère's law), and that the field outside the toroid is essentially zero.
 3. **Helmholtz analytic.** Differentiate the closed-form on-axis $B_z(z)$ for the pair, set $d^2 B/dz^2|_{z=0} = 0$, and confirm the Helmholtz condition $d = R$ algebraically. Plot the fourth derivative at $z = 0$ to verify it's the leading non-zero term once $d = R$ is enforced.
-4. **Solenoid via Poisson.** Solve the 2-D vector-potential BVP for a *cross-section* of a finite solenoid: many parallel current cells around the perimeter of a long rectangle, alternating polarity along the wall. Show that the interior $\vec B$ is approximately uniform and matches $\mu_0 n I$ for a thin cross-section.
+4. **Solenoid via Poisson.** Solve the 2-D vector-potential BVP for a *cross-section* of a finite solenoid: $+I$ current cells along one long wall of a rectangle and $-I$ along the opposite wall (the two cut sides of the winding). Show that the interior $\vec B$ is approximately uniform and matches $\mu_0 n I$ for a thin cross-section.
 5. **High-$\mu$ shield against an external field.** Apply a uniform $B_{\rm ext} = B_0\hat x$ across the box by setting Dirichlet boundary values $A_z = -B_0\,y$ on the left and right edges. Place a hollow iron annulus in the middle. Show that the field inside the *cavity* (the inner disk, free of current) is much smaller than $B_0$ — the iron has shielded the cavity from the external field by short-circuiting flux through itself. Sweep $\mu_r \in \{10, 100, 1000\}$ and confirm the cavity field falls roughly as $1/\mu_r$.
 
 ## What's next

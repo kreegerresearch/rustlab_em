@@ -12,7 +12,7 @@ Lesson 08 closed Maxwell's equations: with the displacement current in place, th
 
 ## Background
 
-Lessons 01 (vector calculus, $\nabla^2$, $\nabla\times$), 07 (Faraday), 08 (Maxwell's equations as a closed system, Poynting flux). The animation builtins are documented in [`docs/functions.md`](../dev/rustlab/requests/animation-export.md) under `frame()` and `saveanim()`.
+Lessons 01 (vector calculus, $\nabla^2$, $\nabla\times$), 07 (Faraday), 08 (Maxwell's equations as a closed system, Poynting flux). The animation builtins `frame()` and `saveanim()` are described in the [animation-export feature request](../dev/rustlab/requests/animation-export.md), which links the upstream `docs/functions.md` entries.
 
 ## From Maxwell to the Wave Equation
 
@@ -91,6 +91,23 @@ legend("t = 0", "t = T/4", "t = T/2")
 The cosine envelope shifts to the right by $\lambda/4$ between $t = 0$ and $t = T/4$, and by $\lambda/2$ between $t = 0$ and $t = T/2$ — exactly $c\,\Delta t$ in each case. A trace at fixed $x$ would show pure $\cos(\omega t)$ with the same period as the spatial pattern.
 
 ```rustlab
+% Static overlay: E_y vs c B_z at t = 0 — the two curves coincide exactly.
+clf;
+B0_v  = E0_v / c_v;
+Bz_t0 = B0_v * cos(k_v * xs_v);
+hold on;
+plot(xs_v / lambda_v, Ey_t0,        "E_y / E0");
+plot(xs_v / lambda_v, c_v * Bz_t0,  "c B_z / E0");
+hold off;
+xlim([0.0, 3.0]);
+ylim([-1.2, 1.2]);
+xlabel("x / lambda");
+ylabel("field / E0");
+title("E_y and c B_z at t = 0 — equal amplitude, equal phase");
+legend("E_y / E0", "c B_z / E0")
+```
+
+```rustlab
 % Verify |E_0|/|B_0| = c numerically.
 B0_v   = E0_v / c_v;
 print(E0_v / B0_v)               % → c ≈ 2.998e8
@@ -133,11 +150,11 @@ Four canonical states:
 | State | Jones vector | Locus in $(E_y, E_z)$ |
 |---|---|---|
 | Linear, $45^\circ$ | $\tfrac{1}{\sqrt 2}(1,\,1)$ | line at $E_z = E_y$ |
-| Right circular (RCP) | $\tfrac{1}{\sqrt 2}(1,\,-i)$ | unit circle, **clockwise** viewed from $+x$ toward source |
+| Right circular (RCP, optics convention) | $\tfrac{1}{\sqrt 2}(1,\,-i)$ | unit circle, **clockwise** looking back toward the source |
 | Left circular (LCP) | $\tfrac{1}{\sqrt 2}(1,\,+i)$ | unit circle, counter-clockwise |
 | Elliptical, axis ratio $2{:}1$ | $(1,\,0.5\,i)$ | $2{:}1$ ellipse, same handedness as LCP |
 
-Handedness conventions vary — the IEEE/physics convention used here calls a wave **right-circular** if the tip rotates clockwise *as seen looking back toward the source* (i.e. against the propagation direction). Optics texts often use the opposite. Spelling out the time-step rule — "$E_y(0)=1$, then $E_z$ becomes negative for RCP" — leaves no room for ambiguity.
+Handedness conventions vary — the optics/receiver convention used here calls a wave **right-circular** if the tip rotates clockwise *as seen looking back toward the source* (i.e. against the propagation direction). IEEE/antenna engineering uses the opposite view — an observer looking *along* the propagation direction, the transmitter's view — so the labels swap: the $\vec J = (1, -i)/\sqrt 2$ wave below is IEEE *left*-circular. Spelling out the time-step rule — "$E_y(0)=1$, then $E_z$ becomes negative for RCP" — leaves no room for ambiguity.
 
 Two physical consequences. First, an unpolarised source (a thermal lamp, the Sun) is a stochastic mixture of polarisations and admits no fixed Jones vector — it is described instead by the $2\times 2$ coherency matrix or the four Stokes parameters. Second, a **polarising filter** projects $\vec J$ onto a one-dimensional subspace, attenuating by $|\hat J_{\rm pass}\cdot\vec J|^2$ (Malus's law for linear filters).
 
@@ -156,11 +173,12 @@ phs_p = 2 * pi * ts_p;
 Ly_p = (1 / sqrt(2)) * cos(phs_p);
 Lz_p = (1 / sqrt(2)) * cos(phs_p);
 
-% RCP: E_y = cos(ωt), E_z = -sin(ωt) → CW viewed from +x toward source.
+% RCP (optics convention): E_y = cos(ωt), E_z = -sin(ωt) → CW looking
+% back toward the source. (IEEE/antenna convention calls this LCP.)
 Ry_p =  cos(phs_p);
 Rz_p = -sin(phs_p);
 
-% LCP: opposite handedness.
+% LCP (optics convention): opposite handedness.
 Ly_circ = cos(phs_p);
 Lz_circ = sin(phs_p);
 
@@ -240,7 +258,7 @@ The corresponding magnetic field, by Faraday, picks up a *cosine* spatial profil
 
 $$B_z(x, t) = -2(E_0/c)\,\cos(k x)\cos(\omega t),$$
 
-which is *maximum* at $x = 0$ (the antinode of $B$ coincides with the node of $E$) — a $\lambda/4$ spatial offset. This is why the surface current on the conductor, $K_z = H_z\,(\text{tangential at the surface})$, is what dissipates the wave's energy in a real (lossy) reflector: the magnetic field plows into the metal at the same instant the electric field cancels.
+which is *maximum* at $x = 0$ (the antinode of $B$ coincides with the node of $E$) — a $\lambda/4$ spatial offset. This is why the surface current on the conductor, $\vec K = \hat n\times\vec H = -H_z\,\hat y$ (magnitude $|H_{\rm tan}|$, directed along the polarisation axis $\hat y$), is what dissipates the wave's energy in a real (lossy) reflector: the magnetic field plows into the metal at the same instant the electric field cancels.
 
 ### Example — Standing-wave field, envelope, animation
 
@@ -286,7 +304,7 @@ title("Standing wave — snapshots inside envelope");
 legend("wt = pi/8", "wt = pi/4", "wt = pi/2", "+envelope", "-envelope")
 ```
 
-The three snapshots all lie inside the same envelope $\pm 2E_0|\sin kx|$, with the snapshot at $\omega t = \pi/2$ (i.e. $t = T/4$) coinciding with the upper envelope itself. Nodes at $x = 0,\,\lambda/2,\,\lambda,\,3\lambda/2,\,2\lambda$ show up as forced zeros every snapshot. The animation below sweeps over an entire period: the field "breathes" between the two envelopes without translating, and the boundary condition holds frame-by-frame.
+The three snapshots all lie inside the same envelope $\pm 2E_0|\sin kx|$; the snapshot at $\omega t = \pi/2$ (i.e. $t = T/4$) reaches the full envelope amplitude $|2E_0\sin kx|$ at every $x$, alternating between the lower and upper envelope on successive half-wavelengths. Nodes at $x = 0,\,\lambda/2,\,\lambda,\,3\lambda/2,\,2\lambda$ show up as forced zeros every snapshot. The animation below sweeps over an entire period: the field "breathes" between the two envelopes without translating, and the boundary condition holds frame-by-frame.
 
 ```rustlab
 clf;
@@ -338,7 +356,7 @@ Run all three with `make lesson-09`, or one at a time via `rustlab run lessons/0
 
 1. **Phase velocity from a single grid sample.** From the propagation-animation snapshots, fit a straight line to the position of the leading zero crossing of $E_y$ vs $t$. Verify the slope equals $c$ to within the grid spacing $\Delta x$.
 2. **$\eta_0$ from the wave.** Compute $|E|/|H|$ at any point; you should get $\eta_0 = \mu_0 c \approx 376.73\,\Omega$. This is the **impedance of free space**, the value that every antenna, waveguide, and transmission line is matched against (Lesson 13).
-3. **Add an RCP plus LCP.** Combine equal-amplitude RCP and LCP plane waves in `polarization.rlab` and verify that the tip of $\vec E$ traces a *line* in the $(E_y, E_z)$ plane — circular polarisation is just two equal-and-opposite chiralities of linear polarisation. This is the basis for quarter-wave-plate polarisation conversion in optics.
+3. **Add an RCP plus LCP.** Combine equal-amplitude RCP and LCP plane waves in `polarization.rlab` and verify that the tip of $\vec E$ traces a *line* in the $(E_y, E_z)$ plane — linear polarisation is just the superposition of two equal-amplitude, opposite-chirality circular polarisations. This is the basis for quarter-wave-plate polarisation conversion in optics.
 4. **Phase mismatch standing wave.** In `standing_wave.rlab`, replace the perfect $-1$ reflection with $\Gamma = -0.7$ (a finite-impedance reflector). Measure the VSWR $= (1+|\Gamma|)/(1-|\Gamma|)$ from the ratio of $|E|_{\max}$ to $|E|_{\min}$ along the line and compare to the analytic value.
 5. **Transverse standing wave.** Replace the PEC at $x = 0$ with two PECs at $x = 0$ and $x = L$, supporting only modes with $kL = n\pi$. Plot the first three transverse modes ($n = 1, 2, 3$) and verify their resonant frequencies $f_n = n c/(2L)$. This is the 1-D version of the rectangular cavity in Lesson 12.
 

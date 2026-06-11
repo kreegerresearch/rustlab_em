@@ -5,23 +5,25 @@ Lesson 15 extracted lumped **capacitance** from a Laplace solve — the electric
 ## Learning Objectives
 
 - Extract a single-loop **self-inductance** from the Biot-Savart flux through the loop interior, regularising the filament singularity by cutting the flux at the inner wire edge $r = R - a$, and verify against $L = \mu_0 R[\ln(8R/a) - 2]$.
-- Build the **per-unit-length inductance matrix** $L'_{ij}$ of coupled conductors with a genuine factor-once-solve-many cached LU — cleaner than the capacitance case, because a *current* source changes only the right-hand side, leaving the operator fixed across all drives.
+- Build the **per-unit-length inductance matrix** $L'_{ij}$ of coupled conductors with a factor-once-solve-many cached LU — the natural fit for a *current* drive, which enters purely as a right-hand-side source term (the capacitance matrix admits the same fixed-operator trick; see L15 Exercise 2).
 - Compute the **mutual inductance** of coaxial loops by flux integration and validate it against the exact complete-elliptic-integral formula to $\lesssim 10^{-6}$.
 - Assemble multi-turn coils into a **transformer**, read off $L_1$, $L_2$, $M$, and the coupling $k = M/\sqrt{L_1 L_2}$, and watch the open-circuit ratio $V_2/V_1 \to N_2/N_1$ in the dense long-solenoid limit.
 - Quantify the **finite-solenoid end effect** (Nagaoka coefficient) and the **virtual-work force** $F = \tfrac12 I^2\,\partial L/\partial x$ on a movable core.
 
 ## Background
 
-[[06-magnetostatics|Lesson 06]] (the $\nabla^2 A_z = -\mu_0 J_z$ Poisson solve, the variable-permeability form $\nabla\!\cdot\!(\mu^{-1}\nabla A_z) = -\mu_0 J_z$ via `laplacian_eps_2d`, and Biot-Savart on a parameterised path). [[15-lumped-capacitance|Lesson 15]] (the short-circuit matrix procedure, energy vs. surface-integral extraction, the cached-LU sweep idiom, and the virtual-work force). The recurring duality table:
+[[06-magnetostatics|Lesson 06]] (the $\nabla^2 A_z = -\mu_0 J_z$ Poisson solve, the variable-permeability form $\nabla\!\cdot\!(\mu_r^{-1}\nabla A_z) = -\mu_0 J_z$ via `laplacian_eps_2d`, and Biot-Savart on a parameterised path). [[15-lumped-capacitance|Lesson 15]] (the short-circuit matrix procedure, energy vs. surface-integral extraction, the cached-LU sweep idiom, and the virtual-work force). The recurring duality table:
 
 | Electric (L15) | Magnetic (L17) |
 |---|---|
 | potential $V$ | vector potential $A_z$ |
 | permittivity $\varepsilon$ | reluctivity $1/\mu$ |
-| $\nabla\!\cdot\!(\varepsilon\nabla V) = -\rho$ | $\nabla\!\cdot\!(\mu^{-1}\nabla A_z) = -J_z$ |
+| $\nabla\!\cdot\!(\varepsilon\nabla V) = -\rho$ | $\nabla\!\cdot\!(\mu_r^{-1}\nabla A_z) = -\mu_0 J_z$ |
 | charge $Q = \oint \varepsilon\vec E\cdot d\vec A$ | flux linkage $\lambda = \oint \vec B \cdot d\vec A$ |
 | $C = Q/V = 2U_E/V^2$ | $L = \lambda/I = 2U_M/I^2$ |
 | $F = \tfrac12 V^2\,\partial C/\partial x$ | $F = \tfrac12 I^2\,\partial L/\partial x$ |
+
+Convention used throughout this lesson: the magnetic operator carries the *dimensionless* relative reluctivity $1/\mu_r$ (the coefficient map that `laplacian_eps_2d` consumes), so $\mu_0$ stays on the source side of $\nabla\!\cdot\!(\mu_r^{-1}\nabla A_z) = -\mu_0 J_z$.
 
 ## Single-Loop Self-Inductance — Regularising the Filament
 
@@ -74,10 +76,10 @@ The coupled-conductor matrix is the magnetic twin of L15's capacitance matrix, a
 
 For $N$ parallel conductors above a return plane, the flux linkages and currents are linearly related:
 $$\lambda_i = \sum_{j=1}^N L_{ij}\,I_j, \qquad L_{ij} = \left.\frac{\lambda_i}{I_j}\right|_{I_k = 0,\,k\neq j}.$$
-Drive conductor $j$ with a unit current, leave the others **open** ($I_k = 0$), solve $\nabla\!\cdot\!(\mu^{-1}\nabla A_z) = -\mu_0 J_z$ with $A_z = 0$ on the PEC ground plane and outer box. In 2-D the flux per unit length linking conductor $i$ against the ground return is simply the mean of $A_z$ over its cross-section, so $L_{ij} = \overline{A_z}^{\,(i)}$ for a unit drive in $j$.
+Drive conductor $j$ with a unit current, leave the others **open** ($I_k = 0$), solve $\nabla\!\cdot\!(\mu_r^{-1}\nabla A_z) = -\mu_0 J_z$ with $A_z = 0$ on the PEC ground plane and outer box. In 2-D the flux per unit length linking conductor $i$ against the ground return is simply the mean of $A_z$ over its cross-section, so $L_{ij} = \overline{A_z}^{\,(i)}$ for a unit drive in $j$.
 
 > [!TIP]
-> In the capacitance case, pinning each driven trace to a fixed voltage **changed the operator** $A$, so a cached factorisation needed care. Driving with a *current source* changes only the right-hand side — the operator is byte-for-byte identical across all $N$ drives. One `lu(A)` factorisation, $N$ cheap `solve(F, b)` back-substitutions. This is the textbook parasitic-extraction fast path, and here it is exact, not aspirational.
+> The capacitance extraction admits the same trick: in the short-circuit procedure **every** conductor cell is Dirichlet-pinned in **every** solve, so the pinned operator $A$ is byte-for-byte identical across all $N$ drives and only the right-hand-side *values* change (L15 Exercise 2 retrofits exactly this). The inductance case is simply the more natural fit — the current drive lives entirely in the right-hand side as a source term, with no boundary values to manage. Either way: one `lu(A)` factorisation, $N$ cheap `solve(F, b)` back-substitutions — the textbook parasitic-extraction fast path.
 
 Because the variable-reluctivity Laplacian is symmetric, $L_{ij} = L_{ji}$ — a free reciprocity check.
 
@@ -135,7 +137,7 @@ title("Coaxial-loop mutual inductance vs. separation");
 legend("numerical", "exact", "dipole");
 ```
 
-Numerical and exact overlap to $\lesssim 10^{-6}$ — the flux integration is essentially perfect. The dipole asymptote is wildly off near $d/R = 0.5$ and is still 15 % high at $d/R = 4$, a reminder that "far field" arrives later than intuition suggests. The coupling coefficient $k_c = M/\sqrt{L_1 L_2}$ stays modest (peak $\approx 0.22$ at $d/R = 0.5$): thin single-turn filaments self-link a *lot* of flux, so two of them couple weakly.
+Numerical and exact overlap to $\lesssim 10^{-6}$ — the flux integration is essentially perfect. The dipole asymptote is wildly off near $d/R = 0.5$ and is still ~18 % high at $d/R = 4$ (1.54 vs. 1.30 nH), a reminder that "far field" arrives later than intuition suggests. The coupling coefficient $k_c = M/\sqrt{L_1 L_2}$ stays modest (peak $\approx 0.22$ at $d/R = 0.5$): thin single-turn filaments self-link a *lot* of flux, so two of them couple weakly.
 
 ## Transformer — Where the Turns Ratio Comes From
 
@@ -202,7 +204,7 @@ title("Finite-solenoid end-effect correction approaches 1");
 legend("numerical", "Wheeler");
 ```
 
-The turn-stack result tracks Wheeler's current-sheet coefficient to better than 1.5 % across $\ell/R = 1 \to 20$, reaching $K = 0.96$ for a coil twenty radii long. The agreement is non-trivial — it confirms that a sum over discrete round-wire turns reproduces the continuous current-sheet idealisation once the winding is dense.
+The turn-stack result tracks Wheeler's current-sheet coefficient to better than ~3 % at $\ell/R = 1$, improving to under 1 % beyond $\ell/R \approx 3$, and reaches $K = 0.96$ for a coil twenty radii long. (Wheeler's $1/(1 + 0.9 R/\ell)$ form itself carries roughly 1 % error against the exact Nagaoka coefficient at small $\ell/R$, so part of the residual belongs to the benchmark.) The agreement is non-trivial — it confirms that a sum over discrete round-wire turns reproduces the continuous current-sheet idealisation once the winding is dense.
 
 ## Force on a Movable Core — Virtual Work
 
@@ -269,7 +271,7 @@ Run all six with `make lesson-17`, or one at a time via `rustlab run lessons/17-
 ## Exercises
 
 1. **Internal inductance.** The loop script uses the external form $L = \mu_0 R[\ln(8R/a)-2]$. Add the internal contribution of a uniform-current round wire ($\mu_0 R/4$, giving the $-7/4$ low-frequency constant) and confirm which the numerical flux-cut value is closer to as $a/R$ grows.
-2. **Cached-LU profiling.** `ind_matrix_microstrip.rlab` factors once with `lu(A)` and back-solves per drive. Replace `solve(F, b)` with a fresh `spsolve(A, b)` in the loop, time both, and report the speedup — the genuine factor-once-solve-many gain that the capacitance matrix could not realise.
+2. **Cached-LU profiling.** `ind_matrix_microstrip.rlab` factors once with `lu(A)` and back-solves per drive. Replace `solve(F, b)` with a fresh `spsolve(A, b)` in the loop, time both, and report the speedup — the factor-once-solve-many gain. The capacitance matrix admits exactly the same gain (its pinned operator is also identical across drives, with only right-hand-side values changing); L15 Exercise 2 retrofits it there.
 3. **Three-trace $L$ bus.** Extend the matrix script to three coplanar traces; build the $3\times3$ $L'$ matrix, verify $L'_{ij} = L'_{ji}$, and compare the magnetic crosstalk pattern to the capacitance matrix of L15's `cap_matrix_three_trace.rlab`.
 4. **Off-axis / tilted coils.** Generalise `mutual_inductance_coil_pair.rlab` to laterally offset or tilted loops by summing the filament Neumann double integral $M = \tfrac{\mu_0}{4\pi}\oint\oint d\vec\ell_1\cdot d\vec\ell_2/r_{12}$, and map $M$ as coupling degrades with misalignment.
 5. **Iron-cored solenoid.** Add a uniform high-$\mu_r$ core to `finite_solenoid.rlab` and show $L$ scales by roughly $\mu_r$ in the long-coil limit, while the *end-effect* coefficient $K$ shifts because the core changes the demagnetising geometry.

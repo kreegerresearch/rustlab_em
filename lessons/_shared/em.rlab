@@ -16,8 +16,8 @@
 #       Same cubic profile evaluated at the dual grid (face between
 #       cells i and i+1, sampled at offset +0.5). Required for proper
 #       face-centred SC-PML — using the primal profile alone leaves a
-#       ~ unity-amplitude reflection from the PML inner edge in the
-#       discrete approximation.
+#       residual reflection from the PML inner edge one to two orders
+#       of magnitude larger than the face-centred form.
 #
 #   s = pml_stretching_factor(sigma, omega, eps0)
 #       Complex SC-PML stretching factor s = 1 + i σ / (ω ε₀).

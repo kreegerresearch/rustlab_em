@@ -13,7 +13,7 @@
 #   R_rad = 2 P_rad / |I_in|² = (η_0 / (2π sin²(kL/2))) · ∫_0^π |F|² sinθ dθ.
 #
 # Two known limits:
-#   L/λ = 1/2 (half-wave):     R_rad ≈ 73.13 Ω (Carson's integral)
+#   L/λ = 1/2 (half-wave):     R_rad ≈ 73.1 Ω (textbook value)
 #   L/λ ≪ 1 (short dipole):    R_rad ≈ 20 π² (L/λ)²
 #
 # Reference: ../../notebooks/13-transmission-lines-and-antennas.md.
@@ -35,7 +35,7 @@ L_half  = 0.5;                  # L in units of λ
 kL_half = 2 * pi * L_half;
 F_half  = (cos((kL_half / 2) * cos(ths)) - cos(kL_half / 2)) ./ sin(ths);
 R_half  = eta0 / (2 * pi * sin(kL_half / 2) ^ 2) * trapz(ths, F_half .^ 2 .* sin(ths));
-print(real(R_half))             # ≈ 73.13 Ω (Carson)
+print(real(R_half))             # ≈ 73.08 Ω (exact η₀; textbook 73.13 assumes η₀ = 120π)
 
 # === Sweep L/λ ===
 # Stop short of L/λ = 1 — the input current goes through zero there

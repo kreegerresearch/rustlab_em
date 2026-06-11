@@ -12,8 +12,8 @@
 #
 # Closed-form (series jX then shunt jB):
 #   X + X_L = ±√(R_L (Z_0 − R_L))           Re(Y') = 1/Z_0
-#   B       = ∓ √((Z_0 − R_L) / R_L) / Z_0  cancel residual susceptance
-# Sign pair (+/−) → Solution A, (−/+) → Solution B.
+#   B       = ± √((Z_0 − R_L) / R_L) / Z_0  cancel residual susceptance
+# SAME sign in both (Pozar 5.6a/b): (+/+) → Solution A, (−/−) → Solution B.
 #
 # Units: SI. Z, X in Ω; B in S; C in F; L in H.
 #

@@ -23,7 +23,7 @@ Three first-order differential operators generate all of vector calculus. Each t
 
 **Domain:** Scalar Field $\to$ Vector Field.
 
-**Definition:** Represents the directional derivative that points in the direction of the greatest rate of increase of the scalar field.
+**Definition:** A vector pointing in the direction of greatest rate of increase of the scalar field, with magnitude equal to that rate of increase.
 
 **Mathematical Form (Cartesian):**
 
@@ -271,7 +271,7 @@ For any nice region $V$ bounded by a closed surface $\partial V$,
 
 $$\boxed{\oint_{\partial V}\vec F\cdot d\vec A = \int_V \nabla\cdot\vec F\, dV.}$$
 
-*Total flux through the boundary equals the total source strength inside.* Coulomb's law, Gauss's law, and every charge-conservation statement in EM are instances of this. We do not verify it numerically here — Lesson 03 will, on a physical $\vec E$ field — but Exercise 2 below is the natural warm-up.
+*Total flux through the boundary equals the total source strength inside.* Coulomb's law, Gauss's law, and every charge-conservation statement in EM are instances of this. We do not verify it numerically here — Lesson 03 examines the differential form $\nabla\cdot\vec E = \rho/\varepsilon_0$ on a physical $\vec E$ field — but Exercise 2 below is the natural warm-up.
 
 ## Stokes' Theorem
 
@@ -285,7 +285,7 @@ $$\boxed{\oint_C \vec F\cdot d\vec\ell = \int_S (\nabla\times\vec F)\cdot d\vec 
 
 For $\vec F = (-y, x)$ we showed $(\nabla\times\vec F)_z = 2$. Pick the square $[-1, 1]^2$: enclosed area is $4$, so the right-hand side is $2 \cdot 4 = 8$. Below we compute both sides numerically and check they agree.
 
-### Example — Line integral around the unit square
+### Example — Line integral around the square $[-1, 1]^2$
 
 Compute the circulation edge by edge with `trapz`, counterclockwise.
 
@@ -392,4 +392,4 @@ Run all three with `make lesson-01` from the repo root (or `rustlab run lessons/
 
 ## What's next
 
-Lesson 02 introduces the electric field from discrete charges — literally summing the contributions of individual point sources — and uses this lesson's machinery to plot $\vec E$ as a quiver field, draw equipotentials of $V$ as contours, and confirm numerically that $\vec E = -\nabla V$.
+Lesson 02 introduces the electric field from discrete charges — literally summing the contributions of individual point sources — and uses this lesson's machinery to plot $\vec E$ as quiver fields, log-magnitude heatmaps, and streamlines, to derive and test the far-field dipole formula, and to collapse a ring of charge to a 1-D integral by symmetry. The electric potential $V$, equipotential contours, and the numerical check $\vec E = -\nabla V$ arrive in Lesson 03.

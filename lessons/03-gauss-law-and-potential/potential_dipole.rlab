@@ -40,9 +40,9 @@ Ey_fromV = -Vy;
 
 # Test cell at (x=0, y=0.04) — perpendicular bisector, far from charges.
 # Far-field analytic:  E_x = -k_e p / y³.
-print(real(Ex_fromV(46, 26)))     # ≈ -2812 V/m
+print(real(Ex_fromV(46, 26)))     # ≈ -2798 V/m  (~0.4% stencil error vs closed form)
 print(real(Ey_fromV(46, 26)))     # ≈ 0  by symmetry
-print(-ke * p / (0.04 ^ 3))       # closed-form check ≈ -2812 V/m
+print(-ke * p / (0.04 ^ 3))       # closed-form check ≈ -2808.6 V/m
 
 # === Plot the recovered field as a quiver overlay ===
 figure();

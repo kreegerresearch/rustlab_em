@@ -8,7 +8,7 @@ Lesson 10 turned the time-harmonic Maxwell equations into a single complex spars
 
 - Derive the 1-D and 2-D Yee staggered grid placements for $\vec E$ and $\vec H$
 - Implement the leapfrog updates and verify CFL stability (1-D: $c_0\Delta t \le \Delta x$; 2-D: $c_0\Delta t \le \Delta x/\sqrt 2$)
-- Vectorise per-step updates via slice-cat rebuilds (since rustlab v0.3's strict 1-D vector type does not yet accept slice assignment)
+- Vectorise per-step updates with vector slice assignment (rustlab ≥ 0.3.4)
 - Measure reflection / transmission off a dielectric slab and compare to the analytic Fresnel coefficients
 - Extend the Yee step with a polarisation-current ADE for a Drude metal; observe the qualitative response above and below the plasma frequency $\omega_p$
 - Inject a clean plane wave with a total-field/scattered-field (TF/SF) source and confirm the scattered zone stays at machine zero
@@ -50,7 +50,7 @@ $$|t_1 \cdot t_2| = \left|\frac{2n_1}{n_1+n_2}\right|\cdot\left|\frac{2n_2}{n_1+
 
 The reflected pulse at a probe between source and slab arrives later than the incident pulse and has amplitude $|R|\cdot |E_{\rm inc}| = (1/3)\cdot|E_{\rm inc}|$.
 
-**Mur first-order ABC**: at the grid ends, $E_y(1) \leftarrow E_y(2)$ and $E_y(N) \leftarrow E_y(N-1)$. For $S \to 1$ this absorbs outgoing waves to machine-noise precision — much simpler than PML in 1-D.
+**Mur first-order ABC**: at $S = 1$ a wave travels exactly one cell per step, so the boundary cell at the *new* time level should take the value its neighbour held at the *old* time level: $E_y^{n+1}(1) = E_y^{n}(2)$, and mirrored at $x_N$. Implementation detail that matters: save the neighbour values **before** the E-update, then assign them after. Copying the *same*-time-step neighbour ($E_y^{n+1}(1) = E_y^{n+1}(2)$) looks almost identical in code but is actually a zero-gradient Neumann wall that reflects with $|R| \approx 1$. With the correct one-step-delayed copy at $S = 0.99$ the measured boundary reflection is only ~ 0.5 % — much simpler than PML in 1-D.
 
 ### Example — 600-cell run with $\lambda \approx 30\,\text{cm}$ pulse
 
@@ -83,13 +83,20 @@ xs_v = (1:N_v) * dx_v;
 
 for step = 1:n_step_v
   Hz_v(1:N_v-1) = Hz_v(1:N_v-1) - cH_v * (Ey_v(2:N_v) - Ey_v(1:N_v-1));
+
+  % Save the boundary-adjacent values at time level n for the Mur ABC.
+  Ey_l_v = Ey_v(2);
+  Ey_r_v = Ey_v(N_v - 1);
+
   Ey_v(2:N_v-1) = Ey_v(2:N_v-1) - cEr_v(2:N_v-1) .* (Hz_v(2:N_v-1) - Hz_v(1:N_v-2));
 
   t = step * dt_v;
   Ey_v(k_src_v) = Ey_v(k_src_v) + exp(-((t - t0_v) / tau_v)^2);
 
-  Ey_v(1) = Ey_v(2);
-  Ey_v(N_v) = Ey_v(N_v - 1);
+  % Mur first-order ABC: one-step-DELAYED copy E^{n+1}(1) = E^n(2).
+  % (Copying the already-updated neighbour would be a Neumann wall, |R| ~ 1.)
+  Ey_v(1) = Ey_l_v;
+  Ey_v(N_v) = Ey_r_v;
 
   if mod(step, 25) == 0
     plot(xs_v * 1000, real(Ey_v), "E_y(x, t)");
@@ -104,17 +111,17 @@ saveanim("fdtd_1d_pulse.gif", 24)
 ```
 
 <!-- rustlab:output-start -->
-![animation 1](plots/11-fdtd-simulation/anim-1-62e10a2f.gif)
+![animation 1](plots/11-fdtd-simulation/anim-1-5c31bc71.gif)
 
 <!-- rustlab:output-end -->
 
-The animation shows the Gaussian splitting at the source, both halves propagating, the +x half hitting the slab, partially transmitting (smaller fast pulse) and partially reflecting (smaller pulse going −x). The first-arrival transmitted-amplitude ratio matches $|t_1 t_2| = 8/9$ to grid precision.
+The animation shows the Gaussian splitting at the source; the −x half exits cleanly through the left boundary (the delayed-copy ABC leaves only a ~ 0.5 % echo at $S = 0.99$), while the +x half hits the slab, partially transmits (smaller fast pulse) and partially reflects (smaller pulse going −x, amplitude ratio 0.335 ≈ $|R| = 1/3$ at the probe). The first-arrival transmitted-amplitude ratio measures 0.882, within 0.8 % of $|t_1 t_2| = 8/9 \approx 0.889$ (the residual is finite pulse bandwidth plus grid dispersion).
 
 ## 2-D Yee TMz — Plane Wave Scattering Off a PEC Cylinder
 
 ### Theory
 
-In 2-D TMz polarisation there is one out-of-plane $E_z$ and two in-plane magnetic components $H_x$, $H_y$. The Yee grid places $E_z$ on integer cells $(i, j)$, $H_x$ at $(i + 1/2, j)$, and $H_y$ at $(i, j + 1/2)$. The leapfrog reads
+In 2-D TMz polarisation there is one out-of-plane $E_z$ and two in-plane magnetic components $H_x$, $H_y$. Throughout this section $i$ indexes **rows** (the $y$ direction) and $j$ indexes **columns** (the $x$ direction), matching the matrix layout. The Yee grid places $E_z$ on integer cells $(i, j)$, $H_x$ at $(i + 1/2, j)$ — staggered in $y$ — and $H_y$ at $(i, j + 1/2)$ — staggered in $x$. The leapfrog reads
 
 $$\begin{aligned}
 H_x(i,j) &\mathrel{-}= \frac{\Delta t}{\mu_0\Delta y}\bigl[E_z(i+1,j) - E_z(i,j)\bigr]\\
@@ -126,9 +133,9 @@ A **PEC** (perfect electric conductor) is enforced by setting $E_z = 0$ inside t
 
 A **soft CW (continuous-wave) line source** on a single column injects a +x plane wave once the ramp-up function $(1 - e^{-(t/\tau)^2})$ saturates near unity.
 
-### Example — $81\times 61$ grid, 200 steps
+### Example — $81\times 61$ grid, 200 steps, $0.4\lambda$ PEC cylinder
 
-In 2-D the leapfrog reads as three sub-matrix slice-assigns — one per field component — and the bulk-loss damping factor `damp_row` is a 1-D vector along the x-axis that we broadcast across rows with `repmat`. No per-cell loops at all.
+The cylinder (radius $0.4\lambda$ = 16 cells, centred at 60 % of the grid width) clears the right absorbing strip and the top/bottom walls by several cells. In 2-D the leapfrog reads as three sub-matrix slice-assigns — one per field component — and the bulk-loss damping factor `damp_row` is a 1-D vector along the x-axis that we broadcast across rows with `repmat`. No per-cell loops at all.
 
 ```rustlab
 clf;
@@ -149,7 +156,9 @@ lambda_s = c0_s / f0_s;
 [Xg_s, Yg_s] = meshgrid((1:nx_s) * dx_s, (1:ny_s) * dy_s);
 xc_s = nx_s * dx_s * 0.6;
 yc_s = ny_s * dy_s * 0.5;
-pec_mask = disk_mask(Xg_s, Yg_s, xc_s, yc_s, 0.6 * lambda_s);
+% Radius 0.4 lambda (16 cells) keeps the cylinder a few cells clear of
+% the right absorbing strip and well away from the top/bottom walls.
+pec_mask = disk_mask(Xg_s, Yg_s, xc_s, yc_s, 0.4 * lambda_s);
 inside_pec = 1 - pec_mask;
 
 % Absorbing strips on the x-edges via bulk loss
@@ -199,7 +208,7 @@ saveanim("fdtd_2d_scattering.gif", 24)
 ```
 
 <!-- rustlab:output-start -->
-![animation 2](plots/11-fdtd-simulation/anim-2-7dbb6f34.gif)
+![animation 2](plots/11-fdtd-simulation/anim-2-c025a4e3.gif)
 
 <!-- rustlab:output-end -->
 
@@ -223,7 +232,7 @@ The Yee step is extended with a third leapfrog update for $J_p$ at half-time ste
 
 $$J_p^{n+1/2} = \alpha\,J_p^{n-1/2} + \beta\,E^n, \quad \alpha = \frac{1 - \gamma\Delta t/2}{1 + \gamma\Delta t/2}, \quad \beta = \frac{\varepsilon_0\,\omega_p^2\,\Delta t}{1 + \gamma\Delta t/2}.$$
 
-The Ampère update gains a $-(\Delta t/\varepsilon_0)\,J_p^{n+1/2}$ term. **Explicit Euler** on this system is unconditionally unstable — the E-$J_p$ pair forms a discrete oscillator whose amplitude grows by $|1 - i\omega_p\Delta t|^{1/2} > 1$ per step.
+The Ampère update gains a $-(\Delta t/\varepsilon_0)\,J_p^{n+1/2}$ term. **Explicit Euler** on this system is unstable for the lossless case: with $\gamma = 0$ the E-$J_p$ pair forms a discrete oscillator whose amplitude grows by $|1 - i\omega_p\Delta t| = \sqrt{1 + \omega_p^2\Delta t^2} > 1$ every step. (A finite damping $\gamma$ can mask the growth for small enough $\omega_p\Delta t$, but the trapezoidal form above removes the problem instead of hiding it.)
 
 ### Example — 3 GHz Drude film, 2 GHz source
 
@@ -266,27 +275,32 @@ for step = 1:n_step_d
   t = step * dt_d;
   Hz_d(1:N_d-1) = Hz_d(1:N_d-1) - cH_d * (Ey_d(2:N_d) - Ey_d(1:N_d-1));
   Jp_d = alpha_d * Jp_d + beta_d * Ey_d .* in_film;
+
+  % Save time-level-n neighbours for the delayed-copy Mur ABC.
+  Ey_l_d = Ey_d(2);
+  Ey_r_d = Ey_d(N_d - 1);
+
   Ey_d(2:N_d-1) = Ey_d(2:N_d-1) - cE_d * (Hz_d(2:N_d-1) - Hz_d(1:N_d-2)) - (dt_d / eps0_d) * Jp_d(2:N_d-1);
 
   src_amp = exp(-((t - t0_d) / tau_d)^2) * cos(2 * pi * f_mod_d * (t - t0_d));
   Ey_d(k_src_d) = Ey_d(k_src_d) + src_amp;
-  Ey_d(1) = Ey_d(2);
-  Ey_d(N_d) = Ey_d(N_d - 1);
+  Ey_d(1) = Ey_l_d;
+  Ey_d(N_d) = Ey_r_d;
 
   E_back_d(step) = real(Ey_d(200));
   E_fwd_d(step)  = real(Ey_d(600));
 end
 
-print(max(abs(E_back_d)))
-print(max(abs(E_fwd_d)))
-print(max(abs(E_fwd_d)) / max(abs(E_back_d)))
+print(max(abs(E_back_d)))                       % ~ 0.505
+print(max(abs(E_fwd_d)))                        % ~ 0.101
+print(max(abs(E_fwd_d)) / max(abs(E_back_d)))   % ~ 0.20
 ```
 
 <!-- rustlab:output-start -->
 ```text
 0.5050797206017913
-0.1026534587667643
-0.20324209145529537
+0.10090464624312218
+0.1997796429500209
 ```
 
 <!-- rustlab:output-end -->
@@ -305,11 +319,11 @@ legend("before film", "after film")
 ```
 
 <!-- rustlab:output-start -->
-![plot 3](plots/11-fdtd-simulation/plot-3-7f0b13f9.svg)
+![plot 3](plots/11-fdtd-simulation/plot-3-5b8147f7.svg)
 
 <!-- rustlab:output-end -->
 
-Comparing the source frequency to the plasma frequency tells the story: at $f_{\rm src} = 2$ GHz $< f_p = 3$ GHz, the transmitted amplitude is suppressed by roughly $5\times$ relative to the incident. Re-running with $f_{\rm src} > f_p$ (e.g. 5 GHz) would yield near-unity transmission. The qualitative point — a frequency-selective filter that the same FDTD code captures without any pre-set $\varepsilon(\omega)$ — is what gives FDTD its broad reach into photonics, antennas, plasmas, and biomedical EM.
+Comparing the source frequency to the plasma frequency tells the story: at $f_{\rm src} = 2$ GHz $< f_p = 3$ GHz, the transmitted amplitude is suppressed by roughly $5\times$ relative to the incident (0.101 vs 0.505 at the probes — ratio 0.20). Re-running with $f_{\rm src} > f_p$ (e.g. 5 GHz) would yield near-unity transmission. The qualitative point — a frequency-selective filter that the same FDTD code captures without any pre-set $\varepsilon(\omega)$ — is what gives FDTD its broad reach into photonics, antennas, plasmas, and biomedical EM.
 
 ## Total-Field / Scattered-Field Plane-Wave Injection
 
@@ -349,7 +363,7 @@ The scattered-field probes sit at $\sim 1.5\times10^{-15}$ while the incident wa
 
 ### Theory
 
-An open-domain simulation needs the grid edge to *absorb* outgoing waves. Bérenger's **split-field perfectly matched layer (PML)** replaces a band of boundary cells with anisotropic absorbing media, impedance-matched at the inner edge (zero analytic reflection) and lossy through the layer. The split-field form decomposes $E_z$ into $E_{zx} + E_{zy}$, each damped by the conductivity along its own axis, with the magnetic conductivity $\sigma^* = \sigma\mu_0/\varepsilon_0$ chosen for matching. A cubic $\sigma$ ramp keeps the impedance gradient smooth; deeper layers attenuate more, so the residual reflection falls roughly exponentially with depth.
+An open-domain simulation needs the grid edge to *absorb* outgoing waves. Bérenger's **split-field perfectly matched layer (PML)** replaces a band of boundary cells with anisotropic absorbing media, impedance-matched at the inner edge (zero analytic reflection) and lossy through the layer. The split-field form decomposes $E_z$ into $E_{zx} + E_{zy}$, each damped by the conductivity along its own axis, with the magnetic conductivity $\sigma^* = \sigma\mu_0/\varepsilon_0$ chosen for matching. A cubic $\sigma$ ramp keeps the impedance gradient smooth. In the continuum the round-trip attenuation is exponential in the layer's optical depth, but on a grid the measured residual is dominated by *discretisation* reflection — the small numerical mismatch generated wherever $\sigma$ changes appreciably between adjacent cells. With $\sigma_{\max}$ scaled so every depth targets the same theoretical $-80$ dB, deepening the layer only smooths the profile, so the residual falls **polynomially** (a power law in $d$), not exponentially.
 
 ### Example — depth sweep $d \in \{4, 8, 16\}$
 
@@ -372,7 +386,7 @@ legend("|R(d)|");
 
 <!-- rustlab:output-end -->
 
-Doubling the layer depth drops the residual reflection by roughly a factor of ~2.5 each time (0.16 → 0.073 → 0.026), the exponential trend a cubic $\sigma$ profile predicts. Even a modest 16-cell PML pushes spurious wall reflections below 3 % — enough for the open-domain radiation problems of Lessons 12 and 14.
+Doubling the layer depth drops the residual reflection by roughly a factor of ~2.2–2.8 each time (0.16 → 0.073 → 0.026) — a power law of roughly $d^{-1.3}$, *not* an exponential. That is the expected signature of discretisation-limited absorption: the profile is designed for the same $-80$ dB theoretical reflection at every depth, so what the sweep measures is the numerical reflection from the discretised cubic ramp, which only falls polynomially as the same total attenuation is spread over more cells. Even a modest 16-cell PML pushes spurious wall reflections below 3 % — enough for the open-domain radiation problems of Lessons 12 and 14.
 
 ## Standalone Scripts
 
@@ -390,13 +404,15 @@ Run all five with `make lesson-11`, or one script at a time via `rustlab run les
 
 | Quantity | Expected Value |
 |---|---|
-| 1-D incident-pulse peak at air probe | $\approx 0.5$ (soft source splits) |
-| 1-D transmitted-pulse peak ($n_2 = 2$ slab) | $\approx 8/9 \cdot 0.5 \approx 0.444$ |
-| 2-D PEC shadow depth (in lee, $|E_z|$) | $\sim 0.1 \cdot$ source peak |
-| Drude transmitted/incident below $\omega_p$ (2 GHz vs 3 GHz) | $\sim 0.2$ |
+| 1-D incident-pulse peak at air probe | $\approx 0.506$ (soft source splits in half) |
+| 1-D transmitted-pulse peak ($n_2 = 2$ slab) | $\approx 0.446$; ratio $0.882$ vs $8/9 \approx 0.889$ |
+| 1-D slab reflected-pulse / incident | $\approx 0.335$ vs $\lvert R\rvert = 1/3$ |
+| 1-D Mur ABC boundary echo (delayed copy, $S = 0.99$) | $\sim 0.5\,\%$ of incident |
+| 2-D PEC shadow depth (lee probe vs lit-side max, late window) | $\sim 0.03$ |
+| Drude transmitted/incident below $\omega_p$ (2 GHz vs 3 GHz) | $0.101 / 0.505 \approx 0.20$ |
 | Drude transmitted/incident above $\omega_p$ (exercise) | $\to 1$ |
 | TF/SF scattered-zone $\lvert E_z\rvert$ (empty box) | $\sim 1.5\times10^{-15}$ (machine zero) |
-| PML residual reflection at $d = 4 / 8 / 16$ | $0.160 / 0.073 / 0.026$ |
+| PML residual reflection at $d = 4 / 8 / 16$ | $0.160 / 0.073 / 0.026$ (power law $\sim d^{-1.3}$) |
 
 ## Exercises
 

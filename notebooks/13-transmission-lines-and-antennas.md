@@ -113,7 +113,7 @@ xlabel("x cell");
 ylabel("y cell")
 ```
 
-The 2-D potential matches the analytic $\ln(b/r)/\ln(b/a)$ shape to grid precision in the bulk; near the rasterised circular conductors a staircase error of a few percent shows up in the extracted $C'$ and propagates into $Z_0$. Refining the grid drops the error like $h^2$.
+The 2-D potential matches the analytic $\ln(b/r)/\ln(b/a)$ shape to grid precision in the bulk; near the rasterised circular conductors a staircase error of $\approx 7\,\%$ shows up in the extracted $C'$ ($37.5$ vs $40.1$ pF/m, $6.6\,\%$ low) and propagates into $Z_0$ ($89.0$ vs $83.1\,\Omega$, $7.1\,\%$ high). Refining the grid drops the error like $h^2$.
 
 ## Twin-Wire Line — Parallel Conductors
 
@@ -165,7 +165,7 @@ Decoupling Maxwell's equations along a TL gives the **telegrapher's equations**:
 
 $$\frac{\partial V}{\partial z} = -L'\,\frac{\partial I}{\partial t}, \qquad \frac{\partial I}{\partial z} = -C'\,\frac{\partial V}{\partial t}.$$
 
-This is structurally identical to the 1-D Maxwell pair $\partial_z E_y = -\mu_0 \partial_t H_z$, $\partial_z H_z = -\varepsilon_0\partial_t E_y$ that Lesson 11 used. Place $V$ on integer cells and $I$ on half cells; leapfrog them:
+This is structurally identical to the 1-D Maxwell pair $\partial_x E_y = -\mu_0 \partial_t H_z$, $\partial_x H_z = -\varepsilon_0\partial_t E_y$ that Lesson 11 used. Place $V$ on integer cells and $I$ on half cells; leapfrog them:
 
 $$I^{n+1/2}(k+\tfrac12) = I^{n-1/2}(k+\tfrac12) - \frac{\Delta t}{L'\Delta z}\bigl[V^n(k+1) - V^n(k)\bigr]$$
 $$V^{n+1}(k) = V^n(k) - \frac{\Delta t}{C'\Delta z}\bigl[I^{n+1/2}(k+\tfrac12) - I^{n+1/2}(k-\tfrac12)\bigr].$$
@@ -191,7 +191,7 @@ C_pul  = 1 / (Z0_t * v_t);
 N_t = 401;
 dz_t = 1e-3;
 dt_t = 0.95 * dz_t / v_t;
-n_step_t = 850;
+n_step_t = 780;
 t0_t = 30 * dt_t;
 tau_t = 8 * dt_t;
 k_src = 30;
@@ -207,7 +207,7 @@ function V_out = run_tline(Z_L_, load_kind_)
   N_l = 401;
   dz_l = 1e-3;
   dt_l = 0.95 * dz_l / v_l;
-  n_step_l = 850;
+  n_step_l = 780;
   t0_l = 30 * dt_l;
   tau_l = 8 * dt_l;
   k_src_l = 30;
@@ -216,6 +216,7 @@ function V_out = run_tline(Z_L_, load_kind_)
   Iv = zeros(1, N_l);
 
   for step = 1:n_step_l
+    V2_prev = V(2);   % pre-update neighbour for the delayed-copy Mur ABC
     Iv = [Iv(1), Iv(2:N_l) - (dt_l / (L_l * dz_l)) * (V(2:N_l) - V(1:N_l-1))];
     V_int = V(1:N_l-1) - (dt_l / (C_l * dz_l)) * (Iv(2:N_l) - Iv(1:N_l-1));
     if load_kind_ == 3
@@ -230,7 +231,7 @@ function V_out = run_tline(Z_L_, load_kind_)
     src_vec = zeros(1, N_l);
     src_vec(k_src_l) = src_val;
     V = V + src_vec;
-    V(1) = V(2);
+    V(1) = V2_prev;   % Mur ABC: one-step-delayed copy, V^{n+1}(1) = V^n(2)
   end
   V_out = V;
 end
@@ -420,7 +421,7 @@ Feeding the standing-wave current into the far-field integral gives the E-plane 
 
 $$R_{\rm rad} = \frac{\eta_0}{2\pi\sin^2(kL/2)}\int_0^\pi \lvert F(\theta)\rvert^2 \sin\theta\,d\theta.$$
 
-Two limits anchor it: the half-wave dipole gives Carson's $R_{\rm rad}\approx 73.13\,\Omega$, and the short dipole gives $R_{\rm rad}\approx 20\pi^2(L/\lambda)^2$.
+Two limits anchor it: the half-wave dipole gives the textbook $R_{\rm rad}\approx 73.1\,\Omega$, and the short dipole gives $R_{\rm rad}\approx 20\pi^2(L/\lambda)^2$.
 
 ### Example — $R_{\rm rad}(L/\lambda)$ and the half-wave value
 
@@ -452,10 +453,10 @@ legend("numerical integration", "short-dipole limit");
 kL = pi;
 Fh = (cos((kL / 2) * cos(ths)) - cos(kL / 2)) ./ sin(ths);
 R_half = eta0 / (2 * pi * sin(kL / 2) ^ 2) * trapz(ths, Fh .^ 2 .* sin(ths));
-print(real(R_half))                   % ~ 73.08 Ohm  (Carson 73.13)
+print(real(R_half))                   % ~ 73.08 Ohm  (textbook 73.13)
 ```
 
-The integral returns $73.08\,\Omega$ at $L=\lambda/2$ — within 0.07 % of Carson's classic 73.13 Ω — and tracks the $20\pi^2(L/\lambda)^2$ short-dipole law at small lengths (0.49 Ω at $L/\lambda=0.05$, sub-percent). This 73 Ω is the number every half-wave-dipole and folded-dipole design starts from.
+The integral returns $73.08\,\Omega$ at $L=\lambda/2$ — within 0.07 % of the textbook 73.13 Ω, an offset that is the $\eta_0$ convention, not numerical error: with the exact $\eta_0 = 376.73\,\Omega$, $(\eta_0/4\pi)\,\mathrm{Cin}(2\pi) = 73.08\,\Omega$, while the textbook 73.13 assumes $\eta_0 = 120\pi$. It also tracks the $20\pi^2(L/\lambda)^2$ short-dipole law at small lengths (0.49 Ω at $L/\lambda=0.05$, sub-percent). This 73 Ω is the number every half-wave-dipole and folded-dipole design starts from.
 
 ## Standalone Scripts
 
@@ -485,7 +486,7 @@ Run all seven with `make lesson-13`, or one script at a time via `rustlab run le
 | VSWR from $|V|_{env}$ at $Z_L = 2 Z_0$ | $\approx 2.000$ |
 | S-params of 50→100 Ω step (time-domain) | $\lvert S_{11}\rvert = 0.335$, $\lvert S_{21}\rvert = 0.944$ |
 | Dipole $\cos(kz)$ recovery at $L=\lambda/2$ | $\lesssim 10^{-15}$ |
-| $R_{\rm rad}$ at $L=\lambda/2$ | $73.08\,\Omega$ (Carson 73.13) |
+| $R_{\rm rad}$ at $L=\lambda/2$ | $73.08\,\Omega$ (textbook 73.13 assumes $\eta_0 = 120\pi$) |
 | $R_{\rm rad}$ at $L/\lambda = 0.05$ | $\approx 0.49\,\Omega$ ($20\pi^2(L/\lambda)^2$) |
 
 ## Exercises

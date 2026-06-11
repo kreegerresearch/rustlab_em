@@ -162,14 +162,14 @@ The 3-D parallel-plate machinery transfers directly to real IC structures. Two f
 
 ### Example — Thin-film MIM capacitor
 
-10 µm × 10 µm plates, 100 nm of $\varepsilon_r = 25$ dielectric (typical Ta$_2$O$_5$ / HfO$_2$-class). Analytic $C = \varepsilon_r \varepsilon_0 A / d \approx 22\,\text{fF}$.
+10 µm × 10 µm plates, 100 nm of $\varepsilon_r = 25$ dielectric (typical Ta$_2$O$_5$ / HfO$_2$-class). Analytic $C = \varepsilon_r \varepsilon_0 A / d \approx 221\,\text{fF}$.
 
 ```rustlab
 % From MIM_capacitor_3d.rlab (n³ = 25³ at anisotropic dx = dy = 1 µm,
 % dz = 25 nm). Numerical extraction:
-C_energy_MIM = 168.2e-15;       % fF
-C_gauss_MIM  = 223.0e-15;       % fF — within 1% of the analytic value
-C_ideal_MIM  = 221.4e-15;
+C_energy_MIM = 168.2e-15;       % F (= 168.2 fF)
+C_gauss_MIM  = 223.0e-15;       % F (= 223.0 fF) — within 1% of the analytic value
+C_ideal_MIM  = 221.4e-15;       % F (= 221.4 fF)
 print(C_gauss_MIM  / C_ideal_MIM)         % ≈ 1.008
 print(C_energy_MIM / C_ideal_MIM)         % ≈ 0.76 — energy under-shoots
 ```
@@ -201,7 +201,7 @@ title("Bond-pad parasitic C vs. size and oxide thickness");
 legend("500 nm (num.)", "1500 nm (num.)", "500 nm (ideal)", "1500 nm (ideal)");
 ```
 
-At thick oxide and small pad (1500 nm × 8 µm) the numerical value overshoots ideal by ~9% — fringing matters when the pad side is comparable to the oxide thickness. At thin oxide and large pad the ideal $\varepsilon A / t$ form wins; numerical and analytic match to a few percent.
+At thick oxide and small pad (1500 nm × 8 µm) the numerical value overshoots ideal by ~9% — fringing matters when the pad side is comparable to the oxide thickness. At thin oxide (500 nm) the numerical values sit 14–17% *below* the ideal $\varepsilon A / t$ form — which should raise an eyebrow, since fringing can only *add* capacitance. That undershoot is not physics: it is an extraction artifact of the coarse Gauss pillbox on this fixed $25^3$ grid (only 3 cells through the oxide, one-sided stencils at the pad faces, and a $z$-domain only a few oxide thicknesses tall). Treat the 500 nm numbers as grid-limited lower bounds; refining $\Delta z$ pulls them back above ideal.
 
 ## Force from $F = \tfrac12 V^2\,\partial C/\partial x$
 
@@ -238,7 +238,7 @@ title("Electrostatic force per unit z on a tunable parallel-plate cap");
 legend("numerical", "analytic");
 ```
 
-The match is sub-10 % at moderate gaps (where the finite-difference $\partial C/\partial d$ resolves the local slope cleanly) and degrades at the sweep endpoints where the gradient stencil becomes one-sided. The MEMS-comb-drive variant — multiple interleaved plates summed — uses the same identity and is left as an exercise.
+The match is roughly 5–15 % at moderate gaps (8.5 % at $d = 0.8$ mm, 10.3 % at 1.0 mm, 14.6 % at 0.6 mm — where the finite-difference $\partial C/\partial d$ resolves the local slope) and degrades further at the sweep endpoints where the gradient stencil becomes one-sided. The MEMS-comb-drive variant — multiple interleaved plates summed — uses the same identity and is left as an exercise.
 
 ## Standalone Scripts
 
@@ -265,7 +265,7 @@ Run all six with `make lesson-15`, or one at a time via `rustlab run lessons/15-
 | Three-trace middle trace-to-ground vs. outer | middle $\approx 82.4$, outer $\approx 85.7\,\text{pF/m}$ |
 | MIM $C_{\rm Gauss}$ for 10 µm × 10 µm / 100 nm / $\varepsilon_r = 25$ | $\approx 223\,\text{fF}$ (analytic 221) |
 | Bond pad 8 µm × 8 µm / 500 nm oxide | $\approx 3.8\,\text{fF}$ |
-| Tunable-cap $F'$ vs. analytic at $d = 1\,\text{mm}$ | within $\pm 10\,\%$ |
+| Tunable-cap $F'$ vs. analytic at $d = 1\,\text{mm}$ | $\approx 10\,\%$ apart (5–15 % across moderate gaps) |
 
 ## Exercises
 

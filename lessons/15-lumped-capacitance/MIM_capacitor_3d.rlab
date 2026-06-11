@@ -14,7 +14,7 @@
 #
 # Analytic check: C = ε_r ε₀ A / d
 #                   = 25 × 8.854e−12 × 1e−10 / 1e−7
-#                   ≈ 22 fF.
+#                   ≈ 221 fF.
 #
 # Units: SI. C printed in fF.
 #
@@ -130,7 +130,7 @@ print(C_gauss * 1e15)                         # fF
 
 # === Analytic ===
 C_ideal = eps_r * eps0 * A_plate / d_gap;
-print(C_ideal * 1e15)                         # ≈ 22 fF
+print(C_ideal * 1e15)                         # ≈ 221 fF
 print(C_energy / C_ideal)
 print(C_gauss  / C_ideal)
 

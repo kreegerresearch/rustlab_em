@@ -44,8 +44,13 @@ for iz = 1:length(zline)
 end
 
 B_amp = mu0 * (N_l / L_s) * Isol;
-print(real(Bz_axis(61)))          # centre of solenoid
-print(B_amp)                      # μ₀ n I (infinite limit)
+print(real(Bz_axis(61)))          # centre of solenoid ≈ 5.73e-4 T
+print(B_amp)                      # μ₀ n I (infinite limit) ≈ 6.28e-4 T
+
+# Finite-solenoid closed form at the centre:
+# B(0) = μ₀ n I · (L/2) / sqrt((L/2)² + R²)  — ≈ 0.928 · μ₀nI here
+B_fin = B_amp * (L_s/2) / sqrt((L_s/2)^2 + Rs^2);
+print(B_fin)                      # ≈ 5.83e-4 T, ~1.7% above the numerical sum
 
 # Plot
 figure();

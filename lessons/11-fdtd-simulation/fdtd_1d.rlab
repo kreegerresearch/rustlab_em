@@ -13,7 +13,9 @@
 # splits into +x and -x running waves. The +x wave hits a dielectric
 # slab (ε_r = 4 → n = 2, |R| analytic = 1/3) and partially reflects.
 # Simple Mur first-order absorbing BCs at the ends hold up while
-# c0 dt/dx ≈ 1.
+# c0 dt/dx ≈ 1: E^{n+1}(end) takes the value the neighbour held one
+# step EARLIER (save it before the E update). Copying the same-time
+# neighbour instead would be a Neumann wall with |R| ≈ 1.
 #
 # Reference: ../../notebooks/11-fdtd-simulation.md.
 
@@ -69,6 +71,10 @@ for step = 1:n_step
   # H update on dual cells 1..N-1; Hz(N) is left untouched.
   Hz(1:N-1) = Hz(1:N-1) - cH * (Ey(2:N) - Ey(1:N-1));
 
+  # Save boundary-adjacent values at time level n for the Mur ABC.
+  Ey_l_old = Ey(2);
+  Ey_r_old = Ey(N - 1);
+
   # E update on interior cells 2..N-1.
   Ey(2:N-1) = Ey(2:N-1) - cEr(2:N-1) .* (Hz(2:N-1) - Hz(1:N-2));
 
@@ -76,9 +82,11 @@ for step = 1:n_step
   t = step * dt;
   Ey(k_src) = Ey(k_src) + exp(-((t - t0) / tau)^2);
 
-  # Mur first-order ABC at the two ends (S ≈ 1 → trivial copy).
-  Ey(1) = Ey(2);
-  Ey(N) = Ey(N - 1);
+  # Mur first-order ABC: one-step-DELAYED copy E^{n+1}(1) = E^n(2).
+  # (Assigning the already-updated neighbour would be a reflecting
+  # Neumann wall.) Residual boundary echo ~ 0.5 % at S = 0.99.
+  Ey(1) = Ey_l_old;
+  Ey(N) = Ey_r_old;
 
   # Probes.
   E_inc_hist(step)   = real(Ey(k_inc));
@@ -109,9 +117,9 @@ saveanim("fdtd_1d_pulse.gif", 24);
 # (Fabry-Perot bounces aside, which arrive at the trans probe later).
 A_inc   = max(abs(E_inc_hist));
 A_trans = max(abs(E_trans_hist));
-print(A_inc)               # ~ 0.5 (half of unit Gaussian source)
-print(A_trans)             # ~ A_inc * 8/9 — first transmitted lobe
-print(A_trans / A_inc)     # ~ 8/9 ≈ 0.889
+print(A_inc)               # ~ 0.506 (half of unit Gaussian source)
+print(A_trans)             # ~ 0.446 — first transmitted lobe
+print(A_trans / A_inc)     # ~ 0.882, vs Fresnel 8/9 ≈ 0.889
 
 # === Static traces plot ===
 figure();

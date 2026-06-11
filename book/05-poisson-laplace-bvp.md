@@ -80,7 +80,7 @@ err  = abs(V - V_an);
 % Sample halfway down (i_mid = 20, x ≈ y ≈ 0.476)
 i_mid = 20;
 print(real(V(i_mid, i_mid)))         % ≈ 0.1832
-print(V_an(i_mid, i_mid))            % ≈ 0.1830 — agrees to four digits
+print(V_an(i_mid, i_mid))            % ≈ 0.1830 — agrees to ~1 part in 10³
 print(real(max(err(:))))             % ≈ 1.6e-4 — well below the (1/42)² ≈ 6e-4 bound
 ```
 
@@ -93,7 +93,7 @@ print(real(max(err(:))))             % ≈ 1.6e-4 — well below the (1/42)² �
 
 <!-- rustlab:output-end -->
 
-The two values agree to four digits; the worst-case error sits comfortably under the $(1/(N+1))^2$ bound the second-order stencil promises.
+The two values agree to about one part in $10^3$; the worst-case error sits comfortably under the $(1/(N+1))^2$ bound the second-order stencil promises.
 
 ```rustlab
 clf;
@@ -177,13 +177,13 @@ end
 
 <!-- rustlab:output-end -->
 
-The three printed errors decay roughly an order of magnitude per 200 iterations: $\sim 10^{-1}$ after 50, $\sim 3\times10^{-3}$ after 200, $\sim 6\times10^{-4}$ after 1000 (where it floors out at the grid's $h^2$ truncation error). `spsolve` produced the same accuracy in one factorisation, taking less time than even the 50-iteration Gauss–Seidel pass. From here the rest of the lesson uses the direct solver exclusively.
+The three printed errors decay roughly an order of magnitude every ~100 iterations until the iteration floors out at the grid's $h^2$ truncation error around iteration 300: $\sim 10^{-1}$ after 50, $\sim 3\times10^{-3}$ after 200, $\sim 6\times10^{-4}$ after 1000. `spsolve` produced the same accuracy in one factorisation, taking less time than even the 50-iteration Gauss–Seidel pass. From here the rest of the lesson uses the direct solver exclusively.
 
 ## Parallel Plates with Fringing Fields
 
 ### Theory
 
-A finite parallel-plate capacitor inside a grounded box is the simplest realistic geometry: two horizontal conducting plates of width $w$ and gap $d$, driven to fixed potentials $\pm V_0/2$, surrounded by a far enough grounded boundary that the box itself doesn't affect the result. The 1-D limit (infinite plates) gives a uniform interior field $E_y = V_0/d$ and capacitance per unit length $C/w = \varepsilon_0/d$. Real plates have **fringing** — field lines bowing outward beyond the plate edges — and the actual capacitance is always larger than the 1-D estimate.
+A finite parallel-plate capacitor inside a grounded box is the simplest realistic geometry: two horizontal conducting plates of width $w$ and gap $d$, driven to fixed potentials $\pm V_0/2$, surrounded by a far enough grounded boundary that the box itself doesn't affect the result. The 1-D limit (infinite plates) gives a uniform interior field $E_y = V_0/d$ and capacitance per unit depth $C' = \varepsilon_0 w/d$ — i.e. $\varepsilon_0/d$ per unit plate area. Real plates have **fringing** — field lines bowing outward beyond the plate edges — and the actual capacitance is always larger than the 1-D estimate.
 
 Numerically the plates are treated as **pinned cells**: every grid cell inside a plate has its row of $A$ replaced by the identity row, with the right-hand side set to the plate's potential. The rest of the system stays untouched, and the linear solve fixes the conductor potential exactly while the surrounding Laplace problem solves around it.
 
@@ -425,7 +425,7 @@ print(C_an)                                    % ≈ 1.42e-9 F/m²
 % total Q per unit area = σ; C/A = σ / V₀ with V₀ = 1.
 sigma_top = -eps0 * real(Eyd(nyd - 1, nxd / 2));   % one cell below the top plate
 C_num     = abs(sigma_top) / 1.0;
-print(C_num)                                   % matches C_an to ~10⁻³
+print(C_num)                                   % matches C_an to ~1%
 ```
 
 <!-- rustlab:output-start -->
@@ -619,7 +619,7 @@ Run all five with `make lesson-05`, or one at a time via `rustlab run lessons/05
 2. **SOR with optimal $\omega$.** Implement SOR on the 20-cell unit-square problem. Sweep $\omega$ from 1.0 to 1.95 in steps of 0.05 and plot iterations-to-$10^{-4}$ residual versus $\omega$. Verify the optimum sits near $2/(1 + \sin(\pi/N))$.
 3. **Capacitance of finite plates.** Take the parallel-plate result from this lesson and compute $C$ via the surface integral $C = (\varepsilon_0/V_0)\oint\!\vec E\!\cdot\!\hat n\,dA$ on a rectangle just outside the top plate. Compare to the 1-D estimate $\varepsilon_0 w/d$ and quantify the fringing-field correction (typically 10–20 % above the 1-D value at $w/d \sim 3$).
 4. **Coaxial cable on a Cartesian grid.** Pin two concentric conductor rings at $V = 1$ and $V = 0$; verify $V(r) = \ln(b/r)/\ln(b/a)$ along a radial slice and compute the capacitance per unit length, comparing to $C' = 2\pi\varepsilon_0/\ln(b/a)$.
-5. **Re-entrant angle sweep.** Modify the corner example to have an interior angle $\beta \in \{3\pi/2, 5\pi/4, 7\pi/4\}$ (the third is a near-flat angle, so almost no singularity; the second is sharper than 90°). Verify the fitted slope of $|\vec E|$ vs $r$ is $1/\beta\cdot\pi - 1$, and that an interior $\pi/2$ corner has $|E|$ regular (no singularity).
+5. **Re-entrant angle sweep.** Modify the corner example to have an interior angle $\beta \in \{3\pi/2, 5\pi/4, 7\pi/4\}$ (the second gives slope $-1/5$ — near-flat, only weakly singular; the third gives $-3/7$ — the sharpest of the three, approaching a knife-edge). Verify the fitted slope of $|\vec E|$ vs $r$ is $\pi/\beta - 1$, and that an interior $\pi/2$ corner has $|E|$ regular (no singularity).
 
 ## What's next
 

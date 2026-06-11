@@ -57,12 +57,16 @@ print(mag_dB(k_res))                          # deep null at resonance
 in_band = mag < 0.3162;                       # |S₁₁| < −10 dB
 idx     = find(in_band);
 if length(idx) > 0
-  f_lo = fs(idx(1));
-  f_hi = fs(idx(length(idx)));
+  # Linearly interpolate the band edges between grid samples — reading
+  # raw 5 MHz grid points clips the band to ≈ 1.63 %; interpolation
+  # recovers the analytic ≈ 1.87 %.
+  k1 = idx(1);  k2 = idx(length(idx));
+  f_lo = fs(k1-1) + (0.3162 - mag(k1-1)) / (mag(k1) - mag(k1-1)) * (fs(k1) - fs(k1-1));
+  f_hi = fs(k2)   + (0.3162 - mag(k2))   / (mag(k2+1) - mag(k2)) * (fs(k2+1) - fs(k2));
   bw   = f_hi - f_lo;
-  print(f_lo / 1e9)                           # lower edge
-  print(f_hi / 1e9)                           # upper edge
-  print(bw / f_res * 100)                     # fractional BW (%)
+  print(f_lo / 1e9)                           # lower edge ≈ 2.427 GHz
+  print(f_hi / 1e9)                           # upper edge ≈ 2.473 GHz
+  print(bw / f_res * 100)                     # fractional BW ≈ 1.87 %
 end
 
 # === |S₁₁|(f) plot ===

@@ -44,8 +44,8 @@ print(err)                         # ~1e-10 V/m  —  machine-precision agreemen
 
 # === Peak location: z = R/√2 ===
 idx_max = argmax(abs(Ez_num));
-print(zs(idx_max))                 # ≈ +R/√2 ≈ +0.01414 m
-print(Ez_num(idx_max))             # ≈ 8654 V/m for R=2 cm, Q=1 nC
+print(zs(idx_max))                 # ≈ ±R/√2 ≈ ±0.01414 m; this grid lands on -0.014 m
+print(Ez_num(idx_max))             # ≈ -8648 V/m  (|E_z| peak ≈ 8648 V/m for R=2 cm, Q=1 nC)
 
 # === Plot ===
 figure();

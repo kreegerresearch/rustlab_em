@@ -63,6 +63,9 @@ freq  = 1.0e6;
 omega = 2 * pi * freq;
 I0    = 1e-3;
 
+C_cap = eps0 * A_cap / d_cap;
+print(C_cap)           % ≈ 8.85e-13 F — parallel-plate capacitance
+
 ts    = linspace(0, 2 / freq, 401);          % two periods
 I_t   = I0 * cos(omega * ts);
 Q_t   = (I0 / omega) * sin(omega * ts);
@@ -91,6 +94,10 @@ legend("I_wire (mA)", "I_disp (mA)")
 ```
 
 <!-- rustlab:output-start -->
+```text
+0.0000000000008854187817000001
+```
+
 ![plot 1](plots/08-maxwell-equations/plot-1-2573d971.svg)
 
 <!-- rustlab:output-end -->
@@ -251,7 +258,7 @@ ylabel("t")
 
 <!-- rustlab:output-end -->
 
-The residuals are not just small — they are *structured*: the discrete second derivative of a cosine is itself a cosine, so the residual map has the same diagonal stripes as the field, just multiplied by $-(k\Delta x)^2/6$. Halving the grid spacing should drop the maximum residual by a factor of four; running the convergence sweep at $N \in \{41, 81, 161\}$ confirms it (`residual_convergence.svg`).
+The residuals are not just small — they are *structured*, and the structure is worth reading. In the grid interior the two truncation errors nearly cancel: with $N_x = N_t = 81$ over one wavelength × one period, $k\Delta x = \omega\Delta t$, so the $O(h^2)$ centred-difference errors of $\partial E_y/\partial x$ and $\partial B_z/\partial t$ are identical cosine stripes that subtract away. The maximum residual instead lives on the grid edges, where `gradient` falls back to one-sided stencils: their error is larger but still $O(h^2)$, $\approx (k\Delta x)^2/2 \approx 3.1\times10^{-3}$ at $N = 81$ — exactly the printed value. Because the dominant edge error is still second order, halving the grid spacing drops the maximum residual by a factor of four; the convergence sweep at $N \in \{41, 81, 161\}$ in the standalone `maxwell_consistency.rlab` confirms it (that script produces `residual_convergence.svg`).
 
 The two divergence equations $\nabla\cdot\vec E = 0$ and $\nabla\cdot\vec B = 0$ are satisfied *identically* for a plane wave that has only $E_y$ and $B_z$ — the relevant partial derivatives are zero in our 2-D layout. The plane wave is a self-checking solution: Faraday and Ampère imply $\omega^2 = c^2 k^2$, and the two divergence equations follow from the polarisation choice.
 

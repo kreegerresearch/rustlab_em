@@ -12,8 +12,9 @@
 #   3. Form Love's equivalent surface currents J_s = n̂ × H and
 #      M_s = -n̂ × E.
 #   4. For each far-field direction r̂(θ, φ), evaluate the radiation
-#      integral
-#        F(r̂) = ∫_S (η₀ J_s + r̂ × M_s) e^{-i k r̂·r'} dS'
+#      integral (e^{+jωt} time convention, so outgoing waves carry
+#      e^{-jkr} and the integral phase is e^{+jk r̂·r'})
+#        F(r̂) = ∫_S (η₀ J_s - r̂ × M_s) e^{+j k r̂·r'} dS'
 #      and project onto the plane ⊥ r̂. The amplitude |F⊥| ∝ |E_ff|.
 #   5. Compare to the textbook Hertzian-dipole pattern |F(θ)| ∝ sin θ.
 #
@@ -35,10 +36,11 @@ k      = 2 * pi / lambda;
 I0_dl  = 1.0;                # current-moment normalisation (A·m)
 
 # === Cubic Huygens surface ===
-# Half-side a = λ/4 puts S well inside the near zone (kr ≈ π/2 at the
-# face centres), so the 1/(kr)² and 1/(kr)³ terms of the Hertzian field
-# are non-negligible — a strong test that the integral picks out the
-# correct asymptotic far-field pattern.
+# Half-side a = λ/4 puts S in the transition region just outside the
+# reactive zone (kr ≈ π/2 at the face centres, vs the kr = 1 boundary),
+# so the 1/(kr)² and 1/(kr)³ terms of the Hertzian field are still
+# significant (~40 % and ~26 % of the radiating term) — a strong test
+# that the integral picks out the correct asymptotic far-field pattern.
 a   = lambda / 4;
 M   = 21;
 du  = 2 * a / M;
@@ -76,7 +78,7 @@ function [Ex, Ey, Ez, Hx, Hy, Hz] = hertzian_xyz(X, Y, Z, k, eta0, I0_dl)
   cos_p = X ./ rxy_s;
   sin_p = Y ./ rxy_s;
   kr    = k * r;
-  ph    = exp(j * kr);
+  ph    = exp(-j * kr);    # e^{+jωt} convention: outgoing wave ∝ e^{-jkr}
   # Spherical components (Balanis Eqs. 4-26): full near+far form.
   Er  = (eta0 * k * I0_dl / (2 * pi))    * cos_t .* (1 ./ (kr .* kr) - j ./ (kr .^ 3)) .* ph;
   Eth = (j * eta0 * k * I0_dl / (4 * pi)) * sin_t .* (1 ./ kr - j ./ (kr .* kr) - 1 ./ (kr .^ 3)) .* ph;
@@ -105,17 +107,17 @@ Mz_s = -(nxs .* Ey_s - nys .* Ex_s);
 # Returns |F⊥(r̂)|, the magnitude of the radiation integral projected
 # onto the plane perpendicular to r̂.
 function amp = ff_amp(rx, ry, rz, xs, ys, zs_s, Jx_s, Jy_s, Jz_s, Mx_s, My_s, Mz_s, eta0, k, dA)
-  # F = η₀ J + r̂ × M
-  Fx = eta0 * Jx_s + (ry * Mz_s - rz * My_s);
-  Fy = eta0 * Jy_s + (rz * Mx_s - rx * Mz_s);
-  Fz = eta0 * Jz_s + (rx * My_s - ry * Mx_s);
+  # F = η₀ J - r̂ × M
+  Fx = eta0 * Jx_s - (ry * Mz_s - rz * My_s);
+  Fy = eta0 * Jy_s - (rz * Mx_s - rx * Mz_s);
+  Fz = eta0 * Jz_s - (rx * My_s - ry * Mx_s);
   # F⊥ = F − (F · r̂) r̂
   F_dot_r = Fx * rx + Fy * ry + Fz * rz;
   Fpx = Fx - F_dot_r * rx;
   Fpy = Fy - F_dot_r * ry;
   Fpz = Fz - F_dot_r * rz;
-  # Phase factor e^{-i k r̂·r'}
-  phase = exp(-j * k * (rx * xs + ry * ys + rz * zs_s));
+  # Phase factor e^{+j k r̂·r'} (e^{+jωt} convention)
+  phase = exp(j * k * (rx * xs + ry * ys + rz * zs_s));
   Ix = sum(Fpx .* phase) * dA;
   Iy = sum(Fpy .* phase) * dA;
   Iz = sum(Fpz .* phase) * dA;
@@ -136,7 +138,7 @@ E_ff    = arrayfun(ff_eplane, ths);
 E_ff_norm = real(E_ff) / max(real(E_ff));
 analytic  = sin(ths);
 err       = max(abs(E_ff_norm - analytic));
-print(err)             # ≪ 1 — sin-shape recovered
+print(err)             # ~ 1e-5 — sin-shape recovered
 
 # === φ-cut at θ = π/2 (H-plane sanity check) ===
 # For a ẑ dipole the pattern is φ-independent on the equator. Spread
@@ -147,7 +149,7 @@ ff_hplane = @(ph) ff_amp(cos(ph), sin(ph), 0, xs, ys, zs_s, ...
                          Jx_s, Jy_s, Jz_s, Mx_s, My_s, Mz_s, eta0, k, dA);
 E_ph      = arrayfun(ff_hplane, phs);
 phi_spread = (max(real(E_ph)) - min(real(E_ph))) / mean(real(E_ph));
-print(phi_spread)      # ≪ 1 — equatorial cut should be flat
+print(phi_spread)      # ~ 2e-4 — equatorial cut should be flat
 
 # === Plots ===
 figure();

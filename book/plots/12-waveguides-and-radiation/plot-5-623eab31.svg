@@ -85,7 +85,7 @@ theta  (deg)
 <polyline fill="none" opacity="0.3" stroke="#9696B4" stroke-width="1" points="405,429 405,47 "/>
 <polyline fill="none" opacity="0.3" stroke="#9696B4" stroke-width="1" points="563,429 563,47 "/>
 <polyline fill="none" opacity="0.3" stroke="#9696B4" stroke-width="1" points="721,429 721,47 "/>
-<polyline fill="none" opacity="1" stroke="#17BECF" stroke-width="2" points="90,398 155,318 221,243 287,177 353,124 418,91 484,79 550,91 616,124 681,177 747,243 813,318 879,398 "/>
+<polyline fill="none" opacity="1" stroke="#17BECF" stroke-width="2" points="90,398 155,315 221,238 287,173 353,122 418,90 484,79 550,90 616,122 681,173 747,238 813,315 879,398 "/>
 <polyline fill="none" opacity="1" stroke="#BCBD22" stroke-width="2" points="90,398 155,315 221,238 287,173 353,122 418,90 484,79 550,90 616,122 681,173 747,238 813,315 879,398 "/>
 <rect x="746" y="52" width="129" height="49" opacity="0.85" fill="#1E1E2E" stroke="none"/>
 <rect x="746" y="52" width="129" height="49" opacity="0.3" fill="none" stroke="#CDD6F4"/>
