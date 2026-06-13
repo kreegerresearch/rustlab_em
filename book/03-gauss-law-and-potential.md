@@ -2,7 +2,7 @@
 
 # Lesson 03: Gauss's Law & Electric Potential
 
-Lesson 02 added charges one by one. Most real distributions have so many charges that direct summation is hopeless — but they often have *symmetry*, and Gauss's law turns symmetry into a one-line answer. The same lesson introduces the *electric potential* $V$, a scalar field whose gradient gives back $\vec E$. Replacing a vector calculation with a scalar one is the single biggest simplification in static electromagnetism.
+Lesson 02 added charges one by one. Most real distributions have so many charges that direct summation is hopeless — but they often have *symmetry*, and Gauss's law turns symmetry into a one-line answer. This lesson also introduces the *electric potential* $V$, a scalar field whose gradient gives back $\vec E$. Replacing a vector calculation with a scalar one is the single biggest simplification in static electromagnetism.
 
 ## Learning Objectives
 
@@ -185,9 +185,9 @@ hold off;
 
 <!-- rustlab:output-end -->
 
-### Example — $\vec E = -\nabla V$ matches direct superposition
+### Example — $\vec E = -\nabla V$ recovers the far-field dipole formula
 
-Compute $-\nabla V$ via Lesson 01's `gradient` and plot it as a quiver overlay. It should reproduce the dipole field of Lesson 02 — same arrows, derived from a scalar potential rather than a vector sum. This is the numerical analogue of the analytic proof above.
+Compute $-\nabla V$ via Lesson 01's `gradient` and plot it as a quiver overlay. Because $V$ here is the *ideal-dipole* potential, the result should reproduce Lesson 02's far-field formula — which in turn approximates the two-charge superposition away from the charges. This is the numerical analogue of the analytic differentiation above.
 
 ```rustlab
 dx = xs(2) - xs(1);
@@ -220,7 +220,7 @@ quiver(X, Y, Ex_from_V, Ey_from_V, "Dipole field recovered as -∇V")
 
 <!-- rustlab:output-end -->
 
-The quiver is visually identical to Lesson 02's direct-superposition plot — and now we have a *scalar* recipe (compute $V$, take $-\nabla V$) that scales to $10^4$ charges as cheaply as to two.
+Away from the charges the quiver is visually identical to Lesson 02's direct-superposition plot (near them the ideal-dipole approximation breaks down) — and now we have a *scalar* recipe (compute $V$, take $-\nabla V$) that scales to $10^4$ charges as cheaply as to two.
 
 ## Parallel-Plate Capacitor in 1D
 
@@ -238,7 +238,7 @@ The capacitance follows from $Q = CV_0$ with $Q = \sigma A$:
 
 $$\boxed{\,C = \frac{\varepsilon_0\,A}{d}.\,}$$
 
-This is the simplest device-level result in all of electrostatics — and the model that every other capacitor (coax, microstrip, fringe-corrected plates) refines. Lesson 05 will solve the same geometry with the finite-element machinery to recover the same $C$ inclusive of fringing.
+This is the simplest device-level result in all of electrostatics — and the model that every other capacitor (coax, microstrip, fringe-corrected plates) refines. Lesson 05 will solve the same geometry with the finite-difference machinery to recover the same $C$ inclusive of fringing.
 
 ### Example — Field, potential, and $C$ for a 1 cm × (10×10) cm² capacitor
 
@@ -301,14 +301,19 @@ legend("E_z (V/m)", "V (V)")
 
 ### Theory
 
-A consistent check on the Lesson 02 dipole field: in the *vacuum* between the charges, $\rho = 0$, so $\nabla\cdot\vec E$ should be zero up to discretization error. Near a charge it should integrate (over a small box) to $q/\varepsilon_0$. The first half is a clean test of the differential form of Gauss's law.
+A subtler check than it first appears. Our grid holds $E_x$ and $E_y$ — the *in-plane components of the 3-D Coulomb field* sampled on the $z = 0$ plane. In the vacuum around the charges the full 3-D divergence vanishes ($\rho = 0$), but the planar divergence we can actually compute on a 2-D grid does *not*:
 
-### Example — $\nabla\cdot\vec E$ on the dipole grid
+$$\frac{\partial E_x}{\partial x} + \frac{\partial E_y}{\partial y} \;=\; \underbrace{\nabla\cdot\vec E}_{=\,0\ \text{in vacuum}} \;-\; \frac{\partial E_z}{\partial z} \;=\; -\sum_i\frac{k_e\,q_i}{\rho_i^3}\qquad(z = 0),$$
 
-Recompute the dipole field exactly as in Lesson 02, take its divergence with the Lesson 01 operator, and check a vacuum cell.
+because each charge's $E_z = k_e q_i\,z/(\rho_i^2 + z^2)^{3/2}$ grows linearly through the plane with slope $k_e q_i/\rho_i^3$ (here $\rho_i$ is the in-plane distance to charge $i$). So the honest test of $\nabla\cdot\vec E = \rho/\varepsilon_0$ on this slice is not "is the planar divergence zero?" but "does it match $-\partial E_z/\partial z = -\sum_i k_e q_i/\rho_i^3$?"
+
+### Example — Planar $\nabla\cdot\vec E$ on the dipole grid vs the analytic slice value
+
+Recompute the dipole field exactly as in Lesson 02, take its planar divergence with the Lesson 01 operator, and compare a vacuum cell against the analytic $-\partial E_z/\partial z$.
 
 ```rustlab
 % rebuild Ex, Ey from the dipole superposition (same as Lesson 02)
+d  = 0.02;                     % restore the dipole separation (the capacitor block reused d)
 Ex = zeros(size(X));
 Ey = zeros(size(X));
 % +q
@@ -324,17 +329,25 @@ divE = divergence(Ex, Ey, dx, dy);
 
 % Pick a non-symmetric vacuum cell so we don't see an artificial symmetry zero.
 % (x, y) = (0.008, 0.028):  well outside the d=0.02 dipole, no symmetry.
-print(real(divE(40, 30)))      % expect a small finite stencil-error value (V/m²)
+% Analytic planar divergence there:  -∂Ez/∂z = -Σ_i k_e q_i / ρ_i³.
+xt = xs(30);  yt = ys(40);
+rho_p = sqrt((xt - d/2)^2 + yt^2);     % in-plane distance to +q
+rho_m = sqrt((xt + d/2)^2 + yt^2);     % in-plane distance to -q
+div2d_ana = -ke * (q / rho_p^3 - q / rho_m^3);
+
+print(real(divE(40, 30)))      % ≈ -1.75e5 V/m²  (numerical planar divergence)
+print(div2d_ana)               % ≈ -1.63e5 V/m²  (analytic -∂Ez/∂z at this cell)
 ```
 
 <!-- rustlab:output-start -->
 ```text
--106873.65130626428
+-175173.44361588795
+-162617.31593468232
 ```
 
 <!-- rustlab:output-end -->
 
-The numerical value is *not* particularly small in absolute units (V/m² values in the $10^4$–$10^5$ range are typical here) — the central-difference stencil sees the steep $1/r^3$ dipole falloff and the leading truncation error is of order $\Delta^2\,\partial^3 E/\partial x^3$, which is sizeable when $|\vec E|/\Delta^2$ is large. Lesson 05 fixes this by solving for $V$ on a grid using the finite-difference Laplacian directly, where the discretization is *consistent with the operator*: the algebraic identity $\nabla^2 V_{\rm num} = -\rho_{\rm num}/\varepsilon_0$ is built in by construction, so vacuum cells return zero exactly under the same stencil that defines $\nabla^2$.
+The two values agree in sign and magnitude, to within ~8% truncation error — the central-difference stencil sees the steep $1/r^3$ dipole falloff, and its leading error is of order $\Delta^2\,\partial^3 E/\partial x^3$. As the grid refines, the numerical value converges to the analytic $\approx -1.63\times10^5$ V/m² — *not* to zero, because a 2-D slice of a 3-D field has genuinely nonzero planar divergence wherever $\partial E_z/\partial z \neq 0$. Lesson 05 avoids this subtlety entirely by solving for $V$ on a grid using the finite-difference Laplacian directly, where the discretization is *consistent with the operator*: the algebraic identity $\nabla^2 V_{\rm num} = -\rho_{\rm num}/\varepsilon_0$ is built in by construction, so vacuum cells return zero exactly under the same stencil that defines $\nabla^2$.
 
 ## Standalone Scripts
 
@@ -351,17 +364,17 @@ Run all three with `make lesson-03`, or one at a time via `rustlab run lessons/0
 | Variable | Expected Value |
 |---|---|
 | `Er(1)` (sphere, near $r=0$) | ≈ 71.9 V/m (small, grows linearly in $r$) |
-| `Er` at $r \approx R$ | ≈ $k_e Q / R^2$ ≈ 3595 V/m |
+| `Er` at $r \approx R$ | ≈ 3586 V/m (nearest grid point lies just inside $R$; closed form at $R$: 3595) |
 | `V_r(1)` (sphere, near $r=0$) | ≈ $3 k_e Q / (2R)$ ≈ 269.6 V |
 | $k_e Q / R$ (sphere surface) | ≈ 179.75 V |
 | `Ex_from_V(46, 26)` | ≈ −2798 V/m  (analytic far-field −2808.59; ~0.4% stencil error) |
 | `Ey_from_V(46, 26)` | ≈ 0 |
 | `sigma` | $10^{-7}$ C/m² |
-| `E_in` | ≈ 11293 V/m |
+| `E_in` | ≈ 11294 V/m |
 | `V0` | ≈ 113 V |
 | `C` | ≈ 8.854 pF |
 | `Q / V0` | identical to `C` |
-| `divE` (bulk vacuum cell) | small, $\to 0$ as the grid refines |
+| `divE(40, 30)` (planar divergence, vacuum cell) | ≈ −1.75×10⁵ V/m² (analytic $-\partial E_z/\partial z$ ≈ −1.63×10⁵; converges there, not to 0, as the grid refines) |
 
 ## Exercises
 
@@ -369,7 +382,7 @@ Run all three with `make lesson-03`, or one at a time via `rustlab run lessons/0
 2. **Infinite line of charge.** Use cylindrical Gauss to derive $E_\rho = \lambda/(2\pi\varepsilon_0\rho)$. Choose $\lambda = 10^{-9}$ C/m and plot $E_\rho(\rho)$ on $\rho \in [1\,\text{mm}, 10\,\text{cm}]$. Compare against the finite-line result from Lesson 02 Exercise 3 in the limit $L \to \infty$.
 3. **Capacitance of a coaxial cable.** Use Gauss's law in cylindrical symmetry to derive $C' = 2\pi\varepsilon_0/\ln(b/a)$ per unit length for a coax with inner radius $a$ and outer $b$. Tabulate $C'$ for $b/a = 2, 5, 10$.
 4. **Dielectric-filled capacitor.** A linear dielectric of permittivity $\varepsilon = \varepsilon_r\varepsilon_0$ replaces vacuum between the plates. Derive $C = \varepsilon_r\varepsilon_0 A/d$ and explain why both $\vec E$ and $V_0$ drop by a factor $\varepsilon_r$ at fixed $Q$.
-5. **Direct integration of $V$.** Build $V$ on the Lesson 02 grid by superposing $V_i = k_e q_i / |\vec r - \vec r_i|$ for the dipole, then call `gradient` and verify $\vec E = -\nabla V$ matches the direct superposition. (We did this for the *exact* dipole formula above; this exercise replaces that with the actual two-charge sum.)
+5. **Direct integration of $V$.** Build $V$ on the Lesson 02 grid by superposing $V_i = k_e q_i / |\vec r - \vec r_i|$ for the dipole, then call `gradient` and verify $\vec E = -\nabla V$ matches the direct superposition. (We did this for the *ideal* dipole formula above; this exercise replaces that with the actual two-charge sum.)
 
 ## What's next
 

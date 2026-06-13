@@ -12,9 +12,11 @@
 # We sweep PML depth d ∈ {4, 8, 16}, run the same source/probe layout
 # for each, and compare each run's interior field to a "reference"
 # computed on a much larger grid where reflections never reach the
-# probe within the simulation time. The residual reflection
-# coefficient |E_residual| / |E_incident| should drop ~ one order of
-# magnitude per doubling of d for the cubic σ profile used here.
+# probe within the simulation time. Because sigma_max is rescaled so
+# every depth targets the same theoretical −80 dB, the measured
+# residual |E_residual| / |E_incident| is dominated by the DISCRETE
+# reflection off the sampled cubic ramp; it drops by ~ ×2.5 per
+# doubling of d (a power law ~ d^−1.3), not exponentially.
 #
 # Split-field PML (Bérenger, 1994) for 2-D TMz:
 #   E_z is split into E_zx and E_zy:
@@ -173,5 +175,5 @@ figure();
 semilogy(depths, res / inc_pk, "|R(d)|  (residual / incident)");
 xlabel("PML depth  (cells)");
 ylabel("|R|");
-title("Bérenger split-field PML reflection vs depth — exponential trend");
+title("Bérenger split-field PML reflection vs depth — power-law trend");
 savefig("pml_depth_sweep.svg");

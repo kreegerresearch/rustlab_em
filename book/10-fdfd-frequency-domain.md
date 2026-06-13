@@ -33,9 +33,9 @@ $$\nabla^2 E_z + \omega^2\mu_0\varepsilon(x,y)\,E_z = -i\omega\mu_0\,J_z(x,y).$$
 
 (For TEz polarisation — only $H_z$ non-zero — the same scalar form applies to $H_z$ with $\varepsilon\leftrightarrow\mu$.) Discretising the Laplacian on a uniform grid with the standard 5-point stencil produces a sparse complex-valued matrix $A(\omega)$ that is
 
-- non-Hermitian (the $\partial^2$ stencil is real symmetric, but the $\omega^2\varepsilon$ mass term is real positive on the diagonal — the matrix as a whole is *complex symmetric*, sometimes mislabelled as "Hermitian" in textbooks);
-- routed by `spsolve` automatically through the **complex sparse LU** path (since the SPD pre-check rejects it once $\varepsilon$ has any imaginary part);
-- $O(N\log N)$ in factorisation cost on 2-D grids with AMD ordering, and $O(N)$ for back-substitution per right-hand side — perfect for sweeps over frequency or source position.
+- real symmetric but *indefinite* in its bare form (Laplacian stencil plus a real $\omega^2\varepsilon$ mass term); adding the SC-PML stretching factors — and/or any lossy $\varepsilon$ — makes the entries complex, so the matrix becomes **complex symmetric** ($A^T = A$) but **not Hermitian** ($A^\dagger \ne A$);
+- routed by `spsolve` automatically through the **complex sparse LU** path (the SPD pre-check rejects the operator as soon as its entries go complex);
+- about $O(N^{3/2})$ in factorisation *flops* with $O(N\log N)$ fill on 2-D grids with good (nested-dissection-style) ordering, and $O(N\log N)$ work per back-substitution — cheap enough per right-hand side to make sweeps over frequency or source position practical.
 
 That single sparse linear system is FDFD. Everything else in this lesson is about *what to put on the diagonal*: how to encode geometry, how to make the boundaries pretend to be infinite, and how to read out $S$-parameters or radiation patterns from the solution.
 
@@ -57,7 +57,7 @@ ramps gently from zero at the PML inner edge to $\sigma_{\max}$ at the outer edg
 
 $$A_{i,i\pm1}\;\stackrel{?}{=}\;\frac{1}{[s_x(x_i)\,\Delta x]^2}\quad\text{(wrong)}$$
 
-This produces a residual $\sim 100\,\%$-amplitude reflection at the PML inner edge in our 1-D test below — the field carries an enormous standing-wave ripple even with a 20-cell PML. The textbook formulation instead places one $s_x$ at the **primal** cell centre (where $E_z$ lives) and the other at the **dual** cell face (where $H$ lives, between cells $i$ and $i+1$):
+This leaves a measurable residual reflection at the PML inner edge — in practice one to two orders of magnitude worse than the face-centred form, enough to put a visible standing-wave ripple on the field even with a 20-cell PML. The textbook formulation instead places one $s_x$ at the **primal** cell centre (where $E_z$ lives) and the other at the **dual** cell face (where $H$ lives, between cells $i$ and $i+1$):
 
 $$A_{i,i+1} = \frac{1}{s_E(x_i)\,s_H(x_i + \tfrac12\Delta x)\,\Delta x^2}, \qquad A_{i,i} = -A_{i,i+1} - A_{i,i-1} + k_0^2\,\varepsilon(x_i).$$
 
@@ -128,9 +128,10 @@ ylabel("y cell index")
 <!-- rustlab:output-end -->
 
 ```rustlab
-% Symmetry sanity: |E_pml| at four cardinal-direction sample points
-% on a circle should agree to ~ ppm — the only asymmetry is grid
-% anisotropy of the 5-point stencil.
+% Symmetry sanity: the source sits at the exact centre of the 121x121
+% grid, so the four cardinal sample points are images of one another
+% under exact grid reflections — |E_pml| should agree to round-off
+% (~1e-14) if the solver and the PML assembly are symmetric.
 ic = round(ny_v / 2);
 jc = round(nx_v / 2);
 r  = round(0.3 * nx_v);
@@ -148,7 +149,7 @@ print((max([sN_v, sS_v, sE_v, sW_v]) - min([sN_v, sS_v, sE_v, sW_v])) / mean([sN
 
 <!-- rustlab:output-end -->
 
-The hard-wall image shows the cavity's rectangular mode pattern — that is *not* the response of a free point source. The PML image shows nearly perfect radial symmetry (asymmetry $< 2\times10^{-5}$, dominated by the 5-point stencil's preference for axis-aligned propagation over diagonal). SC-PML is the workhorse that lets every later FDFD demo treat the computational box as if it extends to infinity.
+The hard-wall image shows the cavity's rectangular mode pattern — that is *not* the response of a free point source. The printed cardinal-sample asymmetry is $\sim 10^{-14}$: the four points are related by exact grid reflection symmetry (the source is dead-centre on an odd-sized grid), so this is a solver/assembly sanity check that must come out at round-off regardless of stencil quality. (Measuring the 5-point stencil's *true* numerical anisotropy would require comparing cardinal against **diagonal** propagation directions, where the dispersion mismatch at 12 cells per wavelength is of order $10^{-3}$–$10^{-2}$.) SC-PML is the workhorse that lets every later FDFD demo treat the computational box as if it extends to infinity.
 
 ## 1-D Stratified Helmholtz
 
@@ -302,7 +303,7 @@ The right-hand side is non-zero only inside the scatterer — a **polarisation c
 
 ### Example — $\varepsilon_r = 4$ cylinder, $R = 0.4\lambda_0$
 
-A $161\times 161$ grid covers $4\lambda\times 4\lambda$ at 12 cells per $\lambda$, with an 18-cell PML on each side. The cylinder is centred. Plot $\mathrm{Re}(E_{\rm total})$ to show the incident plane wave bending around the scatterer, $|E_{\rm total}|$ to expose the standing-wave intensity pattern, and $|E_{\rm scat}|$ in isolation to see the radiation pattern.
+A $161\times 161$ grid at 12 cells per $\lambda$ spans about $13.4\lambda\times 13.4\lambda$, of which roughly $10.4\lambda\times 10.4\lambda$ is interior once the 18-cell PML on each side is excluded. The cylinder is centred. Plot $\mathrm{Re}(E_{\rm total})$ to show the incident plane wave bending around the scatterer, $|E_{\rm total}|$ to expose the standing-wave intensity pattern, and $|E_{\rm scat}|$ in isolation to see the radiation pattern.
 
 ```rustlab
 clf;
@@ -377,13 +378,13 @@ A rectangular cavity of size $a\times b$ with PEC (perfect electric conductor) w
 
 $$E_z^{(m,n)}(x,y) = E_0\,\sin(m\pi x/a)\,\sin(n\pi y/b), \qquad \omega_{mn} = c\,\pi\,\sqrt{(m/a)^2 + (n/b)^2}\;\bigl(\,m,\,n \ge 1\bigr).$$
 
-Driving the cavity with a current source at off-modal-node frequency $\omega$ and reading $E_z$ at a different off-node point produces a Lorentzian peak at each $\omega_{mn}$ — height $\propto Q$, width $\propto 1/Q$, where the quality factor $Q$ is determined by losses (here, a small bulk loss tangent $\tan\delta$ that we plug into $\varepsilon = \varepsilon_r(1 - i\tan\delta)$). FDFD does this in one sparse solve per frequency.
+Note the $m, n \ge 1$ restriction: the Dirichlet ($E_z = 0$) walls force $\sin$ factors in *both* directions, and $\sin(0\cdot\pi x/a) \equiv 0$ — so there are no TM$_{10}$, TM$_{01}$, or TM$_{20}$ modes. Driving the cavity with a current source at off-modal-node frequency $\omega$ and reading $E_z$ at a different off-node point produces a Lorentzian peak at each $\omega_{mn}$ — height $\propto Q$, width $\propto 1/Q$, where the quality factor $Q$ is determined by losses (here, a small bulk loss tangent $\tan\delta$ that we plug into $\varepsilon = \varepsilon_r(1 + i\tan\delta)$). Mind the sign: under this lesson's $e^{-i\omega t}$ convention loss is a **positive** imaginary part of $\varepsilon$ — consistent with the PML's $s = 1 + i\sigma/(\omega\varepsilon_0)$ — whereas $e^{+j\omega t}$ engineering texts write the same lossy medium as $\varepsilon_r(1 - j\tan\delta)$. FDFD does this in one sparse solve per frequency.
 
 Since every frequency is an independent sparse solve, the sweep is embarrassingly parallel — we dispatch it with `parmap(@trial, 1:Nf)` instead of a serial `for kf` loop. `parmap` requires the trial body to be a pure function (no figures, no shared mutable state) and the function does not capture the surrounding workspace, so the constants get rebuilt inside.
 
 ### Example — $0.10\,\text{m}\times 0.075\,\text{m}$ cavity, $\tan\delta = 0.005$
 
-Sweep from 1 GHz to 4 GHz at 121 frequency points. The lowest five mode frequencies are 1.50, 2.00, 2.50, 3.00, 3.61 GHz — predicted by the analytic formula. The numerical sweep shows Lorentzian peaks at exactly those frequencies.
+Sweep from 1 GHz to 4 GHz at 121 frequency points. Because of the $m, n \ge 1$ restriction, only **two** modes live in this band: TM$_{11}$ at 2.50 GHz and TM$_{21}$ at 3.60 GHz (the next one up, TM$_{12} \approx 4.27$ GHz, sits just outside the sweep). The numerical sweep shows Lorentzian peaks at exactly those two frequencies — and, instructively, *nothing* at $c/(2a) = 1.50$ GHz, where a naive "TM$_{10}$" guess would put the fundamental.
 
 ```rustlab
 clf;
@@ -394,7 +395,8 @@ c0_3 = 1 / sqrt(mu0_3 * eps0_3);
 a_cav = 0.10;
 b_cav = 0.075;
 tan_d = 0.005;
-eps_c = 1 - j * tan_d;
+% Loss is +i tan_d under the e^{-i omega t} convention (see Theory).
+eps_c = 1 + j * tan_d;
 
 nx_3 = 81; ny_3 = 61;
 dx_3 = a_cav / (nx_3 + 1);
@@ -416,7 +418,7 @@ function a = resonator_trial(kf)
   eps0_3 = 8.854187817e-12;
   c0_3 = 1 / sqrt(mu0_3 * eps0_3);
   a_cav = 0.10; b_cav = 0.075;
-  eps_c = 1 - j * 0.005;
+  eps_c = 1 + j * 0.005;
   nx_3 = 81; ny_3 = 61;
   dx_3 = a_cav / (nx_3 + 1); dy_3 = b_cav / (ny_3 + 1);
   L_3 = laplacian_2d(nx_3, ny_3, dx_3, dy_3);
@@ -432,16 +434,17 @@ function a = resonator_trial(kf)
 end
 amp_3 = parmap(@resonator_trial, 1:Nf_3);
 
-f10 = c0_3 / (2 * a_cav);
-f01 = c0_3 / (2 * b_cav);
+% Why is there no peak at 1.5 GHz? c/(2a) is what "TM10" would give —
+% but sin(n pi y / b) with n = 0 vanishes identically, so the mode
+% does not exist. The lowest real mode is TM11.
+f_no_mode = c0_3 / (2 * a_cav);
 f11 = c0_3 / 2 * sqrt((1 / a_cav)^2 + (1 / b_cav)^2);
-f20 = c0_3 / a_cav;
 f21 = c0_3 / 2 * sqrt((2 / a_cav)^2 + (1 / b_cav)^2);
-print(f10 / 1e9)   % 1.50
-print(f01 / 1e9)   % 2.00
-print(f11 / 1e9)   % 2.50
-print(f20 / 1e9)   % 3.00
-print(f21 / 1e9)   % 3.61
+f12 = c0_3 / 2 * sqrt((1 / a_cav)^2 + (2 / b_cav)^2);
+print(f_no_mode / 1e9)   % 1.50 — no peak here in the sweep (m,n >= 1)
+print(f11 / 1e9)         % 2.50 — lowest mode, TM11
+print(f21 / 1e9)         % 3.60 — TM21
+print(f12 / 1e9)         % 4.27 — TM12, just above the sweep band
 
 plot(fs_3 / 1e9, amp_3, "|E_z(meas)| vs f");
 xlabel("frequency  (GHz)");
@@ -452,10 +455,9 @@ title("Closed-cavity FDFD response — Lorentzian peaks at TM_{m n}")
 <!-- rustlab:output-start -->
 ```text
 1.4989622900525144
-1.998616386736686
 2.4982704834208573
-2.9979245801050287
 3.603056931180843
+4.269046473432809
 ```
 
 ![plot 8](plots/10-fdfd-frequency-domain/plot-8-0a97296b.svg)
@@ -464,25 +466,30 @@ title("Closed-cavity FDFD response — Lorentzian peaks at TM_{m n}")
 
 ```rustlab
 clf;
-omega_r = 2 * pi * f10;
+omega_r = 2 * pi * f11;
 A_r  = L_3 + ((omega_r / c0_3)^2 * eps_c) * speye(N_3);
 b_r  = zeros(1, N_3);
 b_r(k_src) = -j * omega_r * mu0_3;
 E_r  = spsolve(A_r, b_r);
 E_grid = reshape(E_r, ny_3, nx_3);
+print(max(abs(E_r)))   % ~ 0.71 — antinode at the cavity centre
 
 imagesc(real(E_grid), "viridis");
-title("Re(E_z) at TM_{10} resonance — single half-wave along x");
+title("Re(E_z) at TM_{11} resonance — one half-sine lobe in x and in y");
 xlabel("x cell index");
 ylabel("y cell index")
 ```
 
 <!-- rustlab:output-start -->
-![plot 9](plots/10-fdfd-frequency-domain/plot-9-34a55993.svg)
+```text
+0.7116026757939578
+```
+
+![plot 9](plots/10-fdfd-frequency-domain/plot-9-239e54b0.svg)
 
 <!-- rustlab:output-end -->
 
-The peaks in the sweep land within ~ 0.1 % of the analytic frequencies (limited by grid spacing — $\Delta x = a/(n_x+1)$ here gives ~ 1 % discretisation error on the eigenfrequency, converging quadratically as the grid is refined). The TM$_{10}$ snapshot shows the standing-wave half-cosine along $x$ with no $y$-dependence — the lowest-order cavity mode. Lesson 12 returns to these modes with a cleaner approach: directly solve the generalised eigenvalue problem $A\phi = k_c^2\phi$ with `eigs` instead of sweeping the frequency.
+How precisely do the sweep peaks land on the analytic frequencies? The dominant limit is simply the sweep spacing: 121 points over 3 GHz is a 25 MHz step, so a peak location is only readable to roughly half that — about 1 % at 2.5 GHz, comparable to the Lorentzian's FWHM of $f_{11}/Q \approx 12.5$ MHz. The grid itself is far better: the 5-point stencil's eigenfrequency error at this resolution is only ~ 0.01 %, converging quadratically as the grid is refined. The TM$_{11}$ snapshot shows a single half-sine lobe in both $x$ and $y$ — maximum $|E_z| \approx 0.71$ at the cavity centre, zero on all four PEC walls — the lowest mode the cavity supports. Lesson 12 returns to these modes with a cleaner approach: directly solve the generalised eigenvalue problem $A\phi = k_c^2\phi$ with `eigs` instead of sweeping the frequency.
 
 ## Standalone Scripts
 
@@ -503,17 +510,20 @@ Run the lesson with `make lesson-10`, or one script at a time via `rustlab run l
 |---|---|
 | 1-D AR ripple at $f_0$ | ~ 1 % (only the discretisation residual) |
 | 1-D no-AR ripple at $f_0$ | ~ 0.64 ($|R|=1/3$, VSWR $= 2$) |
-| 2-D PML symmetry error (cardinal sample points) | ~ $2\times10^{-5}$ |
-| Cavity TM$_{10}$ analytic frequency | $c/(2a) \approx 1.500\,\text{GHz}$ |
-| Cavity TM$_{11}$ analytic frequency | $c/2\,\sqrt{a^{-2}+b^{-2}} \approx 2.499\,\text{GHz}$ |
-| FDFD peak frequency offset (this grid) | ~ 0.1 % |
+| 2-D PML cardinal-sample symmetry error | ~ $10^{-14}$ (round-off; exact grid symmetry) |
+| Cavity TM$_{11}$ (lowest) analytic frequency | $c/2\,\sqrt{a^{-2}+b^{-2}} \approx 2.498\,\text{GHz}$ |
+| Cavity TM$_{21}$ analytic frequency | $\approx 3.603\,\text{GHz}$ |
+| Sweep response at $c/(2a) = 1.50\,\text{GHz}$ | no peak — TM$_{10}$ does not exist ($m,n\ge1$) |
+| Sweep peak $\lvert E_z\rvert$ at TM$_{11}$ / TM$_{21}$ | $\approx 0.53$ / $\approx 0.28$ |
+| TM$_{11}$ snapshot max $\lvert E_z\rvert$ (cavity centre) | $\approx 0.71$ |
+| Peak read-off uncertainty (25 MHz sweep step) | ~ 1 % (grid eigenfrequency error itself ~ 0.01 %) |
 | Cavity peak Q | $\approx 1/\tan\delta = 200$ |
 
 ## Exercises
 
 1. **Resolution sweep on the AR demo.** Re-run `fdfd_1d_layers` at $\Delta x = \lambda/20,\,\lambda/40,\,\lambda/80$. Verify the AR ripple drops as $\Delta x^2$ (centred-difference truncation), and that the frequency-sweep peak narrows toward an ideal Lorentzian.
 2. **Bragg reflector.** Replace the AR layer with $N$ pairs of alternating ε layers (high index $\varepsilon_H$ + low index $\varepsilon_L$, each $\lambda/(4n)$ thick). Sweep frequency and verify the **stop band** centred on $f_0$ where transmission is exponentially suppressed in $N$. This is the basis of every dielectric mirror, from cheap laser pointers to telescope coatings.
-3. **PEC cylinder.** In `fdfd_2d_tmz`, replace the dielectric cylinder with a perfect electric conductor — set $\varepsilon_r$ inside the disk to a large negative imaginary number (e.g., $\varepsilon_r = 1 - 10^4 j$) so the wave decays evanescently inside. Compare the scattered field to the dielectric case.
+3. **PEC cylinder.** In `fdfd_2d_tmz`, replace the dielectric cylinder with a perfect electric conductor — set $\varepsilon_r$ inside the disk to a large *positive* imaginary number (e.g., $\varepsilon_r = 1 + 10^4 i$; recall that under the $e^{-i\omega t}$ convention loss is $+\mathrm{Im}\,\varepsilon$, the opposite sign from $e^{+j\omega t}$ engineering texts) so the wave decays evanescently inside. Compare the scattered field to the dielectric case.
 4. **Cavity Q from the sweep.** Fit a Lorentzian to the TM$_{11}$ peak in `fdfd_resonator`. Extract $Q$ from the FWHM and verify $Q \approx 1/\tan\delta$ (here, $\sim 200$).
 5. **Loaded cavity.** Place a small dielectric perturbation ($\varepsilon_r = 4$, radius $0.05a$) at one corner of the cavity and re-run the sweep. Identify the frequency shift on each mode and check it against first-order perturbation theory: $\Delta\omega/\omega = -\tfrac12\int_{\rm pert}(\varepsilon-1)|E|^2\,dV / \int|E|^2\,dV$.
 

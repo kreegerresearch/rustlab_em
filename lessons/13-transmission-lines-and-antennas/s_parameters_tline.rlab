@@ -81,6 +81,7 @@ function [V_p1, V_p2] = run_line(L_arr, C_arr, Z_load, n_step, dz, dt, ...
   V_p1 = zeros(n_step);
   V_p2 = zeros(n_step);
   for step = 1:n_step
+    V2_prev = V(2);            # pre-update neighbour for the delayed-copy Mur ABC
     # I update (vectorised slice-assign).
     Iv(2:N) = Iv(2:N) - (dt ./ (L_arr(2:N) * dz)) .* (V(2:N) - V(1:N-1));
     # V update on interior cells.
@@ -91,8 +92,9 @@ function [V_p1, V_p2] = run_line(L_arr, C_arr, Z_load, n_step, dz, dt, ...
     # Modulated Gaussian soft source on V at k_src.
     t = step * dt;
     V(k_src) = V(k_src) + exp(-((t - t0) / tau) ^ 2) * cos(2 * pi * f_c * (t - t0));
-    # Mur first-order ABC on the left edge.
-    V(1) = V(2);
+    # Mur first-order ABC on the left edge (delayed copy: V^{n+1}(1) = V^n(2);
+    # a same-step copy would be a reflecting Neumann wall).
+    V(1) = V2_prev;
     V_p1(step) = real(V(k_p1));
     V_p2(step) = real(V(k_p2));
   end

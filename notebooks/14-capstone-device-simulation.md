@@ -13,7 +13,7 @@ The classic 3-D device target — a rectangular patch antenna on FR-4 at 2.45 GH
 
 ## Background
 
-Lessons 04 (geometry / material maps), 09 (FFT + animations), 11 (FDTD core), 12 (radiation), 13 (transmission-line port). The 2-D Yee step is reused verbatim from `fdtd_2d_scattering.rlab` with `ε_r(x, y)` from a layered material map.
+Lessons 04 (geometry / material maps), 09 (animations via `frame()`/`saveanim()`), 11 (FDTD core), 12 (radiation), 13 (transmission-line port and the probe-trace FFT pattern). The 2-D Yee step is reused verbatim from `fdtd_2d_scattering.rlab` with `ε_r(x, y)` from a layered material map.
 
 ## Device Under Test
 
@@ -27,7 +27,7 @@ A side-view of a microstrip patch antenna:
 | Ground plane | row $y_g$ | PEC, full-width |
 | Air below | $y \in [1, y_g)$ | $\varepsilon_r = 1$ |
 
-A 1-column **feed** sits at $x = x_{\rm lo}$ (the left edge of the patch), driving $E_z$ between the ground plane and the patch underside with a Gaussian-modulated CW pulse centred at 2.45 GHz. The cross-section is bounded laterally by absorbing strips (cubic-σ bulk loss); top and bottom of the air regions are open and don't reflect within the simulation window.
+A 1-column **feed** sits at $x = x_{\rm lo}$ (the left edge of the patch), driving $E_z$ between the ground plane and the patch underside with a Gaussian-modulated CW pulse centred at 2.5 GHz. The cross-section is bounded laterally by absorbing strips (cubic-σ bulk loss); the top and bottom rows of the grid are hard (PEC-like) boundaries, so radiated leakage *does* reflect within the simulation window — it is weak compared with the energy confined under the patch, but it sets up box modes of the truncated domain that show up in the probe spectrum (see the discussion under Expected Numerical Outputs).
 
 ## The Capstone Loop
 
@@ -39,28 +39,29 @@ The four pieces compose like this:
 
 2. **Yee FDTD core.** Lesson 11's leapfrog updates $H_x$, $H_y$, $E_z$ on a staggered grid. The per-cell $\varepsilon_r$ coefficient enters as a precomputed `cE_map(i, j) = \Delta t / (\varepsilon_0\varepsilon_r(i,j)\Delta x)`. Bulk-loss absorbing strips at the lateral edges suppress reflection without a full Bérenger PML — adequate for a 900-step run.
 
-3. **Pulsed feed.** A Gaussian-modulated $\sin(\omega_0 t)$ in a 1-column column of the substrate. The pulse's frequency content roughly covers 0–6 GHz so a single run probes the patch across its operating band.
+3. **Pulsed feed.** A Gaussian-modulated $\sin(\omega_0 t)$ in a 1-column column of the substrate. The pulse's frequency content roughly covers 1–4 GHz (a $\tau = 0.4$ ns Gaussian envelope on a 2.5 GHz carrier) so a single run probes the patch across its operating band.
 
-4. **Port-trace FFT.** A probe just above the ground plane in the feed column records $E_z(t)$. After the source pulse subsides, the trace is the **free decay** of the patch resonator; its Fourier transform peaks at the patch's resonant frequencies. The dominant peak is the patch's fundamental mode — what an S$_{11}$ measurement on a real network analyser would read as the antenna's tuning.
+4. **Port-trace FFT.** A probe just above the ground plane in the feed column records $E_z(t)$. After the source pulse subsides, the trace is the **free decay** of the resonant structure; its Fourier transform peaks at the resonant frequencies — in principle the patch modes, in practice (for this small truncated 2-D box) also the domain's box modes, which is what an S$_{11}$ measurement on a real network analyser would *not* see. The caveat below the script walkthrough unpacks which peak is which.
 
 ### Example — Microstrip patch on FR-4
 
 ```rustlab
 clf;
+set_default_axis("xy");        % physics y-axis: ground at the bottom of the panel
 mu0_c  = 4 * pi * 1e-7;
 eps0_c = 8.854187817e-12;
 c0_c   = 1 / sqrt(mu0_c * eps0_c);
 
-nx_c = 161; ny_c = 61;
-dx_c = 7.5e-4; dy_c = dx_c;
+nx_c = 121; ny_c = 51;
+dx_c = 1.0e-3; dy_c = dx_c;
 S_c  = 0.7;
 dt_c = S_c * dx_c / c0_c;
 
-% Geometry rows
-y_g_c   = 10;
-y_top_c = 18;
-x_lo_c  = 50;
-x_hi_c  = 110;
+% Geometry rows — same grid as patch_antenna.rlab
+y_g_c   = 8;
+y_top_c = 14;
+x_lo_c  = 35;
+x_hi_c  = 85;
 
 % ε map (FR-4 substrate)
 eps_r = ones(ny_c, nx_c);
@@ -85,7 +86,7 @@ xlabel("x cell");
 ylabel("y cell")
 ```
 
-The geometry snapshot shows the substrate band (mid-yellow) sandwiched between the ground plane (top row of metal, drawn as a stripe) and the patch (shorter stripe above). The colour scale stacks the PEC value on top of the dielectric ε so both regions stay visible.
+The geometry snapshot shows the substrate band (mid-yellow) sandwiched between the full-width ground plane below it and the shorter patch stripe on top — with `set_default_axis("xy")` the y axis points up, so row 1 is the bottom of the panel, exactly as in the standalone script. The colour scale stacks the PEC value on top of the dielectric ε so both regions stay visible.
 
 The remaining cells of the loop — the Yee update, the source injection, the PEC enforcement, the probe storage, the animation frame, and the post-FFT peak finding — together form the script `patch_antenna.rlab`. Rather than embed the whole 100-line loop here, we walk through its block structure:
 
@@ -99,14 +100,14 @@ The remaining cells of the loop — the Yee update, the source injection, the PE
      c. Add Gaussian-modulated pulse at feed column     ← Lesson 13 feed
      d. Enforce E_z = 0 on ground + patch via mask
      e. Record probe E_z(t) at one cell                 ← Lesson 11 + 13 trace
-     f. Every 60 steps, frame() the field for animation ← Lesson 09 animation
+     f. Every 40 steps, frame() the field for animation ← Lesson 09 animation
 5. saveanim("patch_antenna_animation.gif")
-6. FFT the probe trace (skipping the first 200 steps) → spectrum    ← Lesson 09 FFT pattern
-7. Identify the dominant peak — the patch's resonance.
+6. FFT the probe trace (skipping the first 200 steps) → spectrum    ← Lesson 13 FFT pattern
+7. Identify the dominant peak in the spectrum (see caveat below).
 8. Plot the spectrum, the time trace, and the final |E_z| heatmap.
 ```
 
-The standalone script that implements this pattern is `patch_antenna.rlab`. Run it with `make lesson-14`; its 900-step animation lands in well under a minute of interpreted-rustlab wall time. The dominant spectral peak sits within a few percent of $f_{\rm res} = c_0 / (2 L_{\rm patch}\sqrt{\varepsilon_{\rm eff}})$ — the textbook fundamental for a $\lambda/2$ patch on a high-permittivity substrate.
+The standalone script that implements this pattern is `patch_antenna.rlab`. Run it with `make lesson-14`; its 900-step animation lands in well under a minute of interpreted-rustlab wall time. One honest caveat about reading the result: the textbook $\lambda/2$ formula $f_{\rm res} = c_0 / (2 L_{\rm patch}\sqrt{\varepsilon_{\rm eff}})$ predicts $\approx 1.4\,\text{GHz}$ for this 50 mm patch on $\varepsilon_r = 4.4$, but the dominant peak the script prints is $\approx 3.7\,\text{GHz}$. The two do **not** agree, and the discrepancy is physical, not a bug. The probe's late-time ring-down is dominated by a high-Q **box mode** of the truncated 2-D domain — a vertical half-wave of the $\approx 37$ mm air column between the patch and the hard top boundary row (predicted $c_0/(2 \times 37\,\text{mm}) \approx 4.05\,\text{GHz}$; a longer 6000-step run resolves the surviving peak at 4.12 GHz, which the 900-step run's coarse $\approx 0.61\,\text{GHz}$ FFT bins report as 3.67 GHz). The patch's own half-wave mode near 1.4 GHz is only weakly excited because the feed pulse's spectral content spans roughly 1–4 GHz centred at 2.5 GHz. Exercise 1's length sweep is the diagnostic that separates true patch modes (which move with $L_{\rm patch}$) from box modes (which don't).
 
 ## From 2-D to 3-D — What Would Change
 
@@ -137,7 +138,7 @@ Run it with `make lesson-14`, or directly via `rustlab run lessons/14-capstone-d
 |---|---|
 | Substrate $\varepsilon_r$ (FR-4) | 4.4 |
 | Patch length $L$ at $f_0 = 2.45\,\text{GHz}$ | $\lambda_0/(2\sqrt{\varepsilon_{\rm eff}}) \sim 30\,\text{mm}$ |
-| 2-D resonant peak frequency, this geometry | $\sim 3.7\,\text{GHz}$ — the 2-D side-view's cavity mode (a real 3-D patch with the same dimensions would resonate lower because of fringing-field length extension and the lateral $\hat y$ mode) |
+| 2-D dominant spectral peak, this geometry | $\sim 3.7\,\text{GHz}$ printed (3.67 GHz bin) — a box mode of the truncated domain (vertical half-wave of the air column above the patch, $\approx 4.1\,\text{GHz}$ when resolved with a longer run), *not* the patch's half-wave mode, which the formula puts near $1.4\,\text{GHz}$ |
 | Pulse half-width $\tau$ | $\approx 0.4\,\text{ns}$ |
 | Time-step ($S = 0.7$ Courant) | $\sim 2.34\,\text{ps}$ ($\Delta x = 1$ mm) |
 | Total simulation time | $\sim 2.1\,\text{ns}$ (900 steps × $\Delta t$) |
@@ -152,7 +153,7 @@ Run it with `make lesson-14`, or directly via `rustlab run lessons/14-capstone-d
 
 ## Looking Back
 
-The fourteen lessons span:
+The first fourteen lessons span:
 
 - **Lessons 01–03**: vector calculus on grids, electrostatic superposition, Gauss / potential
 - **Lesson 04**: geometry primitives — the CAD layer every later solver consumes
@@ -163,5 +164,7 @@ The fourteen lessons span:
 - **Lesson 12**: modal eigenproblems and far-field radiation
 - **Lesson 13**: transmission lines and S-parameters
 - **Lesson 14**: composition — this capstone
+
+Beyond the capstone, Lessons 15–17 extend the arc from fields to circuits: lumped capacitance extraction (Lesson 15), Smith-chart impedance matching (Lesson 16), and lumped inductance extraction (Lesson 17).
 
 Every script in this curriculum sits in `lessons/<id>-<name>/` as a runnable artefact; every notebook in `notebooks/<id>-<name>.md` documents the physics with interleaved theory and example. The rendered curriculum is at `book/`. The two upstream-feature requests we filed and saw landed — animation export (`frame()`/`saveanim()`) and the SC-PML helpers in `lessons/_shared/em.rlab` — close the loop on the original "what rustlab needs to support the curriculum" survey from `dev/rustlab/requests/em_requests.md`. The remaining 3-D Yee + SC-PML graduation to native Rust waits on the triggers documented in [`yee-and-pml-builders.md`](../dev/rustlab/requests/yee-and-pml-builders.md); until then, the scripted library is the curriculum-side answer.

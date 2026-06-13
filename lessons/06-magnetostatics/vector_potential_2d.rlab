@@ -48,7 +48,7 @@ Bx_w = Az_y;
 By_w = -Az_x;
 
 figure();
-quiver(Xw, Yw, Bx_w, By_w, "B field from -grad x A");
+quiver(Xw, Yw, Bx_w, By_w, "B field from curl A");
 xlabel("x (m)");
 ylabel("y (m)");
 savefig("two_wires_B.svg");

@@ -68,7 +68,7 @@ function V_out = run_tline(load_kind, Z_L)
   N_l   = 401;
   dz_l  = 1e-3;
   dt_l  = 0.95 * dz_l / v_l;
-  n_step_l = 850;
+  n_step_l = 780;
 
   V = zeros(1, N_l);
   Iv = zeros(1, N_l);                # I(k) at half-cell between V(k-1) and V(k); I(1) unused
@@ -78,6 +78,7 @@ function V_out = run_tline(load_kind, Z_L)
   k_src = 30;
 
   for step = 1:n_step_l
+    V2_prev = V(2);              # pre-update neighbour for the delayed-copy Mur ABC
     # I update: I(2:N) ← I(2:N) − (Δt/(L' dz)) (V(2:N) − V(1:N-1))
     Iv = [Iv(1), Iv(2:N_l) - (dt_l / (L_l * dz_l)) * (V(2:N_l) - V(1:N_l-1))];
     # V update: V(1:N-1) ← V(1:N-1) − (Δt/(C' dz)) (I(2:N) − I(1:N-1))
@@ -102,8 +103,10 @@ function V_out = run_tline(load_kind, Z_L)
     src_vec(k_src) = src_val;
     V = V + src_vec;
 
-    # Left-end Mur ABC (let the back-going pulse out)
-    V(1) = V(2);
+    # Left-end Mur ABC (delayed copy): V^{n+1}(1) = V^n(2) lets the
+    # back-going pulse out (a same-step copy would be a reflecting
+    # Neumann wall).
+    V(1) = V2_prev;
   end
   V_out = V;
 end

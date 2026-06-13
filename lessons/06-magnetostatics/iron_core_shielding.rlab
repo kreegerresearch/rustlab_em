@@ -6,11 +6,13 @@
 # Method:     ∇·((1/μ_r) ∇ Az) = -μ₀ Jz, solved with laplacian_eps_2d on
 #             the reluctivity map 1/μ_r and a single-cell current source.
 # Observe:    |B| in the iron is ~ μ_r × the surrounding-vacuum value,
-#             concentrating flux through the iron. Exterior |B| matches
+#             concentrating flux through the iron. Exterior |B| tracks
 #             the bare-wire μ₀ I/(2π r) — Ampère pins H regardless of μ_r
-#             in this cylindrically symmetric geometry. (See lesson notes
-#             and Exercise 5 for true exterior shielding via an external
-#             applied field.)
+#             in this cylindrically symmetric geometry: ~5 % agreement at
+#             r = 7 cm, but ~19 % high at r = 9 cm because that sample is
+#             only 1 cm from the grounded Az = 0 box wall, which compresses
+#             the return flux. (See lesson notes and Exercise 5 for true
+#             exterior shielding via an external applied field.)
 #
 # Reference: ../../notebooks/06-magnetostatics.md.
 
@@ -74,7 +76,8 @@ j_iron  = round((0.05 + Lx2/2) / dxi);
 j_outer = round((0.07 + Lx2/2) / dxi);
 j_far   = round((0.09 + Lx2/2) / dxi);
 print(real(Bmag(i_c, j_iron)))      # iron interior — large
-print(real(Bmag(i_c, j_outer)))     # just outside — close to bare-wire value
-print(real(Bmag(i_c, j_far)))       # further out
+print(real(Bmag(i_c, j_outer)))     # just outside — within ~5% of bare-wire
+print(real(Bmag(i_c, j_far)))       # further out — ~19% above bare-wire
+                                    # (grounded box wall only 1 cm away)
 print(mu0 * 1.0 / (2 * pi * 0.07))  # bare-wire reference at r = 7 cm
 print(mu0 * 1.0 / (2 * pi * 0.09))  # bare-wire reference at r = 9 cm

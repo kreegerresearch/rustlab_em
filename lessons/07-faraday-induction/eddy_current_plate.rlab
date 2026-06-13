@@ -62,10 +62,10 @@ title("Stream function psi(x, y) for the eddy-current pattern");
 hold off;
 savefig("eddy_psi.svg");
 
-# === Recover J = ẑ × ∇ψ ===
+# === Recover J = ẑ × ∇ψ:  Jx = -∂ψ/∂y,  Jy = ∂ψ/∂x ===
 [psi_x, psi_y] = gradient(psi, dx3, dy3);
-Jx = psi_y;
-Jy = -psi_x;
+Jx = -psi_y;
+Jy = psi_x;
 Jmag = sqrt(Jx .^ 2 + Jy .^ 2);
 
 figure();
@@ -79,8 +79,11 @@ imagesc(real(Jmag), "viridis");
 title("|J|(x, y): linear ramp inside the disk, zero outside");
 savefig("eddy_Jmag.svg");
 
-# === Numerical vs analytic at r ≈ 0.7 R ===
+# === Numerical vs analytic at the sampled radius nearest 0.7 R ===
 i_c = round(ny3 / 2);
-print(real(Jmag(i_c, round(0.7 * R_plate / dx3) + nx3 / 2)))
-print(sigma_cu * Bdot * 0.7 * R_plate / 2.0)
-print(real(Jmag(i_c, nx3 / 2 + 1)))    # near r = 0
+j_s = round(0.7 * R_plate / dx3) + nx3 / 2;   # column nearest r = 0.7R
+r_s = sqrt(xs3(j_s)^2 + ys3(i_c)^2);          # actual sampled radius
+print(r_s)                                    # ≈ 0.0406 m (vs 0.7R = 0.042 m)
+print(real(Jmag(i_c, j_s)))                   # near-edge sample
+print(sigma_cu * Bdot * r_s / 2.0)            # analytic at the sampled radius
+print(real(Jmag(i_c, nx3 / 2 + 1)))           # near r = 0

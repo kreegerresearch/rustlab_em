@@ -14,9 +14,11 @@
 #      is non-negative. D ≥ 0 ⇔ g_L ≤ 1/sin²(β d_12).
 #   5. Add shunt jb_2 at stub-2 plane to cancel Im(y_2).
 #
-# Forbidden region: g_L > 1/sin²(β d_12). For d_12 = λ/8 the cutoff is
-# g_L > 2. Loads with R_L < Z_0/2 (here R_L < 25 Ω) can't be matched
-# at this spacing — you'd swap the spacing or use a single-stub tuner.
+# Forbidden region: g_L > 1/sin²(β d_12), where g_L is the normalised
+# conductance AT THE FIRST-STUB PLANE. For d_12 = λ/8 the cutoff is
+# g_L > 2; for a purely resistive load at that plane this means loads
+# with R_L < Z_0/2 (here R_L < 25 Ω) can't be matched at this spacing —
+# you'd swap the spacing or use a single-stub tuner.
 #
 # We demonstrate both regimes:
 #   succeeds:  Z_L = 100 + j100  Ω  (y_L = 0.25 − j0.25,  g_L = 0.25)

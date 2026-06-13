@@ -139,13 +139,15 @@ print(real(Z_quarter))                          %  100   Ω  (= Z_0²/Z_L)
 
 ## L-Section Matching
 
-Two reactive elements (one series, one shunt) match any complex load to a real $Z_0$. When $R_L < Z_0$ the load's constant-$r$ circle intersects the unit-conductance circle *only from the impedance side*, so the series element must come first; with $R_L > Z_0$ the situation reverses and the shunt element comes first.
+Two reactive elements (one series, one shunt) match any complex load to a real $Z_0$. The ordering is set by chart geometry: for $R_L < Z_0$ the constant-$r$ circle through $z_L$ crosses the unit-conductance circle, so a series reactance alone can walk the load onto $g = 1$ — series element first, then a shunt element to cancel the residual susceptance. For $R_L > Z_0$ that constant-$r$ circle never reaches $g = 1$, so the shunt element must come first.
 
 ### Theory
 
 For series-then-shunt, with series reactance $X$ and shunt susceptance $B$:
 
-$$X + X_L = \pm\sqrt{R_L (Z_0 - R_L)}, \qquad B = \mp\,\frac{1}{Z_0}\sqrt{\frac{Z_0 - R_L}{R_L}}.$$
+$$X + X_L = \pm\sqrt{R_L (Z_0 - R_L)}, \qquad B = \pm\,\frac{1}{Z_0}\sqrt{\frac{Z_0 - R_L}{R_L}},$$
+
+with the **same** sign taken in both expressions (Pozar Eqs. 5.6a/b) — the worked example below confirms it: the $+$ branch gives $X + X_L = +24.49\,\Omega$ and $B_A = +0.0163\,\text{S}$.
 
 The $\pm$ pair gives two distinct networks — typically one cap-cap and one cap-inductor. The signs of $X$ and $B$ pick capacitor vs. inductor on each leg.
 
@@ -284,7 +286,7 @@ Let $t = \tan(\beta d_{12})$. The two stub susceptances are real-valued only whe
 
 $$g_L \,\le\, \frac{1}{\sin^2(\beta d_{12})}.$$
 
-For $d_{12} = \lambda/8$ the threshold is $g_L \le 2$, i.e. $R_L \ge Z_0/2$. Loads with $R_L < 25\,\Omega$ on a 50 Ω system can't be matched at this spacing.
+For $d_{12} = \lambda/8$ the threshold is $g_L \le 2$, where $g_L$ is the normalised conductance seen **at the plane of the first stub** — not a condition on $R_L$ directly. For a *purely resistive* load sitting at that plane it reduces to $R_L \ge Z_0/2$: such loads with $R_L < 25\,\Omega$ on a 50 Ω system can't be matched at this spacing. A complex load (or any line length between load and first stub) is judged by its conductance at the stub plane.
 
 ### Example — Solvable ($Z_L = 100 + j100\,\Omega$) vs. forbidden ($Z_L = 10\,\Omega$)
 
@@ -415,8 +417,13 @@ mag    = abs(G);
 print(fs(k_res) / 1e9)                          % ≈ 2.45 GHz
 print(20 * log10(mag(k_res)))                   % ≈ −19 dB depth
 
-idx = find(mag < 0.3162);
-print((fs(idx(length(idx))) - fs(idx(1))) / fs(k_res) * 100)   % fractional BW ≈ 1.6%
+% −10 dB band edges, linearly interpolated between the 5 MHz grid samples
+% (reading raw grid points clips the band to ≈ 1.6%).
+idx  = find(mag < 0.3162);
+k1 = idx(1);  k2 = idx(length(idx));
+f_lo = fs(k1-1) + (0.3162 - mag(k1-1)) / (mag(k1) - mag(k1-1)) * (fs(k1) - fs(k1-1));
+f_hi = fs(k2)   + (0.3162 - mag(k2))   / (mag(k2+1) - mag(k2)) * (fs(k2+1) - fs(k2));
+print((f_hi - f_lo) / fs(k_res) * 100)          % fractional BW ≈ 1.87%
 
 smith(s_patch);
 marker(G(1),     sprintf("f = %.1f GHz", fs(1) / 1e9));
@@ -429,7 +436,7 @@ title("Patch antenna S_{11}(f) on the Smith chart");
 ```text
 2.45
 -19.084850188786497
-1.6326530612244898
+1.8738333801847769
 ```
 
 ![plot 7](plots/16-smith-chart/plot-7-e4104410.svg)
@@ -481,7 +488,7 @@ Run all seven with `make lesson-16`, or one at a time via `rustlab run lessons/1
 | $\lambda/4$ transformer $Z_T$ for $Z_L = 100$, $Z_0 = 50$ | $\sqrt{5000} \approx 70.71\,\Omega$ |
 | $\lambda/4$ transformer fractional $-10\,\text{dB}$ BW | $\approx 156\,\%$ |
 | Patch antenna resonance, $\lvert S_{11}\rvert$ at resonance | $2.45\,\text{GHz}$, $\approx -19\,\text{dB}$ |
-| Patch antenna fractional $-10\,\text{dB}$ BW | $\approx 1.6\,\%$ |
+| Patch antenna fractional $-10\,\text{dB}$ BW | $\approx 1.87\,\%$ (interpolated edges; raw 5 MHz grid points clip it to $\approx 1.6\,\%$) |
 
 ## Exercises
 

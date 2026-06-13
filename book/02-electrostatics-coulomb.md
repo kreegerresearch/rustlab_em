@@ -33,7 +33,7 @@ This is *the* defining computation of electrostatics. Every analytic result (Gau
 
 ### Theory
 
-A 51×51 grid spanning $[-5\,\text{cm},\,5\,\text{cm}]^2$ at spacing $\Delta = 2$ mm comfortably resolves the field around a $\pm q$ pair separated by $d = 2$ cm. Charges sitting on grid lines produce a singular cell each — we replace tiny $r^3$ by a small floor so divisions stay finite, and the singular cell ends up with a huge but finite value that quiver and `imagesc` simply clip visually.
+A 51×51 grid spanning $[-5\,\text{cm},\,5\,\text{cm}]^2$ at spacing $\Delta = 2$ mm comfortably resolves the field around a $\pm q$ pair separated by $d = 2$ cm. Charges sitting on grid lines produce a singular cell each — we add a tiny floor ($10^{-12}\ \text{m}^2$) to $r^2$ before raising it to the $3/2$ power so divisions stay finite, and the singular cell ends up with a huge but finite value that quiver and `imagesc` simply clip visually.
 
 ### Example — A 51×51 grid spanning ±5 cm
 
@@ -69,7 +69,7 @@ Place $q$ at the origin and evaluate $\vec E = k_e q\,\vec r/|\vec r|^3$ on ever
 
 ### Example — Numerical $\vec E$ at sample points
 
-The `1e-12` floor in $r^3$ keeps the origin cell finite. Outside that one pixel, the relative error is at the $10^{-9}$ level — nothing to do with stencil error since this is an explicit closed-form evaluation, not finite differences.
+The `1e-12` m² floor added to $r^2$ keeps the origin cell finite. Outside that one pixel it perturbs the field by a relative $\sim 1.5\times10^{-12}/r^2$ — about $1.5\times10^{-8}$ at $r = 1$ cm — nothing to do with stencil error since this is an explicit closed-form evaluation, not finite differences.
 
 ```rustlab
 Rx = X;
@@ -137,7 +137,7 @@ Place $+q$ at $(+d/2, 0)$ and $-q$ at $(-d/2, 0)$. The dipole moment $\vec p = q
 - On the $y$-axis (the perpendicular bisector), $E_y = 0$ — vertical components from the two charges cancel.
 - On the $x$-axis between the charges, $E_y = 0$ — both charges sit on this axis.
 
-At the midpoint $(0, 0)$ both charges push $+x$-test-charge force the *same* way along $-\hat x$; the field is $\vec E(0,0) = -8 k_e q / d^2\,\hat x \approx -179{,}750$ V/m for our numbers.
+At the midpoint $(0, 0)$ both charges push a positive test charge the *same* way, along $-\hat x$; the field is $\vec E(0,0) = -8 k_e q / d^2\,\hat x \approx -179{,}750$ V/m for our numbers.
 
 ### Example — Build $E_x$, $E_y$ from a charges table
 
@@ -268,7 +268,7 @@ At $y/d = 5$ the error is already under 1.5 %; at $y/d = 10$ it has fallen to $\
 
 ### Theory
 
-A *field line* is a curve everywhere tangent to $\vec E$. Two rules: lines start on positive charges and end on negative ones (or run to infinity), and the line density is proportional to $|\vec E|$. `streamplot` integrates the differential equation $d\vec r/ds = \vec E(\vec r)/|\vec E|$ from a grid of seed points using RK4; the result is a clean visual of the dipole's bipolar topology.
+A *field line* is a curve everywhere tangent to $\vec E$. Two rules: lines start on positive charges and end on negative ones (or run to infinity), and the line density is proportional to $|\vec E|$. `streamplot` integrates the differential equation $d\vec r/ds = \vec E(\vec r)/|\vec E|$ from a grid of seed points using RK4; the result is a clean visual of the dipole's bipolar topology. One caveat: because the seed points are uniformly spaced, the density of *plotted* lines does not encode $|\vec E|$ — only an ideal field-line diagram has that property.
 
 ### Example — Streamlines of the dipole
 
@@ -290,7 +290,7 @@ A ring of total charge $Q$ and radius $R$ in the $xy$-plane, centered at the ori
 
 $$E_z(z) = \frac{1}{4\pi\varepsilon_0}\,\frac{Q\,z}{(z^2 + R^2)^{3/2}}.$$
 
-The transverse components vanish by symmetry — every infinitesimal $dq$ on one side of the ring is matched by an equal $dq$ on the diametrically opposite side. The on-axis maximum sits at $z = R/\sqrt 2$, where $|E_z|$ peaks at $k_e Q/(R^2\,\sqrt 2\,(3/2)^{3/2}) \approx k_e Q/(2.598\,R^2)$. With $Q = 1$ nC and $R = 2$ cm that is $\approx 8{,}654$ V/m.
+The transverse components vanish by symmetry — every infinitesimal $dq$ on one side of the ring is matched by an equal $dq$ on the diametrically opposite side. The on-axis maximum sits at $z = R/\sqrt 2$, where $|E_z|$ peaks at $k_e Q/(R^2\,\sqrt 2\,(3/2)^{3/2}) \approx k_e Q/(2.598\,R^2)$. With $Q = 1$ nC and $R = 2$ cm that is $\approx 8{,}648$ V/m.
 
 ### Example — Numerical integration around the ring
 
@@ -378,7 +378,7 @@ Run all three with `make lesson-02` from the repo root, or one at a time via `ru
 2. **Far-field along the dipole axis.** Repeat the relative-error plot along the dipole axis ($y = 0$, $x > d/2$) instead of the perpendicular bisector. The leading correction has the same $(d/r)^2$ scaling but a different prefactor — recover it from the truncated multipole expansion.
 3. **Line of charge.** Replace the ring with a finite line $-L/2 \le x' \le L/2$ at $y = 0$, $z = 0$, total charge $Q$. Compute $E_z$ on the perpendicular axis $(0, 0, z)$ by 1-D quadrature. Check the limits: $L \to 0$ should reproduce a point charge; $L \to \infty$ should give the infinite-line result $E_\rho = \lambda/(2\pi\varepsilon_0\rho)$ from Gauss's law (Lesson 03).
 4. **Ring with off-axis test point.** Compute $\vec E$ at a point in the ring's plane but outside the ring, e.g. $(2R, 0, 0)$. The transverse components no longer cancel — get them right by numerical integration and compare to a perturbative expansion in $R/r$.
-5. **Energy in the dipole.** Compute the electrostatic energy $U = \tfrac12\varepsilon_0\int|\vec E|^2\,dV$ on the grid (use `trapz` twice). Vary $d$ and confirm $U$ diverges as $d \to 0$ — the bare-pair energy is infinite, a Lesson 03 Gauss-law reminder that point charges carry an unphysical self-energy.
+5. **Energy in the dipole.** Compute the electrostatic energy $U = \tfrac12\varepsilon_0\int|\vec E|^2\,dV$ on the grid (use `trapz` twice). Then refine the grid at fixed $d$ and confirm $U$ grows without bound — the cells nearest each charge carry an unphysical *self-energy* that diverges with resolution, a Lesson 03 reminder that point charges have infinite field energy. For a sharper exercise, tabulate $U(d)$ at fixed grid and isolate the $d$-dependent part: it tracks the interaction energy $-k_e q^2/d$.
 
 ## What's next
 

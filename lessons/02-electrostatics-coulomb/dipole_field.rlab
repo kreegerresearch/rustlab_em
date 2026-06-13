@@ -31,7 +31,7 @@ rel_err = abs(Ex_far - Ex_exact) ./ abs(Ex_exact);
 print(Ex_exact(40))                 # ≈ exact value at y ≈ 0.01345 m
 print(Ex_far(40))                   # far-field at the same y
 print(rel_err(40))                  # ≈ moderate error in the near zone
-print(rel_err(end))                 # at y = 0.05 m, well below 1 %
+print(rel_err(end))                 # at y = 0.20 m (10 d), well below 1 %
 
 # === Plot rel-err vs y/d ===
 figure();

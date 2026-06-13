@@ -13,8 +13,10 @@
 # Routes a 3-D Laplace at n³ = 25³ per geometry. Sweeps two pad sizes
 # × two oxide thicknesses → a 2×2 design-rule grid in fF. The plotted
 # curve overlays the simple ε_r ε₀ A / t_ox baseline (which neglects
-# fringing); the numerical values land above it as expected for finite
-# pads.
+# fringing). At 1500 nm × 8 µm the numerical value lands ~9 % above
+# ideal (fringing); at 500 nm the coarse Gauss pillbox (3 cells through
+# the oxide) under-reads by 14–17 % — a grid artifact, not physics,
+# since fringing can only add capacitance.
 #
 # Units: SI. Pad side L in µm; oxide t in µm; C in fF.
 #

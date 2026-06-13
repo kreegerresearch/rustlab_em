@@ -18,12 +18,14 @@
 #          linking conductor i with the ground return is just Az(i), so
 #              L_ij = λ_i / I_j = mean(Az over trace i)   (I_j = 1 A).
 #
-# Cached LU:  unlike the capacitance case (where pinning each driven trace
-#          changed the operator A), driving with a *current source* only
-#          changes the right-hand side. The operator is identical across
-#          all N drives → factor once with lu(A), back-solve per drive.
-#          This is the textbook factor-once-solve-many of every commercial
-#          parasitic-extraction tool.
+# Cached LU:  the capacitance case admits the same trick (every conductor
+#          cell is pinned in every solve, so its operator A is identical
+#          across drives too — see L15 Exercise 2); a *current source* is
+#          simply the more natural fit, living entirely in the right-hand
+#          side. The operator is identical across all N drives → factor
+#          once with lu(A), back-solve per drive. This is the textbook
+#          factor-once-solve-many of every commercial parasitic-extraction
+#          tool.
 #
 # Units: SI. L' in nH/m (printed) — typical microstrip scale.
 #

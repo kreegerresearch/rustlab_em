@@ -35,7 +35,7 @@ The analytic cutoffs (in GHz) for the lowest few TM modes:
 
 | $(m, n)$ | $f_c$ (GHz) |
 |---|---|
-| $(1, 1)$ | 7.075 |
+| $(1, 1)$ | 7.071 |
 | $(2, 1)$ | 9.598 |
 | $(1, 2)$ | 12.564 |
 | $(3, 1)$ | 12.741 |
@@ -168,7 +168,7 @@ ylabel("y cell")
 
 <!-- rustlab:output-end -->
 
-The lowest four resonances match analytic predictions to within $0.6\,\%$ — the second-order discretisation error of `laplacian_2d` on this grid.
+The lowest three resonances match analytic predictions to within $0.07\,\%$, all biased slightly *low* — the signature of `laplacian_2d`'s second-order discretisation. Mode 4 is different: it prints $4.949\,\text{GHz}$, $0.56\,\%$ *above* TM$_{31}$'s analytic $4.921\,\text{GHz}$ — a deviation FD discretisation cannot produce. The giveaway is that $4.949$ sits between TM$_{31}$ ($4.921$) and TM$_{22}$ ($4.997$), a pair only $1.5\,\%$ apart: this is exactly the unresolved-cluster Lanczos artifact warned about above, and we requested only 20 modes. Over-requesting (e.g. `eigs(L_c, 60, "sm")`) resolves the cluster — mode 4 then lands at $4.915\,\text{GHz}$, back to the expected slightly-low discretisation error.
 
 ## Hertzian Dipole — Analytic Far Field
 
@@ -306,7 +306,7 @@ legend("half-wave  cos(π/2 cosθ)/sinθ", "Hertzian  sinθ")
 ths_R = linspace(0.001, pi - 0.001, 2001);
 integrand_R = (cos(pi / 2 * cos(ths_R))) .^ 2 ./ sin(ths_R);
 R_rad = eta0_d / (2 * pi) * trapz(ths_R, integrand_R);
-print(R_rad)                  % ~ 73.13 Ω
+print(R_rad)                  % ~ 73.08 Ω
 ```
 
 <!-- rustlab:output-start -->
@@ -316,7 +316,7 @@ print(R_rad)                  % ~ 73.13 Ω
 
 <!-- rustlab:output-end -->
 
-The two polar traces almost coincide — both peak at $\theta = \pi/2$, both null on-axis — but the half-wave's shape (slightly elongated lobes) is a real physical effect that improves antenna gain by $\approx 0.4$ dB. The numerical $R_{\rm rad}$ ($73.08\,\Omega$) matches the textbook $73.13\,\Omega$ to three significant figures (0.07 %).
+The two polar traces almost coincide — both peak at $\theta = \pi/2$, both null on-axis — but the half-wave's shape (slightly elongated lobes) is a real physical effect that improves antenna gain by $\approx 0.4$ dB. The numerical $R_{\rm rad}$ ($73.08\,\Omega$) matches the textbook $73.13\,\Omega$ to three significant figures — and the 0.07 % offset is the $\eta_0$ convention, not numerical error: with the exact $\eta_0 = 376.73\,\Omega$, $(\eta_0/4\pi)\,\mathrm{Cin}(2\pi) = 73.08\,\Omega$, while the textbook 73.13 assumes $\eta_0 = 120\pi$.
 
 ## Near-Field to Far-Field Transform
 
@@ -324,21 +324,21 @@ The two polar traces almost coincide — both peak at $\theta = \pi/2$, both nul
 
 A full-wave solver only ever computes fields in a finite box, yet the antenna pattern lives at infinity. **Love's equivalence principle** bridges the gap: the tangential $\vec E$, $\vec H$ on *any* closed surface $S$ enclosing the sources are replaced by equivalent surface currents $\vec J_s = \hat n\times\vec H$, $\vec M_s = -\hat n\times\vec E$, whose radiation integral gives the exterior far field
 
-$$\vec F(\hat r) \propto \int_S\bigl[\eta_0\vec J_s + \hat r\times\vec M_s\bigr]\,e^{-jk\hat r\cdot\vec r'}\,dS',$$
+$$\vec F(\hat r) \propto \int_S\bigl[\eta_0\vec J_s - \hat r\times\vec M_s\bigr]\,e^{+jk\hat r\cdot\vec r'}\,dS',$$
 
 projected onto the plane $\perp\hat r$. So a single near-zone solve yields the entire 3-D pattern — the technique Lesson 14's capstone uses to turn a patch antenna's FDTD near field into a gain pattern.
 
 ### Example — recovering $\sin\theta$ from a Hertzian near field
 
-`nf2ff_transform.rlab` samples the analytic Hertzian-dipole near field on a cube of half-side $\lambda/4$ (well inside the reactive near zone, so the $1/(kr)^2$ and $1/(kr)^3$ terms are large), forms the Love currents, and integrates. The E-plane cut should reproduce the textbook $\sin\theta$ — a clean unit test of the kernel, isolated from any solver.
+`nf2ff_transform.rlab` samples the analytic Hertzian-dipole near field on a cube of half-side $\lambda/4$ — $kr \approx \pi/2$ at the face centres, in the transition region just outside the reactive zone ($kr = 1$), where the $1/(kr)^2$ and $1/(kr)^3$ terms are still significant (about $40\,\%$ and $26\,\%$ of the radiating term here) — forms the Love currents, and integrates. The E-plane cut should reproduce the textbook $\sin\theta$ — a clean unit test of the kernel, isolated from any solver.
 
 ```rustlab
 clf;
 % Baked E-plane cut from nf2ff_transform.rlab's surface integral
 % (cube half-side lambda/4); compared to the analytic sin(theta).
 th_deg = [0, 15, 30, 45, 60, 75, 90, 105, 120, 135, 150, 165, 180];
-E_ff   = [0.0, 0.2498, 0.4856, 0.6939, 0.8589, 0.9641, 1.0, ...
-          0.9641, 0.8589, 0.6939, 0.4856, 0.2498, 0.0];
+E_ff   = [0.0, 0.2588, 0.5000, 0.7071, 0.8660, 0.9659, 1.0, ...
+          0.9659, 0.8660, 0.7071, 0.5000, 0.2588, 0.0];
 analytic = sin(th_deg * pi / 180);
 hold on;
 plot(th_deg, E_ff,     "NF->FF surface integral");
@@ -351,11 +351,11 @@ legend("NF->FF integral", "sin(theta)");
 ```
 
 <!-- rustlab:output-start -->
-![plot 5](plots/12-waveguides-and-radiation/plot-5-4795368d.svg)
+![plot 5](plots/12-waveguides-and-radiation/plot-5-623eab31.svg)
 
 <!-- rustlab:output-end -->
 
-At full resolution the integral matches $\sin\theta$ to a maximum error of $\approx 1.5\,\%$, and the equatorial ($\theta=\pi/2$) cut is flat in $\varphi$ to $\approx 6\,\%$ — confirming the kernel is both accurate and rotationally symmetric. The residual is the cube's finite sampling; refining the surface mesh tightens it. This is exactly the transform that converts the capstone's boxed near field into a radiation pattern.
+At full resolution the integral matches $\sin\theta$ to a maximum error of $\approx 1\times 10^{-5}$, and the equatorial ($\theta=\pi/2$) cut is flat in $\varphi$ to $\approx 0.02\,\%$ — confirming the kernel is both accurate and rotationally symmetric. Love's equivalence is exact for any closed surface, so the only residual is the cube's finite $21\times 21$-per-face sampling. This is exactly the transform that converts the capstone's boxed near field into a radiation pattern.
 
 ## Standalone Scripts
 
@@ -365,7 +365,7 @@ At full resolution the integral matches $\sin\theta$ to a maximum error of $\app
 | `cavity_resonances.rlab` | TM resonances of a 2-D rectangular cavity; 4 mode images |
 | `hertzian_dipole.rlab` | Hertzian polar pattern, radiated-power integral, analytic-vs-numerical check |
 | `half_wave_dipole.rlab` | Half-wave pattern (numerical + analytic), polar comparison, $R_{\rm rad}$ |
-| `nf2ff_transform.rlab` | Love's equivalence-principle surface integral on a cubic Huygens surface around an analytic Hertzian dipole; recovers $\sin\theta$ to $\sim 1\,\%$. Lesson 14 reuses the kernel on the patch antenna's near field. |
+| `nf2ff_transform.rlab` | Love's equivalence-principle surface integral on a cubic Huygens surface around an analytic Hertzian dipole; recovers $\sin\theta$ to $\sim 10^{-5}$. Lesson 14 reuses the kernel on the patch antenna's near field. |
 
 Run all five with `make lesson-12`, or one script at a time via `rustlab run lessons/12-waveguides-and-radiation/<name>.rlab`.
 
@@ -373,20 +373,20 @@ Run all five with `make lesson-12`, or one script at a time via `rustlab run les
 
 | Quantity | Expected Value |
 |---|---|
-| TM$_{11}$ cutoff, 40×25 mm guide | $\approx 7.075\,\text{GHz}$ |
+| TM$_{11}$ cutoff, 40×25 mm guide | $\approx 7.071\,\text{GHz}$ |
 | TM$_{21}$ cutoff | $\approx 9.598\,\text{GHz}$ |
 | Cavity TM$_{11}$, 100×75 mm cavity | $\approx 2.498\,\text{GHz}$ |
-| Cavity TM$_{31}$ | $\approx 4.921\,\text{GHz}$ |
+| Cavity mode 4 with 20 requested modes | $\approx 4.949\,\text{GHz}$ printed (Lanczos cluster artifact; TM$_{31}$ analytic is $4.921\,\text{GHz}$) |
 | $\int_0^\pi \sin^3\theta\,d\theta$ | $4/3$ |
 | Hertzian $P_{\rm rad}$ ($I_0=1\,\text{A}$, $d\ell=1\,\text{cm}$, $f=1\,\text{GHz}$) | $\approx 0.439\,\text{W}$ |
 | Half-wave pattern numerical-vs-analytic max error | $\sim 10^{-5}$ |
 | Half-wave $R_{\rm rad}$ | $\approx 73.08\,\Omega$ |
-| NF→FF $\sin\theta$ recovery (E-plane max error) | $\approx 1.5\,\%$ |
-| NF→FF equatorial $\varphi$ flatness | $\approx 6\,\%$ |
+| NF→FF $\sin\theta$ recovery (E-plane max error) | $\approx 1\times 10^{-5}$ |
+| NF→FF equatorial $\varphi$ flatness | $\approx 0.02\,\%$ |
 
 ## Exercises
 
-1. **L-shape waveguide.** Modify `waveguide_modes` to solve a guide whose cross-section is an L (two overlapping rectangles). Pin the cells outside the L-shape with a large diagonal value so their eigenvalues are far above the modal range, then read the first few modes from `eigs`. Compare to the rectangular case — the L-shape's lowest mode sits below the equivalent rectangle's because the corner allows extra field penetration.
+1. **L-shape waveguide.** Modify `waveguide_modes` to solve a guide whose cross-section is an L (two overlapping rectangles). Pin the cells outside the L-shape with a large diagonal value so their eigenvalues are far above the modal range, then read the first few modes from `eigs`. Compare to the rectangular case — by domain monotonicity of Dirichlet eigenvalues (a larger domain has lower eigenvalues), the L-shape's lowest mode sits *below* that of either constituent rectangle alone (the L contains each) and *above* that of its bounding rectangle (which contains the L).
 2. **Perturbed cavity.** Place a small dielectric inclusion ($\varepsilon_r = 4$, radius $0.05\,a$) at one corner of the cavity in `cavity_resonances`. Use the *generalised* form `eigs(A, B, n)` where $B$ is the diagonal mass matrix from the $\varepsilon$ map. Verify the frequency shifts against first-order perturbation theory.
 3. **3-D Hertzian doughnut.** In `hertzian_dipole`, build a $(\theta, \varphi)$ meshgrid and `surf` the 3-D radiation pattern $r(\theta, \varphi) = \sin\theta$. Save it as an HTML to rotate interactively.
 4. **Off-resonance dipole.** Sweep dipole length from $L = 0.1\lambda$ to $L = 2\lambda$ in 11 steps; compute $R_{\rm rad}$ for each. Plot the curve and identify the resonance peak near $L = 0.48\lambda$ (slightly shorter than $\lambda/2$ for thin wires).

@@ -3,8 +3,9 @@
 # whose shape encodes the polarisation:
 #
 #   Linear  (45°):    J = (1, 1)/√2          → diagonal line
-#   Right circular:   J = (1, -i)/√2         → clockwise circle (viewed
-#                                              from +x toward the source)
+#   Right circular:   J = (1, -i)/√2         → clockwise circle (optics
+#                                              convention: viewed looking
+#                                              back toward the source)
 #   Left circular:    J = (1,  i)/√2         → counter-clockwise circle
 #   Elliptical:       J = (1, 0.5 i)         → ellipse, 2:1 axis ratio,
 #                                              same handedness as LCP
@@ -25,8 +26,10 @@ phs  = 2 * pi * ts;             # ω t
 Ly = (1 / sqrt(2)) * cos(phs);
 Lz = (1 / sqrt(2)) * cos(phs);
 
-# Right circular (IEEE: looking from +x toward the source, the tip
-# rotates clockwise). With (y, z) drawn as (horizontal, vertical),
+# Right circular (optics convention: looking from +x back toward the
+# source, the tip rotates clockwise; IEEE/antenna convention looks along
+# propagation instead and would call this LCP). With (y, z) drawn as
+# (horizontal, vertical),
 # E_y = cos(ωt), E_z = -sin(ωt) sweeps (1,0)→(0,-1)→(-1,0)→(0,1) — CW.
 Ry = cos(phs);
 Rz = -sin(phs);

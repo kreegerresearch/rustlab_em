@@ -73,8 +73,8 @@ print(err_pattern)               # ~ 1e-4 to 1e-3
 ths_R = linspace(0.001, pi - 0.001, 2001);
 integrand_R = (cos(pi / 2 * cos(ths_R))) .^ 2 ./ sin(ths_R);
 R_rad_num = eta0 / (2 * pi) * trapz(ths_R, integrand_R);
-print(R_rad_num)                  # ~ 73.13 Ω
-print(73.13)                      # textbook value
+print(R_rad_num)                  # ~ 73.08 Ω (exact η₀)
+print(73.13)                      # textbook value (assumes η₀ = 120π)
 print(abs(R_rad_num - 73.13))
 
 # === Comparison plot: half-wave vs Hertzian on the same axes ===

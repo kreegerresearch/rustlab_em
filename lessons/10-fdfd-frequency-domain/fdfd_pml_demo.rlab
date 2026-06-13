@@ -55,8 +55,10 @@ A_pml = fdfd_tmz_pml_2d(eps_map, omega, dx, dy, npml, sigma_max);
 E_pml_flat = spsolve(A_pml, b);
 E_pml = reshape(E_pml_flat, ny, nx);
 
-# Sanity: PML case should be ~ radially symmetric far from the source.
-# Sample at four equidistant points; values should agree to a few %.
+# Sanity: the source sits at the exact centre of the 121×121 grid, so
+# the four cardinal sample points are images of one another under exact
+# grid reflections — they must agree to round-off (~1e-14) if the
+# solver and the (symmetric) PML assembly are correct.
 ic = round(ny / 2);
 jc = round(nx / 2);
 r  = round(0.3 * nx);
@@ -69,7 +71,10 @@ print(sS)
 print(sE)
 print(sW)
 sym_err = (max([sN, sS, sE, sW]) - min([sN, sS, sE, sW])) / mean([sN, sS, sE, sW]);
-print(sym_err)         # should be ~ 1e-3 — discretisation anisotropy only
+print(sym_err)         # ~ 1e-14 — round-off; exact grid reflection symmetry
+                       # (true 5-point-stencil anisotropy only shows up when
+                       # comparing cardinal vs DIAGONAL directions: ~1e-3..1e-2
+                       # at 12 cells per wavelength)
 
 figure();
 imagesc(real(E_box), "viridis");

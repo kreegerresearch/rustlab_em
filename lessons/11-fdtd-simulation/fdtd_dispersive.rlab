@@ -6,10 +6,12 @@
 # In the time domain the polarisation current J_p obeys
 #   dJ_p/dt + γ J_p = ε_0 ω_p² E
 # discretised at half-step using a simple trapezoidal update:
-#   J_p^{n+1} = (1 − γ dt/2)/(1 + γ dt/2) · J_p^n
-#             + (ε_0 ω_p² dt / (1 + γ dt/2)) · (E^{n+1} + E^n)/2
-# A simpler one-step Euler form (used here for clarity):
-#   J_p^{n+1} = (1 − γ dt) · J_p^n + ε_0 ω_p² dt · E^n
+#   J_p^{n+1/2} = (1 − γ dt/2)/(1 + γ dt/2) · J_p^{n-1/2}
+#               + (ε_0 ω_p² dt / (1 + γ dt/2)) · E^n
+# (A one-step explicit-Euler form J_p^{n+1} = (1 − γ dt) J_p^n
+#  + ε_0 ω_p² dt E^n is NOT used: for γ = 0 the E–J_p oscillator's
+#  amplitude would grow by |1 − i ω_p dt| = sqrt(1 + ω_p² dt²) > 1
+#  every step.)
 # The Ampère update then sees an extra current term:
 #   E^{n+1}(i) = E^n(i) − (dt/ε_0)/dx · [Hz(i) − Hz(i-1)]  − (dt/ε_0) · J_p(i)
 # (the ε_∞ scaling is absorbed into ε_0 since ε_∞ ≈ 1 for the Drude
@@ -68,7 +70,8 @@ cH = dt / (mu0 * dx);
 cE = dt / (eps0 * dx);
 # Centred-difference (trapezoidal) ADE update keeps the explicit Yee
 # stable: J_p^{n+1/2} = α J_p^{n-1/2} + β E^n.  Explicit Euler on the
-# E-J_p oscillator overshoots phase and is unconditionally unstable;
+# E-J_p oscillator is unstable for γ = 0 — its amplitude grows by
+# sqrt(1 + ω_p² dt²) per step (finite γ can mask but not fix it);
 # this form is stable as long as ω_p dt ≤ 2 (Drude's analogue of CFL).
 ade_decay = (1 - gamma * dt / 2) / (1 + gamma * dt / 2);
 ade_drive = eps0 * omega_p^2 * dt   / (1 + gamma * dt / 2);
@@ -85,6 +88,10 @@ for step = 1:n_step
   # ADE update for J_p (only inside metal — `in_film` mask zeros it elsewhere)
   Jp = ade_decay * Jp + ade_drive * Ey .* in_film;
 
+  # Save boundary-adjacent values at time level n for the Mur ABC.
+  Ey_l_old = Ey(2);
+  Ey_r_old = Ey(N - 1);
+
   # E update: standard Ampère term minus the polarisation-current term
   Ey(2:N-1) = Ey(2:N-1) - cE * (Hz(2:N-1) - Hz(1:N-2)) - (dt / eps0) * Jp(2:N-1);
 
@@ -92,9 +99,10 @@ for step = 1:n_step
   src_amp = exp(-((t - t0) / tau)^2) * cos(2 * pi * f_mod * (t - t0));
   Ey(k_src) = Ey(k_src) + src_amp;
 
-  # ABC at ends
-  Ey(1) = Ey(2);
-  Ey(N) = Ey(N - 1);
+  # Mur first-order ABC at the ends: one-step-DELAYED copy
+  # E^{n+1}(1) = E^n(2) (same-time copy would be a Neumann reflector).
+  Ey(1) = Ey_l_old;
+  Ey(N) = Ey_r_old;
 
   E_back_hist(step) = real(Ey(k_probe_back));
   E_fwd_hist(step)  = real(Ey(k_probe_fwd));
@@ -140,5 +148,5 @@ title(sprintf("Drude metal — plasma frequency fp = %.0f GHz", fp / 1e9));
 savefig("fdtd_dispersive_transmission.svg");
 
 print(fp / 1e9)             # 3 — expected plasma frequency
-print(max(abs(E_fwd_hist))) # transmitted-pulse peak
-print(max(abs(E_back_hist)))
+print(max(abs(E_fwd_hist))) # ~ 0.101 — transmitted-pulse peak
+print(max(abs(E_back_hist)))# ~ 0.505 — incident-side peak (ratio ~ 0.20)

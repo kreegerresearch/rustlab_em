@@ -13,14 +13,15 @@
 # Drive:     point source at one corner well off any modal node; read
 #            out |E_z| at a different corner, also off any node, and
 #            plot |E|² over a frequency sweep covering several modes.
-# Theory:    f_{m n} = c/(2 √(ε_r)) · √((m/a)² + (n/b)²)
-#            with c = 1/√(μ₀ ε₀). For a = 0.10 m, b = 0.075 m,
-#            ε_r ≈ 1 the lowest few modes are
-#               TM10  ≈ 1.500 GHz
-#               TM01  ≈ 2.000 GHz
-#               TM11  ≈ 2.500 GHz
-#               TM20  ≈ 3.000 GHz
-#               TM21  ≈ 3.606 GHz
+# Theory:    f_{m n} = c/(2 √(ε_r)) · √((m/a)² + (n/b)²),  m, n ≥ 1,
+#            with c = 1/√(μ₀ ε₀). The Dirichlet (PEC) walls force
+#            sin(mπx/a)·sin(nπy/b) in BOTH directions, so any zero
+#            index kills the mode — TM10/TM01/TM20 do not exist.
+#            For a = 0.10 m, b = 0.075 m, ε_r ≈ 1 the in-band modes
+#            of a 1–4 GHz sweep are
+#               TM11  ≈ 2.498 GHz
+#               TM21  ≈ 3.603 GHz
+#            (next is TM12 ≈ 4.269 GHz, just above the band).
 #
 # Reference: ../../notebooks/10-fdfd-frequency-domain.md.
 
@@ -33,7 +34,10 @@ a_cav  = 0.10;
 b_cav  = 0.075;
 tan_d  = 0.005;     # bulk loss tangent — Q ≈ 1/tan_delta ≈ 200
 eps_re = 1.0;
-eps_c  = eps_re - j * eps_re * tan_d;     # ε with small loss
+# Loss is a POSITIVE imaginary part under the e^{-iωt} convention used
+# throughout Lesson 10 (matches the PML's s = 1 + iσ/(ωε₀); e^{+jωt}
+# engineering texts write the same medium as ε_r(1 − j·tanδ)).
+eps_c  = eps_re + j * eps_re * tan_d;     # ε with small loss
 
 # === Grid ===
 nx = 81;
@@ -73,7 +77,7 @@ function a = fdfd_trial(kf)
   c0   = 1 / sqrt(mu0 * eps0);
   a_cav = 0.10; b_cav = 0.075;
   tan_d = 0.005; eps_re = 1.0;
-  eps_c = eps_re - j * eps_re * tan_d;
+  eps_c = eps_re + j * eps_re * tan_d;
   nx = 81; ny = 61;
   dx = a_cav / (nx + 1); dy = b_cav / (ny + 1);
   N = nx * ny;
@@ -89,17 +93,17 @@ function a = fdfd_trial(kf)
 end
 amp = parmap(@fdfd_trial, 1:Nf);
 
-# Analytic resonance frequencies for the lowest five modes
-f_10 = c0 / (2 * a_cav) * sqrt(1) / sqrt(eps_re);
-f_01 = c0 / (2 * b_cav) * sqrt(1) / sqrt(eps_re);
+# Analytic resonance frequencies. Why no peak at 1.5 GHz? c/(2a) is
+# what a naive "TM10" would give — but sin(nπy/b) with n = 0 vanishes
+# identically, so the mode does not exist; the lowest real mode is TM11.
+f_no_mode = c0 / (2 * a_cav) / sqrt(eps_re);
 f_11 = (c0 / (2 * sqrt(eps_re))) * sqrt((1 / a_cav)^2 + (1 / b_cav)^2);
-f_20 = c0 / a_cav        * sqrt(1) / sqrt(eps_re);
 f_21 = (c0 / (2 * sqrt(eps_re))) * sqrt((2 / a_cav)^2 + (1 / b_cav)^2);
-print(f_10 / 1e9)
-print(f_01 / 1e9)
-print(f_11 / 1e9)
-print(f_20 / 1e9)
-print(f_21 / 1e9)
+f_12 = (c0 / (2 * sqrt(eps_re))) * sqrt((1 / a_cav)^2 + (2 / b_cav)^2);
+print(f_no_mode / 1e9)   # 1.50 — NO peak here in the sweep (m,n ≥ 1)
+print(f_11 / 1e9)        # 2.50 — lowest mode, TM11
+print(f_21 / 1e9)        # 3.60 — TM21
+print(f_12 / 1e9)        # 4.27 — TM12, just above the sweep band
 
 figure();
 plot(fs / 1e9, amp, "|E_z(meas)| vs f");
@@ -108,32 +112,33 @@ ylabel("|E_z| at sample point");
 title("Closed-cavity FDFD response — resonant peaks at TM_{m n}");
 savefig("fdfd_resonator_sweep.svg");
 
-# === Field snapshot at the lowest resonance ===
-omega_r = 2 * pi * f_10;
-A_r  = L + ((omega_r / c0)^2 * eps_c) * speye(N);
-b_r  = zeros(1, N);
-b_r(k_src) = -j * omega_r * mu0;
-E_r  = spsolve(A_r, b_r);
-E_grid = reshape(E_r, ny, nx);
-
-figure();
-imagesc(real(E_grid), "viridis");
-title("Re(E_z) at TM_{10} resonance (single-half-wave along x)");
-xlabel("x cell index");
-ylabel("y cell index");
-savefig("fdfd_resonator_TM10.svg");
-
-# Snapshot at TM_{11}
+# === Field snapshot at the lowest resonance, TM_{11} ===
 omega_r = 2 * pi * f_11;
 A_r  = L + ((omega_r / c0)^2 * eps_c) * speye(N);
 b_r  = zeros(1, N);
 b_r(k_src) = -j * omega_r * mu0;
 E_r  = spsolve(A_r, b_r);
 E_grid = reshape(E_r, ny, nx);
+print(max(abs(E_r)))     # ~ 0.71 — antinode at the cavity centre
 
 figure();
 imagesc(real(E_grid), "viridis");
-title("Re(E_z) at TM_{11} resonance");
+title("Re(E_z) at TM_{11} resonance — one half-sine lobe in x and in y");
 xlabel("x cell index");
 ylabel("y cell index");
 savefig("fdfd_resonator_TM11.svg");
+
+# Snapshot at TM_{21} — two lobes along x, one along y
+omega_r = 2 * pi * f_21;
+A_r  = L + ((omega_r / c0)^2 * eps_c) * speye(N);
+b_r  = zeros(1, N);
+b_r(k_src) = -j * omega_r * mu0;
+E_r  = spsolve(A_r, b_r);
+E_grid = reshape(E_r, ny, nx);
+
+figure();
+imagesc(real(E_grid), "viridis");
+title("Re(E_z) at TM_{21} resonance — two lobes along x, one along y");
+xlabel("x cell index");
+ylabel("y cell index");
+savefig("fdfd_resonator_TM21.svg");

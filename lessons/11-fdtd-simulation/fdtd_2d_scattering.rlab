@@ -45,10 +45,12 @@ lambda = c0 / f0;
 k0     = omega / c0;
 
 # === PEC cylinder ===
+# Radius 0.4 λ (16 cells) keeps the cylinder a few cells clear of the
+# right absorbing strip and well away from the top/bottom walls.
 [Xg, Yg] = meshgrid((1:nx) * dx, (1:ny) * dy);
 xc = nx * dx * 0.6;
 yc = ny * dy * 0.5;
-R_pec = 0.6 * lambda;
+R_pec = 0.4 * lambda;
 pec_mask = disk_mask(Xg, Yg, xc, yc, R_pec);
 inside_pec = 1 - pec_mask;            # 1 outside, 0 inside
 

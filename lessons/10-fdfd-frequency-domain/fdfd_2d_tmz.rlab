@@ -33,7 +33,8 @@ omega    = 2 * pi * f0;
 k0       = omega / c0;
 lambda0  = c0 / f0;
 
-# Domain: 4 λ × 4 λ, with 12 cells per λ in the background.
+# Domain: 161 cells ≈ 13.4 λ across at 12 cells per λ (≈ 10.4 λ of
+# interior once the 18-cell PML on each side is excluded).
 nx        = 161;
 ny        = 161;
 dx        = lambda0 / 12;

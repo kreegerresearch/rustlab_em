@@ -12,7 +12,7 @@
 #   2. ε_r and PEC arrays         → Lesson 04
 #   3. Vectorised 2-D Yee FDTD    → Lesson 11 (cat-rebuild updates)
 #   4. Pulsed-feed waveport       → Lesson 13
-#   5. Probe FFT → S_11           → Lesson 13 + Lesson 09 FFT
+#   5. Probe FFT → S_11           → Lesson 13 (port + FFT pattern)
 #   6. Animated field             → Lesson 09 frame()/saveanim()
 #
 # Geometry (side view, 2-D TMz):

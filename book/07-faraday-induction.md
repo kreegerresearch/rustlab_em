@@ -74,7 +74,7 @@ print(Eps_peak)        % ≈ 0.296 V
 
 <!-- rustlab:output-end -->
 
-The EMF leads the flux by $\pi/2$ (cosine vs sine) — the EMF is largest at the moments when the flux is changing fastest, and zero at the flux peaks where $d\Phi/dt = 0$. Flipping the sign of $B_0$ (or running the loop counter-clockwise) flips the sign of $\varepsilon$ — Lenz's law in action.
+The EMF is in quadrature with the flux — $90°$ out of phase — largest at the moments when the flux is changing fastest, and zero at the flux peaks where $d\Phi/dt = 0$. Lenz's law lives in the minus sign's *direction*: the current the EMF drives around the loop produces its own magnetic flux, and that flux always opposes the change in the applied flux — pushing back while $\Phi$ rises, propping it up while $\Phi$ falls.
 
 ## Mutual Inductance
 
@@ -186,7 +186,7 @@ A thin conducting plate (thickness $t \ll$ plate dimensions, conductivity $\sigm
 
 Because $\vec J$ is divergence-free in the plane, write it as the curl of a **stream function** $\psi(x, y)$,
 
-$$\vec J = \hat z\times\nabla\psi = \left(\frac{\partial\psi}{\partial y},\;-\frac{\partial\psi}{\partial x}\right),$$
+$$\vec J = \hat z\times\nabla\psi = \left(-\frac{\partial\psi}{\partial y},\;\frac{\partial\psi}{\partial x}\right),$$
 
 so the divergence-free condition is automatic. Substitute into $\nabla\times\vec E_{\rm in} = -\dot B_z\,\hat z$ via $\vec E_{\rm in} = \vec J/\sigma$:
 
@@ -269,10 +269,10 @@ hold off;
 <!-- rustlab:output-end -->
 
 ```rustlab
-% Recover J = ẑ × ∇ψ.   Jx = ∂ψ/∂y,   Jy = -∂ψ/∂x
+% Recover J = ẑ × ∇ψ.   Jx = -∂ψ/∂y,   Jy = ∂ψ/∂x
 [psi_x, psi_y] = gradient(psi, dx3, dy3);
-Jx = psi_y;
-Jy = -psi_x;
+Jx = -psi_y;
+Jy = psi_x;
 
 clf;
 quiver(Xp, Yp, Jx, Jy, "Eddy-current density J = ẑ × ∇ψ");
@@ -281,33 +281,37 @@ ylabel("y (m)")
 ```
 
 <!-- rustlab:output-start -->
-![plot 5](plots/07-faraday-induction/plot-5-7dbe57d3.svg)
+![plot 5](plots/07-faraday-induction/plot-5-fa41bc9c.svg)
 
 <!-- rustlab:output-end -->
 
-The quiver field circulates clockwise inside the plate — consistent with Lenz's law for a positive $\dot B_z$. Sample the current magnitude along a radius and compare to the analytic $J_\varphi(r) = \sigma\dot B_z\,r/2$.
+The quiver field circulates clockwise inside the plate — consistent with Lenz's law for a positive $\dot B_z$. Sample the current magnitude along a radius and compare to the analytic $|J_\varphi|(r) = \sigma\dot B_z\,r/2$.
 
 ```rustlab
 % Sample |J| along the +x axis at i = ny3/2; compare against the analytic
-% J_φ(r) = σ Ḃ r / 2 (a linear ramp from 0 at the centre to σḂR/2 at r = R).
+% J_φ(r) = σ Ḃ r / 2 (a linear ramp from 0 at the centre to σḂR/2 at r = R),
+% evaluated at the radius the grid actually samples.
 i_c = round(ny3 / 2);
 Jmag = sqrt(Jx .^ 2 + Jy .^ 2);
-J_an = sigma_cu * Bdot * abs(xs3) / 2.0;
-print(real(Jmag(i_c, round(0.7 * R_plate / dx3) + nx3 / 2)))   % near-edge sample
-print(sigma_cu * Bdot * 0.7 * R_plate / 2.0)                   % analytic at r = 0.7R
-print(real(Jmag(i_c, nx3 / 2 + 1)))                            % near centre
+j_s  = round(0.7 * R_plate / dx3) + nx3 / 2;          % column nearest r = 0.7R
+r_s  = sqrt(xs3(j_s)^2 + ys3(i_c)^2);                 % actual sampled radius
+print(r_s)                                            % ≈ 0.0406 m (vs 0.7R = 0.042 m)
+print(real(Jmag(i_c, j_s)))                           % near-edge sample
+print(sigma_cu * Bdot * r_s / 2.0)                    % analytic at the sampled radius
+print(real(Jmag(i_c, nx3 / 2 + 1)))                   % near centre
 ```
 
 <!-- rustlab:output-start -->
 ```text
+0.04060613198893046
 1175649.633045984
-1218000
+1177577.8276789833
 40606.13198313814
 ```
 
 <!-- rustlab:output-end -->
 
-The numerical $|J|$ at $r = 0.7\,R$ matches the analytic $\sigma\dot B_z r/2$ within a few percent; near $r = 0$ both go to zero. The eddy-current pattern this produces — circular flow lines, current density growing linearly outward — is the same one industrial-induction-heating cookers exploit (a strong $\dot B$ from a coil drives huge $J$ in the steel pan, which dissipates as $\int|\vec J|^2/\sigma$). The drift of these eddies into a conductor is also why **transformer cores must be laminated**: replacing solid iron with thin insulated sheets confines the eddy stream-function support to each lamination's small disk, killing $\propto R^4$ eddy losses to a manageable level.
+The grid column nearest $0.7R$ actually sits at $r \approx 0.0406$ m (not exactly $0.042$ m), and evaluating the analytic $\sigma\dot B_z r/2$ at that sampled radius the numerical $|J|$ matches it to better than $0.2\,\%$; near $r = 0$ both go to zero. The eddy-current pattern this produces — circular flow lines, current density growing linearly outward — is the same one industrial-induction-heating cookers exploit (a strong $\dot B$ from a coil drives huge $J$ in the steel pan, which dissipates as $\int|\vec J|^2/\sigma$). The drift of these eddies into a conductor is also why **transformer cores must be laminated**: replacing solid iron with thin insulated sheets confines the eddy stream-function support to each lamination's small disk, killing $\propto R^4$ eddy losses to a manageable level.
 
 ## Standalone Scripts
 
@@ -327,7 +331,8 @@ Run all three with `make lesson-07`, or one at a time via `rustlab run lessons/0
 | Peak EMF $\varepsilon_{\rm peak}$ at 60 Hz | $\pi R^2 B_0\omega \approx 0.296$ V |
 | Numerical $M$ (concentric loops, $a/b = 0.2$) | $\approx 7.94\times10^{-9}$ H |
 | Analytic small-$a/b$ $M$ | $\mu_0\pi a^2/(2b) \approx 7.90\times10^{-9}$ H |
-| Eddy $\lvert J\rvert$ at $r = 0.7R$ on Cu plate | $\approx \sigma\dot B_z R\cdot 0.35 \approx 1.2\times10^{6}$ A/m² |
+| Sampled radius $r_s$ (grid column nearest $0.7R$) | $\approx 0.0406$ m |
+| Eddy $\lvert J\rvert$ at $r_s$ on Cu plate | $\approx \sigma\dot B_z r_s/2 \approx 1.18\times10^{6}$ A/m² (numeric $1.1756\times10^{6}$, analytic $1.1776\times10^{6}$ — $<0.2\,\%$ apart) |
 | Eddy $\lvert J\rvert$ near $r = 0$ | $\approx 0$ |
 
 ## Exercises
