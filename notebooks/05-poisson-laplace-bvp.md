@@ -107,13 +107,13 @@ and sweep across the grid updating each cell from its current neighbours. **Jaco
 
 $$V_{i,j}^{(k+1)} = (1 - \omega)\,V_{i,j}^{(k)} + \omega\,V_{i,j}^{\rm GS}.$$
 
-The convergence rate is set by the spectral radius of the iteration matrix. For an $N\!\times\!N$ Dirichlet grid:
+The convergence rate is set by the spectral radius of the iteration matrix. For a Dirichlet grid of $N$ interior cells per side (spacing $h = 1/(N+1)$):
 
 | Method | Spectral radius | Iterations to $10^{-6}$ residual ($N=20$) |
 |---|---|---|
-| Jacobi | $\cos(\pi/N) \approx 1 - \tfrac{\pi^2}{2N^2}$ | $\approx 1100$ |
-| Gauss–Seidel | $\cos^2(\pi/N)$ | $\approx 550$ |
-| SOR ($\omega_{\rm opt} = 2/(1 + \sin\pi/N)$) | $(1-\sin\pi/N)/(1+\sin\pi/N)$ | $\approx 45$ |
+| Jacobi | $\cos(\pi/(N+1)) \approx 1 - \tfrac{\pi^2}{2(N+1)^2}$ | $\approx 1200$ |
+| Gauss–Seidel | $\cos^2(\pi/(N+1))$ | $\approx 600$ |
+| SOR ($\omega_{\rm opt} = 2/(1 + \sin(\pi/(N+1)))$) | $(1-\sin(\pi/(N+1)))/(1+\sin(\pi/(N+1)))$ | $\approx 46$ |
 
 SOR with the optimal $\omega$ is over an order of magnitude faster than Gauss–Seidel, and ~25× faster than Jacobi. But "faster" still means *iterating* until convergence; sparse direct solve via `spsolve` factors the matrix once and hands back the exact (up to round-off) answer in a single shot. For the grid sizes this lesson uses (under $200\times200$), direct solve wins outright. Iterative methods stay relevant for the truly huge problems (3-D FDTD time-stepping in Lesson 11; matrix-free Krylov methods on $10^7$-cell grids) where a full factorisation is unaffordable.
 
@@ -158,7 +158,7 @@ The three printed errors decay roughly an order of magnitude every ~100 iteratio
 
 ### Theory
 
-A finite parallel-plate capacitor inside a grounded box is the simplest realistic geometry: two horizontal conducting plates of width $w$ and gap $d$, driven to fixed potentials $\pm V_0/2$, surrounded by a far enough grounded boundary that the box itself doesn't affect the result. The 1-D limit (infinite plates) gives a uniform interior field $E_y = V_0/d$ and capacitance per unit depth $C' = \varepsilon_0 w/d$ — i.e. $\varepsilon_0/d$ per unit plate area. Real plates have **fringing** — field lines bowing outward beyond the plate edges — and the actual capacitance is always larger than the 1-D estimate.
+A finite parallel-plate capacitor inside a grounded box is the simplest realistic geometry: two horizontal conducting plates of width $w$ and gap $d$, driven to fixed potentials $\pm V_0/2$, surrounded by a grounded boundary that is close enough that it still adds $\approx 10\%$ to the plate charge (a coupling term Exercise 3 separates from the genuine fringing). The 1-D limit (infinite plates) gives a uniform interior field $E_y = V_0/d$ and capacitance per unit depth $C' = \varepsilon_0 w/d$ — i.e. $\varepsilon_0/d$ per unit plate area. Real plates have **fringing** — field lines bowing outward beyond the plate edges — and the actual capacitance is always larger than the 1-D estimate.
 
 Numerically the plates are treated as **pinned cells**: every grid cell inside a plate has its row of $A$ replaced by the identity row, with the right-hand side set to the plate's potential. The rest of the system stays untouched, and the linear solve fixes the conductor potential exactly while the surrounding Laplace problem solves around it.
 
@@ -184,7 +184,7 @@ imagesc(top_plate + 2 * bot_plate, "viridis");
 title("Plate masks: 1 = +V plate (top), 2 = -V plate (bottom)")
 ```
 
-Build the system, then pin the plate cells. For each plate cell at flat index $k$, zero out the four off-diagonal entries in row $k$ (one per stencil neighbour), set the diagonal to 1, and write the plate potential into $b$.
+Build the system, then pin the plate cells. For each plate cell at flat index $k$, zero out the four off-diagonal entries in row $k$ (one per stencil neighbour), set the diagonal to 1, and write the plate potential into $b$. The helper `ij2k(i, j, ny)` maps a grid cell $(i, j)$ to its column-major flat index $k = (j-1)\,n_y + i$ — the same layout `laplacian_2d` produces, so note the third argument is `ny`, the number of rows.
 
 ```rustlab
 L = laplacian_2d(nx, ny, dx, dy);
@@ -232,14 +232,14 @@ hold off;
 ```
 
 ```rustlab
-% Recover the field and integrate flux around the top plate to get C.
+% Recover the field; the actual flux-integral C is Exercise 3.
 [Vx, Vy] = gradient(real(V), dx, dy);
 Ex = -Vx; Ey = -Vy;
 
 % Mid-gap field on the plate axis (x = 0)
 i_mid = ny / 2;
 j_mid = nx / 2;
-print(abs(real(Ey(i_mid, j_mid))))            % ≈ 48 V/m  (1-D estimate is V₀/d = 50)
+print(abs(real(Ey(i_mid, j_mid))))            % ≈ 48.1 V/m (snapped-gap V₀/gap; 1-D V₀/d = 50)
 
 % Capacitance from the analytic infinite-plate formula
 eps0 = 8.8541878128e-12;
@@ -247,7 +247,7 @@ C_1d = eps0 * w / d;                            % per metre depth
 print(C_1d)                                     % ≈ 2.66e-11 F/m
 ```
 
-The mid-gap field comes out close to $V_0/d = 50$ V/m, confirming that the 1-D estimate is locally accurate inside the plates. The contour map shows the equipotentials curving sharply at the plate edges — that's fringing, the visible signature of why finite plates have $C > \varepsilon_0 w/d$. (Exercise 3 walks through extracting the actual numerical $C$ via the flux integral and quantifying the fringing correction.)
+The mid-gap field comes out near $V_0/d = 50$ V/m, but the ~4% shortfall is **plate-row grid snapping**, not physics: on this $100\times100$ grid the rows nearest $y = \pm d/2$ land at $y = \pm 0.01040$ m, so the pinned plates sit 0.02079 m apart rather than the nominal 0.02000 m, and $V_0/\text{gap} = 48.1$ V/m — exactly what the field prints. (Fringing *raises* the total capacitance; it does not lower the interior field.) The contour map shows the equipotentials curving sharply at the plate edges — that's the fringing, the visible signature of why finite plates have $C > \varepsilon_0 w/d$. (Exercise 3 walks through extracting the actual numerical $C$ via the flux integral and quantifying the fringing correction.)
 
 ## Variable Permittivity — Dielectric Slabs
 
@@ -257,11 +257,11 @@ In a piecewise-uniform medium the right operator is *not* the constant-coefficie
 
 $$\nabla\!\cdot\!\bigl(\varepsilon(x, y)\nabla V\bigr) = -\rho.$$
 
-Discretising it directly with arithmetic-mean face coefficients introduces artificial sources at material interfaces — the field component normal to the interface is supposed to satisfy $D_n^{\rm in} = D_n^{\rm out}$ (i.e. $\varepsilon E_n$ is continuous), and the wrong mean breaks that exactly. The right choice is the **harmonic mean** at half-cell faces,
+Discretising it needs an *effective* $\varepsilon$ on each half-cell face between two cells. *Any* flux-conservative choice — the arithmetic mean included — keeps the scheme conservative, so the discrete normal displacement $D_n = \varepsilon E_n$ stays continuous across the interface either way; the D-continuity check below would pass with an arithmetic mean too. What separates the choices is **accuracy**. The **harmonic mean** at half-cell faces,
 
 $$\varepsilon_{i, j+1/2} = \frac{2\,\varepsilon_{i,j}\,\varepsilon_{i,j+1}}{\varepsilon_{i,j} + \varepsilon_{i,j+1}},$$
 
-which preserves flux continuity exactly. The rustlab builtin `laplacian_eps_2d(eps_map, dx, dy)` assembles the resulting sparse matrix from a Lesson-04 material map. With $\varepsilon \equiv 1$ it reduces to `laplacian_2d`; with a piecewise $\varepsilon$ it produces the right operator without any user-side stencil bookkeeping.
+is the exact series composition of the two half-cells straddling the face, so it is exact for an interface that lands on a face; the arithmetic mean mis-weights the two materials and leaves an $O(h)$ error in the face flux (≈ 0.45% on this grid). The rustlab builtin `laplacian_eps_2d(eps_map, dx, dy)` uses this harmonic mean when it assembles the sparse matrix from a Lesson-04 material map. With $\varepsilon \equiv 1$ it reduces to `laplacian_2d`; with a piecewise $\varepsilon$ it produces the right operator without any user-side stencil bookkeeping.
 
 A textbook check is the **series-dielectric capacitor**: a parallel-plate capacitor with two stacked dielectric layers (thicknesses $d_1$, $d_2$, permittivities $\varepsilon_{r1}$, $\varepsilon_{r2}$) has capacitance per unit area
 
@@ -271,7 +271,7 @@ with field $E_1 / E_2 = \varepsilon_{r2}/\varepsilon_{r1}$ (stronger field in th
 
 ### Example — Capacitor with $\varepsilon_r = 4$ slab filling half the gap
 
-A 21-column × 81-row grid covers a 5 mm × 10 mm region. Bottom half ($y < 5$ mm) is filled with a dielectric of $\varepsilon_r = 4$; top half is vacuum. Plates at $y = 0$ and $y = 10$ mm are driven to $V = 0$ and $V = 1$. Side boundaries use **Neumann** ($\partial V/\partial x = 0$), which makes the bulk solution one-dimensional: the $\varepsilon_r$ map varies only with $y$, so the right physics is a pure $y$-dependence with no $x$-direction leakage.
+A 21-column × 81-row grid covers a 5 mm × 10 mm region. Bottom half ($y < 5$ mm) is filled with a dielectric of $\varepsilon_r = 4$; top half is vacuum. Plates at $y = 0$ and $y = 10$ mm are driven to $V = 0$ and $V = 1$. Side boundaries use **Neumann** ($\partial V/\partial x = 0$), which makes the bulk solution one-dimensional: the $\varepsilon_r$ map varies only with $y$, so the right physics is a pure $y$-dependence with no $x$-direction leakage. Unlike the interior-only grids earlier in this lesson, this grid *includes* the plate rows — `linspace` places nodes exactly on $y = 0$ and $y = 10$ mm — so the Dirichlet plate values are pinned as explicit matrix rows rather than folded into the right-hand side.
 
 ```rustlab
 clf;
@@ -282,6 +282,7 @@ dyd = Lyd / (nyd - 1);
 xsd = linspace(0, Lxd, nxd);
 ysd = linspace(0, Lyd, nyd);
 [Xd, Yd] = meshgrid(xsd, ysd);
+j_mid = (nxd + 1) / 2;                % centre column (x = 2.5 mm) — nxd = 21 → 11
 
 % ε_r map: lower half = 4, upper half = 1.
 eps_map = ones(nyd, nxd);
@@ -298,8 +299,8 @@ A_d   = -1 * L_eps;
 n_d   = nxd * nyd;
 b_d   = zeros(1, n_d);
 
-% Pin top row (i = nyd) to V = 1 and bottom row (i = 1) to V = 0.
-% Each pinned row zeros its 4-stencil neighbours and sets the diagonal to 1.
+% Pin top row (i = nyd) to V = 1, bottom row (i = 1) to V = 0 — same
+% pinning idiom as the parallel-plate block above.
 for j = 1:nxd
   k_top = ij2k(nyd, j, nyd);
   A_d(k_top, k_top) = 1.0;
@@ -322,7 +323,7 @@ V_d      = real(reshape(V_d_flat, nyd, nxd));
 
 ```rustlab
 clf;
-plot(ysd * 1000, V_d(:, nxd / 2), "V(y) at the centre: 0–5 mm ε_r=4, 5–10 mm air");
+plot(ysd * 1000, V_d(:, j_mid), "V(y) at the centre: 0–5 mm ε_r=4, 5–10 mm air");
 xlabel("y (mm)");
 ylabel("V (V)")
 ```
@@ -334,16 +335,16 @@ The profile is piecewise linear: shallow slope through the dielectric (small $E$
 [Exd, Eyd] = gradient(V_d, dxd, dyd);
 Eyd = -Eyd;
 
-i_diel = nyd / 4;          % deep in the dielectric (≈ 2.5 mm)
-i_air  = 3 * nyd / 4;      % deep in the air (≈ 7.5 mm)
-print(abs(real(Eyd(i_diel, nxd / 2))))    % ≈ 40 V/m  (low field in ε=4)
-print(abs(real(Eyd(i_air,  nxd / 2))))    % ≈ 159 V/m (4× larger in ε=1)
-print(real(Eyd(i_air, nxd / 2)) / real(Eyd(i_diel, nxd / 2)))   % → 4 exactly
+i_diel = 21;               % mid-dielectric (y = 2.5 mm exactly)
+i_air  = 61;               % mid-air (y = 7.5 mm exactly)
+print(abs(real(Eyd(i_diel, j_mid))))      % ≈ 39.7 V/m (low field in ε=4)
+print(abs(real(Eyd(i_air,  j_mid))))      % ≈ 158.8 V/m (4× larger in ε=1)
+print(real(Eyd(i_air, j_mid)) / real(Eyd(i_diel, j_mid)))   % → 4 exactly
 
 % D = ε ε₀ E continuity across the interface
 eps0 = 8.8541878128e-12;
-D_diel = eps0 * 4.0 * real(Eyd(i_diel, nxd / 2));
-D_air  = eps0 * 1.0 * real(Eyd(i_air,  nxd / 2));
+D_diel = eps0 * 4.0 * real(Eyd(i_diel, j_mid));
+D_air  = eps0 * 1.0 * real(Eyd(i_air,  j_mid));
 print(real(D_diel))
 print(real(D_air))         % same value to six+ digits → continuity verified
 ```
@@ -359,10 +360,12 @@ print(C_an)                                    % ≈ 1.42e-9 F/m²
 
 % Numerical: surface charge at the top plate ≈ ε₀ E_air,
 % total Q per unit area = σ; C/A = σ / V₀ with V₀ = 1.
-sigma_top = -eps0 * real(Eyd(nyd - 1, nxd / 2));   % one cell below the top plate
+sigma_top = -eps0 * real(Eyd(nyd - 1, j_mid));   % one cell below the top plate
 C_num     = abs(sigma_top) / 1.0;
-print(C_num)                                   % matches C_an to ~1%
+print(C_num)                                   % ≈ 1.406e-9 — 0.7% below C_an
 ```
+
+The 0.7% shortfall of $C_{\rm num}$ below the ideal $C_{\rm an}$ is not discretisation noise — it is the **half-cell interface offset**, and it is fully accounted for. On this 81-row grid the dielectric fills rows 1–40 (up to $y = 4.875$ mm) and air fills rows 41–81, so the harmonic-mean face that carries the interface sits at $y = 4.9375$ mm, midway between them. The *effective* dielectric layer is therefore 4.9375 mm, not the ideal 5.0 mm. Feed that thickness into the 1-D series formula and you get $E_{\rm diel} = 1/(0.0049375 + 4\times0.0050625) = 39.702$ V/m and $C/A = \varepsilon_0/(0.0050625 + 0.0049375/4) = 1.406\times10^{-9}$ F/m² — matching the printed $E_{\rm diel}$ and $C_{\rm num}$ to their full precision. Refining the grid (or landing the interface exactly on a face) shrinks the gap.
 
 ## Field Singularities at Sharp Corners
 
@@ -404,6 +407,7 @@ A2 = -1 * L2;
 b2 = zeros(1, nx2 * ny2);
 V_cond = 1.0;
 
+% Pin the conductor cells — same pinning idiom as the parallel-plate block.
 for i = 1:ny2
   for j = 1:nx2
     if conductor(i, j) > 0.5
@@ -481,7 +485,7 @@ xlabel("r (m)");
 ylabel("|E| (V/m)")
 ```
 
-The fitted slope sits in the neighbourhood of $-1/3$ — the asymptotic singularity exponent — once the small-$r$ pinning artefact and the large-$r$ box-boundary corrections are excluded. The match isn't sharp on a $100\times100$ grid (the asymptotic regime $h \ll r \ll L_{\rm box}$ is narrow here), and refining the grid pushes the fit closer to $-0.33$. The qualitative point — that $|\vec E|$ does diverge as $r \to 0$, with a power-law slope visible on log-log axes — is robust and is the only thing the lightning-rod argument actually needs.
+The fitted slope sits in the neighbourhood of $-1/3$ — the asymptotic singularity exponent — but it is *not* a robust point estimate. It is sensitive both to the fit window and to the one-cell ambiguity in where $r = 0$ sits relative to the corner cell. Holding the cell-index window fixed, the fitted exponent actually drifts *away* from $-1/3$ as the grid refines ($\approx -0.38$ at $100^2$, $-0.32$ at $200^2$, $-0.29$ at $400^2$); holding a fixed *physical* window instead pulls it the other way (toward $\approx -0.42$), because on a finer grid that window covers a less-asymptotic range of $r$. Across $100^2$–$400^2$ grids the estimate scatters over roughly $-0.29$ to $-0.42$ around the true $-1/3$; recovering it sharply needs both $h \to 0$ *and* a window pushed to smaller physical $r$. The qualitative point — that $|\vec E|$ does diverge as $r \to 0$, with a power-law slope visible on log-log axes — is robust and is the only thing the lightning-rod argument actually needs.
 
 ## Standalone Scripts
 
@@ -505,20 +509,21 @@ Run all five with `make lesson-05`, or one at a time via `rustlab run lessons/05
 | Gauss–Seidel error after 50 iters | $\approx 0.12$ |
 | Gauss–Seidel error after 200 iters | $\approx 3\times10^{-3}$ |
 | Gauss–Seidel error after 1000 iters | $\approx 6\times10^{-4}$ (floors at $h^2$) |
-| Mid-gap field (parallel plates) | $\approx 48$ V/m ($V_0/d = 50$ V/m for ideal 1-D) |
-| Field in dielectric (slab problem) | $\approx 40$ V/m |
-| Field in air (slab problem) | $\approx 159$ V/m (4× larger) |
+| Mid-gap field (parallel plates) | $\approx 48.1$ V/m (1-D $V_0/d = 50$; the deficit is plate-row snapping, not fringing) |
+| 1-D plate capacitance $C' = \varepsilon_0 w/d$ | $\approx 2.66\times10^{-11}$ F/m |
+| Field in dielectric (slab problem) | $\approx 39.7$ V/m |
+| Field in air (slab problem) | $\approx 158.8$ V/m (4× larger) |
 | $E_{\rm air}/E_{\rm diel}$ | $4.0$ exactly (boundary condition) |
-| $D = \varepsilon\varepsilon_0 E$ continuity | identical to six digits across interface |
-| Series-capacitor $C/A$ (analytic) | $\approx 1.417\times10^{-9}$ F/m² |
-| Numerical $C/A$ for the slab capacitor | matches analytic to within $10^{-2}$ |
-| Corner singularity slope (small-$r$ fit) | $\approx -0.38$ (theory: $-1/3$) |
+| $D = \varepsilon\varepsilon_0 E$ continuity | identical to seven digits across interface |
+| Series-capacitor $C/A$ (analytic, ideal 5 mm layers) | $\approx 1.417\times10^{-9}$ F/m² |
+| Numerical $C/A$ for the slab capacitor | $\approx 1.406\times10^{-9}$ F/m² — 0.7% below, set by the half-cell interface offset |
+| Corner singularity slope (small-$r$ fit) | $\approx -0.38$ (theory: $-1/3$; window-sensitive) |
 
 ## Exercises
 
 1. **Convergence study.** Solve the Laplace problem at $N \in \{20, 40, 80, 160\}$ and plot the maximum error vs $h$ on a log-log axis. Fit the slope and verify the predicted $O(h^2)$ rate of the 5-point stencil.
-2. **SOR with optimal $\omega$.** Implement SOR on the 20-cell unit-square problem. Sweep $\omega$ from 1.0 to 1.95 in steps of 0.05 and plot iterations-to-$10^{-4}$ residual versus $\omega$. Verify the optimum sits near $2/(1 + \sin(\pi/N))$.
-3. **Capacitance of finite plates.** Take the parallel-plate result from this lesson and compute $C$ via the surface integral $C = (\varepsilon_0/V_0)\oint\!\vec E\!\cdot\!\hat n\,dA$ on a rectangle just outside the top plate. Compare to the 1-D estimate $\varepsilon_0 w/d$ and quantify the fringing-field correction (typically 10–20 % above the 1-D value at $w/d \sim 3$).
+2. **SOR with optimal $\omega$.** Implement SOR on the 20-cell unit-square problem. Sweep $\omega$ from 1.0 to 1.95 in steps of 0.05 and plot iterations-to-$10^{-4}$ residual versus $\omega$. Verify the optimum sits near $2/(1 + \sin(\pi/(N+1)))$, where $N$ is the number of interior cells per side ($N = 20$ here, so $\omega_{\rm opt} \approx 1.741$).
+3. **Capacitance of finite plates.** Take the parallel-plate result from this lesson and compute $C$ via the surface integral $C = (\varepsilon_0/V_0)\oint\!\vec E\!\cdot\!\hat n\,dA$ on a rectangle just outside the top plate. Compare to the 1-D estimate $\varepsilon_0 w/d$ and quantify the correction — expect $\approx 50$–$60\%$ above the 1-D value for this geometry, roughly $40\%$ genuine fringing (compare Palmer's formula, which gives $\approx 1.42\times$ at $w/d = 3$) plus $\approx 10\%$ from capacitive coupling to the nearby grounded box.
 4. **Coaxial cable on a Cartesian grid.** Pin two concentric conductor rings at $V = 1$ and $V = 0$; verify $V(r) = \ln(b/r)/\ln(b/a)$ along a radial slice and compute the capacitance per unit length, comparing to $C' = 2\pi\varepsilon_0/\ln(b/a)$.
 5. **Re-entrant angle sweep.** Modify the corner example to have an interior angle $\beta \in \{3\pi/2, 5\pi/4, 7\pi/4\}$ (the second gives slope $-1/5$ — near-flat, only weakly singular; the third gives $-3/7$ — the sharpest of the three, approaching a knife-edge). Verify the fitted slope of $|\vec E|$ vs $r$ is $\pi/\beta - 1$, and that an interior $\pi/2$ corner has $|E|$ regular (no singularity).
 

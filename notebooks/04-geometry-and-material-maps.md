@@ -84,11 +84,11 @@ print(sum(sum(D)) * dx * dy)        % ≈ 3.135 (undershoots π by ≈ 0.2 %)
 print(pi)                            % 3.14159...
 ```
 
-The small undershoot is the staircase artefact: `disk_mask` keeps a cell only when its *centre* satisfies $(X-x_c)^2 + (Y-y_c)^2 \le r^2$, so on a 200-cell grid the jagged rim falls a touch inside the smooth circle — the rim cells it drops cover slightly more area than the partial cells it keeps.
+The small undershoot is the staircase artefact: `disk_mask` keeps a cell only when its *centre* satisfies $(X-x_c)^2 + (Y-y_c)^2 \le r^2$, so on a 200-cell grid the jagged rim falls a touch inside the smooth circle — the rim cells it drops cover slightly more area than the partial cells it keeps. That sign is a coincidence of this particular grid, though: at other resolutions the same centre-in test overshoots $\pi$ instead. The staircase area error fluctuates in sign as the grid changes (Exercise 4).
 
 ### Example — Polygon
 
-An equilateral triangle, vertices given as an `N × 2` matrix:
+A nearly equilateral triangle (sides 2.00/1.97/1.97), vertices given as an `N × 2` matrix:
 
 ```rustlab
 clf;
@@ -115,7 +115,7 @@ Because the masks are 0/1 valued, set operations are arithmetic on matrices — 
 | Union $M_1 \cup M_2$               | `M1 + M2 - M1 .* M2`          |
 | Difference $M_1 \setminus M_2$     | `M1 .* (1 - M2)`              |
 
-The union form is *inclusion-exclusion*: add the two indicators and subtract the overlap so cells in both regions don't get counted twice. (Don't write `max(M1, M2)` — `max` in rustlab takes a scalar argument and won't broadcast over matrices.)
+The union form is *inclusion-exclusion*: add the two indicators and subtract the overlap so cells in both regions don't get counted twice. (Since rustlab 0.3.6, element-wise `max(M1, M2)` also works and is the idiomatic union; either form is fine — the inclusion-exclusion version just makes the overlap-subtraction explicit.)
 
 These four primitives cover every multi-region geometry the rest of the curriculum needs.
 
@@ -171,10 +171,12 @@ title("Region IDs: 0 outside, 1 = R only, 2 = D only, 3 = R ∩ D")
 ```
 
 ```rustlab
-print(sum(sum(r_only)) * dx * dy)   % rect minus the disk overlap   ≈ 0.380
-print(sum(sum(d_only)) * dx * dy)   % disk minus the rect overlap   ≈ 0.201
-print(sum(sum(both))   * dx * dy)   % the lens-shaped intersection  ≈ 0.583
+print(sum(sum(r_only)) * dx * dy)   % rect minus disk overlap   ≈ 0.380 (exact 0.3728)
+print(sum(sum(d_only)) * dx * dy)   % disk minus rect overlap   ≈ 0.201 (exact 0.1982)
+print(sum(sum(both))   * dx * dy)   % lens-shaped intersection  ≈ 0.583 (exact 0.5872)
 ```
+
+The overlap here is a circular segment: the disk cap above $y = 0.2$ has analytic area $0.25\cos^{-1}(0.4) - 0.2\sqrt{0.21} = 0.1982$, which is `d_only`; `both` is the rest of the disk ($0.7854 - 0.1982 = 0.5872$) and `r_only` is the rectangle minus that ($0.96 - 0.5872 = 0.3728$). The thin sliver regions rasterize with larger relative error than a bulk shape — up to ~2% here — because a curved boundary cutting a narrow strip lands proportionally more of its area in partially-covered rim cells.
 
 ## From Masks to Material Maps
 
@@ -257,9 +259,9 @@ The fix is **area-weighted conformal coverage**. For each grid cell, replace the
 
 $$\bar\varepsilon_r(i,j) = \alpha(i,j)\,\varepsilon_{r,\rm in} + (1-\alpha(i,j))\,\varepsilon_{r,\rm out}.$$
 
-For area and coverage quantities this blend is exact at interfaces normal to a grid axis and converges as $O(h^2)$ at diagonal ones. One caveat for solver quantities: feeding $\alpha$ into a stencil also requires the *right kind* of averaging at the interface — an arithmetic mean of the two materials for field components tangential to the boundary, but a harmonic mean for components normal to it (Lesson 05 uses exactly this harmonic mean in its variable-coefficient Laplacian). The fractional-coverage map $\alpha$ is the same data structure as a mask, just with values in $[0, 1]$ instead of $\{0, 1\}$ — every later solver consumes it without modification.
+For area and coverage quantities the $\alpha$-weighted cell sum reproduces the true area exactly, up to the accuracy of the $\alpha$ estimate itself — orientation does not enter the coverage arithmetic at all. Where orientation *does* matter is the **solver** error at the interface, which is why the averaging choice below is not cosmetic: feeding $\alpha$ into a stencil requires the *right kind* of averaging — an arithmetic mean of the two materials for field components tangential to the boundary, but a harmonic mean for components normal to it (Lesson 05 uses exactly this harmonic mean in its variable-coefficient Laplacian). The fractional-coverage map $\alpha$ is the same data structure as a mask, just with values in $[0, 1]$ instead of $\{0, 1\}$ — every later solver consumes it without modification.
 
-The simplest way to compute $\alpha$ is by **subgrid sampling**: evaluate the indicator at $K \times K$ sub-points per cell and average. This gives an $O(K^{-2})$ approximation to the true coverage with $K^2 \times$ the work of a single rasterization — usually $K = 4$ or $8$ is plenty, and it's a one-time preprocessing cost.
+The simplest way to compute $\alpha$ is by **subgrid sampling**: evaluate the indicator at $K \times K$ sub-points per cell and average. Because the indicator is discontinuous at the boundary, the per-cell coverage error is $O(1/K)$ in the worst case (usually much better) with $K^2 \times$ the work of a single rasterization — usually $K = 4$ or $8$ is plenty, and it's a one-time preprocessing cost.
 
 ### Example — Subgrid coverage for a unit disk
 
@@ -296,7 +298,7 @@ print(abs(A_stair - A_true) / A_true)     % staircase relative error ≈ 2e-3
 print(abs(A_conf  - A_true) / A_true)     % conformal relative error ≈ 2e-5
 ```
 
-The conformal error on this single grid is already two orders of magnitude smaller. A grid-refinement sweep (Exercise 4) shows the staircase error decays as $O(h)$ while the conformal error decays as $O(h^2)$ — exactly the rate every interior stencil in this curriculum aspires to.
+The conformal error on this single grid is already two orders of magnitude smaller — here $\approx 83\times$. The mechanism is structural: a $K \times K$ midpoint-subsampled $\alpha$ map is arithmetically identical to a staircase mask on a $K\times$-finer grid, so the conformal area error is just the staircase error at spacing $h/K$ — an $\approx K^2 = 64$ reduction that this particular grid happens to realise as $\approx 83$. There is a caveat Exercise 4 makes explicit, though: for a *pure area count* the staircase error is only *bounded* by $O(h)$ — it is really a lattice-point (Gauss-circle) count error that scatters in sign and magnitude from grid to grid (typically $\sim h^{1.5}$), not a clean monotone $O(h)$ decay. A crisp $O(h)$-versus-$O(h^2)$ separation shows up in a *solver* quantity — the capacitance of Lessons 05 and 13 — not in this raw disk-area metric.
 
 ### Example — Where the correction matters
 
@@ -331,18 +333,21 @@ Run all four with `make lesson-04`, or one at a time via `rustlab run lessons/04
 | Rectangle area | $\approx 0.60$ m² |
 | Disk area (staircase) | $\approx 3.135$ m² (≈ 0.2 % under $\pi$) |
 | Annulus area (staircase) | $\approx 2.351$ m² (analytic $\pi(1 - 0.25) = 2.356$) |
+| Region area: rect-only ($R \setminus D$) | $\approx 0.380$ m² (analytic $0.3728$) |
+| Region area: disk-only ($D \setminus R$) | $\approx 0.201$ m² (analytic $0.1982$) |
+| Region area: overlap ($R \cap D$) | $\approx 0.583$ m² (analytic $0.5872$) |
 | `eps_r` in copper cell | $1.0$ (metal overwrote substrate) |
 | `eps_r` in substrate cell | $4.4$ |
 | `sigma` in copper cell | $5.8 \times 10^7$ S/m |
 | Disk area (conformal, $K=8$) | $\approx 3.1417$ (≈ $2.4\times10^{-5}$ relative error) |
-| Conformal-vs-staircase error ratio | $\approx 100\times$ better |
+| Conformal-vs-staircase error ratio | $\approx 83\times$ better (on this grid) |
 
 ## Exercises
 
 1. **Star polygon.** Build a 5-pointed star by listing 10 vertices that alternate between an outer radius $R = 1$ and an inner radius $r = 0.4$ at angles $\theta_k = 2\pi k / 10$. Pass the result to `polygon_mask` and confirm the rasterized area is close to the analytic value $5 r R \sin(2\pi/10)$.
 2. **Pac-Man via subtraction.** Take a unit disk centred at the origin and remove a triangular "mouth" using `polygon_mask`. Verify that the resulting area is the disk area minus the triangle area, up to staircase error.
 3. **Three-material map.** Extend the air / FR-4 / copper example to a four-region device: add a second dielectric ($\varepsilon_r = 11.7$, silicon) somewhere in the substrate. Use the layered idiom and verify by sampling one cell from each region.
-4. **Convergence study.** Repeat the unit-disk area calculation at $N \in \{50, 100, 200, 400\}$. Plot the staircase error and the conformal ($K = 8$) error on a log-log plot and fit slopes; verify that the staircase slope is $\approx -1$ and the conformal slope is $\approx -2$.
+4. **Convergence study.** Repeat the unit-disk area calculation at $N \in \{50, 100, 200, 400\}$ and tabulate both the staircase and conformal ($K = 8$) relative errors. You will find the *raw* staircase error does **not** fall cleanly as $O(h)$ — it fluctuates (e.g. $\approx 2.3\times10^{-3}, 4.3\times10^{-3}, 2.0\times10^{-3}, 7.9\times10^{-5}$), because a single-disk area count is a lattice-point (Gauss-circle) error, not a smooth one. Verify instead the two robust facts: (a) the conformal error stays one-to-two orders of magnitude below the staircase error at *every* $N$, and (b) the $K = 8$ conformal error tracks the staircase error of a grid $K\times$ finer — explain both from the $h/K$ subsampling equivalence. To actually *recover* the textbook $O(h)$ and $O(h^2)$ slopes, average $\lvert\text{error}\rvert$ over ~50 random sub-cell disk-centre offsets at each $N$ before fitting (that averages out the lattice fluctuation), or measure a *solver* quantity instead — the capacitance convergence in Lessons 05 and 13 shows the clean first-order staircase rate directly.
 5. **Anisotropic material map.** A diagonal anisotropic dielectric is described by two arrays $\varepsilon_{r,xx}(x,y)$ and $\varepsilon_{r,yy}(x,y)$ rather than one. Build a device whose substrate has $\varepsilon_{r,xx} = 4.4$ and $\varepsilon_{r,yy} = 6.0$ (a uniaxial liquid-crystal model) and confirm both maps differ from the background value of 1 only inside the substrate region.
 
 ## What's next

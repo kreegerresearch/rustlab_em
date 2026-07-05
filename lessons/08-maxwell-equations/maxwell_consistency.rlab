@@ -61,7 +61,7 @@ r_ampere = -Bz_x - mu0 * eps0 * Ey_t;
 peak_F = E0 * k;
 peak_A = (E0 / c) * k;
 
-print(max(max(abs(r_faraday))) / peak_F)   # ≈ (k dx)^2 / 6
+print(max(max(abs(r_faraday))) / peak_F)   # ≈ (k dx)^2 / 2 — one-sided edge stencils dominate; interior errors cancel
 print(max(max(abs(r_ampere)))  / peak_A)
 
 # === Field snapshots ===

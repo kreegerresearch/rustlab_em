@@ -15,8 +15,10 @@
 # Source: a CW (continuous-wave) sinusoidal **line source** of E_z at
 # column j_src — a soft source that emits a +x plane wave. The grid
 # is bounded on left and right by a thick band of bulk-conductive
-# absorbing cells (cheap stand-in for a full Bérenger PML); top and
-# bottom are simply too far away to reflect within the run length.
+# absorbing cells (cheap stand-in for a full Bérenger PML); the top and
+# bottom walls do reflect (the round trip is only ~40 steps ≪ 200), but
+# the diffraction that reaches them is weak, so the echo is tolerated
+# rather than absorbed.
 #
 # Scatterer: a PEC cylinder enforced by zeroing E_z each step inside
 # the cylinder mask.
@@ -81,6 +83,18 @@ cE = dt / (eps0 * dx);
 damp_row = 1 ./ (1 + dt * sig_x / (2 * eps0));
 damp_int = repmat(damp_row(2:nx-1), ny-2, 1);
 
+# === Shadow-depth probes ===
+# Lee probe: on the beam axis (centre row), a couple of cells behind the
+# cylinder's +x edge but still clear of the right absorbing strip.
+# Lit probe: on the beam axis, in the illuminated region between the
+# source column and the cylinder's front (-x) edge. The shadow depth is
+# the ratio of the late-window lee amplitude to the lit amplitude.
+i_axis = round(yc / dy);
+j_lee  = round((xc + R_pec) / dx) + 2;
+j_lit  = round((xc - R_pec) / dx) - 2;
+E_lee_hist = zeros(n_step);
+E_lit_hist = zeros(n_step);
+
 figure();
 for step = 1:n_step
   t = step * dt;
@@ -101,6 +115,10 @@ for step = 1:n_step
   # ---- PEC: force E_z = 0 inside cylinder ----
   Ez = Ez .* inside_pec;
 
+  # ---- Record shadow probes (lee vs lit, beam axis) ----
+  E_lee_hist(step) = real(Ez(i_axis, j_lee));
+  E_lit_hist(step) = real(Ez(i_axis, j_lit));
+
   if mod(step, 12) == 0
     imagesc(real(Ez), "viridis");
     title(sprintf("FDTD 2-D TMz — t / T = %.2f", t * f0));
@@ -110,6 +128,18 @@ for step = 1:n_step
   end
 end
 saveanim("fdtd_2d_scattering.gif", 24);
+
+# === Shadow depth (late CW window) ===
+# Once the ramped CW has saturated, the lee probe sits in the cylinder's
+# geometric shadow while the lit probe sees the incident + reflected
+# standing wave. Their late-window amplitude ratio is the shadow depth.
+win = round(0.7 * n_step):n_step;
+shadow_abs  = max(abs(E_lee_hist(win)));
+lit_max     = max(abs(E_lit_hist(win)));
+shadow_norm = shadow_abs / lit_max;
+print(shadow_abs)          # lee-probe |E_z| amplitude, late window
+print(lit_max)             # lit-side |E_z| amplitude, late window
+print(shadow_norm)         # shadow depth = lee / lit
 
 # Final snapshot
 figure();

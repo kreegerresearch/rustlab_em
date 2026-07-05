@@ -5,10 +5,12 @@
 # load to a real Z_0. The geometry on the Smith chart:
 #   • series jX moves along a constant-r circle;
 #   • shunt jB moves along a constant-g circle on the admittance grid.
-# When R_L < Z_0 (here 30 < 50) the load's constant-r circle does NOT
-# intersect the g = 1 circle from the shunt-first direction, so only
-# the series-then-shunt ordering works — but with two sign choices,
-# giving two distinct networks. Pozar §5.1.
+# The ordering rule: series-first is *forced* only when g_L > 1 (the
+# load's constant-g circle then never reaches r = 1), and shunt-first
+# only when r_L > 1. Here r_L = 0.6 and g_L = 0.441 — the load sits
+# outside BOTH unit circles, so both orderings match. This script
+# computes the two series-then-shunt networks (the ± sign choices);
+# shunt-then-series yields two more (Exercise 1). Pozar §5.1.
 #
 # Closed-form (series jX then shunt jB):
 #   X + X_L = ±√(R_L (Z_0 − R_L))           Re(Y') = 1/Z_0

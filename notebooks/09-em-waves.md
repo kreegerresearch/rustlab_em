@@ -258,11 +258,11 @@ The corresponding magnetic field, by Faraday, picks up a *cosine* spatial profil
 
 $$B_z(x, t) = -2(E_0/c)\,\cos(k x)\cos(\omega t),$$
 
-which is *maximum* at $x = 0$ (the antinode of $B$ coincides with the node of $E$) — a $\lambda/4$ spatial offset. This is why the surface current on the conductor, $\vec K = \hat n\times\vec H = -H_z\,\hat y$ (magnitude $|H_{\rm tan}|$, directed along the polarisation axis $\hat y$), is what dissipates the wave's energy in a real (lossy) reflector: the magnetic field plows into the metal at the same instant the electric field cancels.
+which is *maximum* at $x = 0$ (the antinode of $B$ coincides with the node of $E$) — a $\lambda/4$ spatial offset. This is why the surface current on the conductor, $\vec K = \hat n\times\vec H = -H_z\,\hat y$ (magnitude $|H_{\rm tan}|$, directed along the polarisation axis $\hat y$), is what dissipates the wave's energy in a real (lossy) reflector: the magnetic field is maximal right where the electric field is forced to zero — the $B$-antinode sits on the $E$-node at the surface.
 
 ### Example — Standing-wave field, envelope, animation
 
-A 1 GHz wave reflects off a PEC at $x = 0$. We sample two wavelengths into the half-space $x > 0$ and produce four artefacts: numerical proof that $E(0, t) = 0$ for all $t$, three time snapshots showing the field oscillating inside the envelope, the envelope alone (so the node positions are unmistakable), and a GIF over one period.
+A 1 GHz wave reflects off a PEC at $x = 0$. We sample two wavelengths into the half-space $x > 0$ and produce three artefacts: numerical proof that $E(0, t) = 0$ for all $t$, three time snapshots showing the field oscillating inside its $\pm 2E_0\lvert\sin kx\rvert$ envelope, and a GIF over one period. (The standalone `standing_wave.rlab` adds an envelope-only SVG so the node positions are unmistakable.)
 
 ```rustlab
 clf;
@@ -345,8 +345,8 @@ Run all three with `make lesson-09`, or one at a time via `rustlab run lessons/0
 |---|---|
 | Phase speed $c = 1/\sqrt{\mu_0\varepsilon_0}$ | $2.998\times10^8\,\text{m/s}$ |
 | Wavelength at $f = 1\,\text{GHz}$ | $\lambda = c/f \approx 0.2998\,\text{m}$ |
-| $\|E_0\|/\|B_0\|$ | $c$ (printed) |
-| $\|E_0\|/\|H_0\| = \mu_0 c$ | $\eta_0 \approx 376.73\,\Omega$ |
+| $\lvert E_0\rvert/\lvert B_0\rvert$ | $c$ (printed) |
+| $\lvert E_0\rvert/\lvert H_0\rvert = \mu_0 c$ | $\eta_0 \approx 376.73\,\Omega$ |
 | Standing-wave node positions | $x = n\lambda/2$ |
 | Standing-wave antinode positions | $x = (2n+1)\lambda/4$ |
 | Peak standing-wave amplitude | $2 E_0$ |

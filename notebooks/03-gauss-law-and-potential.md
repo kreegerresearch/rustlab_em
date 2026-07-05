@@ -5,8 +5,8 @@ Lesson 02 added charges one by one. Most real distributions have so many charges
 ## Learning Objectives
 
 - State Gauss's law in both integral $\oint\vec E\cdot d\vec A = Q_{\rm enc}/\varepsilon_0$ and differential $\nabla\cdot\vec E = \rho/\varepsilon_0$ forms
-- Use spherical, cylindrical, and planar symmetry to derive $\vec E$ from charge distributions in closed form
-- Compute $V(\vec r) = (4\pi\varepsilon_0)^{-1}\!\sum_i q_i/|\vec r - \vec r_i|$ on a grid and recover $\vec E = -\nabla V$ numerically
+- Use spherical and planar symmetry to derive $\vec E$ from charge distributions in closed form (cylindrical symmetry appears in the exercises)
+- Compute the dipole potential on a grid and recover $\vec E = -\nabla V$ numerically (the general point-charge sum is Exercise 5)
 - Plot equipotential contours overlaid on the field, and recognize that field lines cross equipotentials at right angles
 
 ## Background
@@ -126,7 +126,7 @@ A scalar PDE, a vector field for free.
 
 ### Example — Dipole $V$ heatmap with equipotential contours
 
-Reuse Lesson 02's grid. Equipotentials of a dipole are the classic "figure-eight rings" — closed loops surrounding each charge, separated by the perpendicular bisector $V = 0$.
+Reuse Lesson 02's grid. Because this is the *ideal* point-dipole potential, its equipotentials are closed lobes on either side of the $V = 0$ perpendicular bisector, pinching together at the point dipole at the origin — the two-charge version, with separate loops around each charge, is Exercise 5.
 
 ```rustlab
 ke    = 8.9875e9;

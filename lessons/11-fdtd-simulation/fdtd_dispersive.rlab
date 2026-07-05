@@ -17,11 +17,10 @@
 # (the ε_∞ scaling is absorbed into ε_0 since ε_∞ ≈ 1 for the Drude
 # region; for ε_∞ ≠ 1 divide the bracketed term by ε_∞.)
 #
-# Parameters: Drude gold near 2 µm wavelength,
-#   ω_p / 2π ≈ 2.18 THz × ... (scaled to a comfortable GHz demo)
-# We use comfortable curriculum-scale values rather than gold's exact
-# numbers — the qualitative effect (transmission above ω_p, decay below
-# ω_p) is the point.
+# Parameters: real Drude gold has ω_p / 2π ≈ 2.18 PHz (a plasma
+# wavelength near 140 nm). We rescale to comfortable curriculum-scale
+# GHz values rather than gold's exact numbers — the qualitative effect
+# (transmission above ω_p, evanescent decay below ω_p) is the point.
 #
 # Reference: ../../notebooks/11-fdtd-simulation.md.
 
@@ -56,9 +55,10 @@ Ey = zeros(N);
 Hz = zeros(N);
 Jp = zeros(N);     # polarisation current — non-zero only inside metal
 
-# === Source: Gaussian pulse centred on 8 GHz ===
-# Bandwidth straddles ω_p (10 GHz) so we see transmission peak above ω_p
-# and evanescent decay below.
+# === Source: Gaussian pulse modulated at f_mod = 2 GHz ===
+# The carrier (2 GHz) sits below ω_p (3 GHz), so the film is evanescent
+# and the post-film probe sees a strongly attenuated trace. Exercise 4
+# lifts f_mod above ω_p (5 GHz) to watch transmission recover to ~0.63.
 t0    = 80 * dt;
 tau   = 25 * dt;
 f_mod = 2.0e9;

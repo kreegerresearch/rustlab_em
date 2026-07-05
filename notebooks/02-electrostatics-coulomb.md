@@ -162,7 +162,11 @@ hold off;
 
 ### Theory
 
-For $r \gg d$ the two single-charge $1/r^2$ fields cancel to leading order; what survives is a $1/r^3$ tail with a specific angular shape. Expanding $\vec E$ in $d/r$ gives
+For $r \gg d$ the two single-charge $1/r^2$ fields cancel to leading order; what survives is a $1/r^3$ tail with a specific angular shape. The cleanest route is through the potential. With $+q$ at $+\tfrac{d}{2}\hat x$ and $-q$ at $-\tfrac{d}{2}\hat x$, the distances from the two charges to a field point at $(r, \theta)$ — with $r$ measured from the dipole centre and $\theta$ from the $x$-axis — are $r_\pm \approx r \mp \tfrac{d}{2}\cos\theta$ to first order in $d/r$. Hence
+
+$$V = k_e q\left(\frac{1}{r_+} - \frac{1}{r_-}\right) \approx k_e q\,\frac{r_- - r_+}{r^2} = \frac{k_e\,q d\cos\theta}{r^2} = \frac{k_e\,\vec p\cdot\hat r}{r^2},\qquad \vec p = q d\,\hat x.$$
+
+Taking $\vec E = -\nabla V$ of this $1/r^2$ potential then gives
 
 $$\boxed{\vec E_{\rm dip}(\vec r) = \frac{1}{4\pi\varepsilon_0}\,\frac{3(\vec p\cdot\hat r)\hat r - \vec p}{r^3}.}$$
 
@@ -200,13 +204,13 @@ xlabel("y / d");
 ylabel("|E_far - E_exact| / |E_exact|")
 ```
 
-At $y/d = 5$ the error is already under 1.5 %; at $y/d = 10$ it has fallen to $\sim 0.4$ % — the multipole expansion's leading correction goes like $(d/r)^2$, so doubling the distance shrinks the error fourfold.
+At $y/d = 5$ the error is already $\approx 1.5\%$; at $y/d = 10$ it has fallen to $\sim 0.4$ % — the multipole expansion's leading correction goes like $(d/r)^2$, so doubling the distance shrinks the error fourfold.
 
 ## Field Lines via Streamlines
 
 ### Theory
 
-A *field line* is a curve everywhere tangent to $\vec E$. Two rules: lines start on positive charges and end on negative ones (or run to infinity), and the line density is proportional to $|\vec E|$. `streamplot` integrates the differential equation $d\vec r/ds = \vec E(\vec r)/|\vec E|$ from a grid of seed points using RK4; the result is a clean visual of the dipole's bipolar topology. One caveat: because the seed points are uniformly spaced, the density of *plotted* lines does not encode $|\vec E|$ — only an ideal field-line diagram has that property.
+A *field line* is a curve everywhere tangent to $\vec E$. Two rules: lines start on positive charges and end on negative ones (or run to infinity), and the line density is proportional to $|\vec E|$. `streamplot` integrates the differential equation $d\vec r/ds = \vec E(\vec r)/|\vec E|$ from a grid of seed points using RK4; the result is a clean visual of the dipole's bipolar topology. One caveat: because the seed points are uniformly spaced, the density of *plotted* lines does not encode $|\vec E|$ — only an ideal field-line diagram has that property (a 3-D property that no flat 2-D drawing of a 3-D field can encode exactly — and streamplot's uniform seeding doesn't try).
 
 ### Example — Streamlines of the dipole
 
@@ -249,7 +253,7 @@ end
 Ez_ana = ke * Q * zs ./ ((R * R + zs .^ 2) .^ 1.5);
 
 err = max(abs(Ez_num - Ez_ana));
-print(err)                    % ≲ 1e-3 V/m at Nseg = 360
+print(err)                    % ≈ 1e-10 V/m (machine precision — exact for any Nseg on-axis; segment count matters only off-axis, cf. Ex. 4)
 ```
 
 ### Example — Axial $E_z$ vs $z$
@@ -269,7 +273,7 @@ legend("numerical (360 seg.)", "analytic")
 
 ## Standalone Scripts
 
-Three rustlab scripts in this directory reproduce the above as standalone programs:
+Three rustlab scripts in `lessons/02-electrostatics-coulomb/` reproduce the above as standalone programs:
 
 | Script | What it computes |
 |---|---|
@@ -291,7 +295,7 @@ Run all three with `make lesson-02` from the repo root, or one at a time via `ru
 | `Ey(26, 26)` | ≈ 0 |
 | `Exd(26, 36)` (far-field on axis) | ≈ 44937 V/m |
 | `Eyd(26, 36)` | ≈ 0 |
-| `err` (ring numerical–analytic max) | ≲ 1e-3 V/m |
+| `err` (ring numerical–analytic max) | ≈ 1e-10 V/m (machine precision — exact for any $N_{\rm seg}$ on-axis; segment count matters only off-axis, cf. Exercise 4) |
 
 ## Exercises
 
@@ -299,7 +303,7 @@ Run all three with `make lesson-02` from the repo root, or one at a time via `ru
 2. **Far-field along the dipole axis.** Repeat the relative-error plot along the dipole axis ($y = 0$, $x > d/2$) instead of the perpendicular bisector. The leading correction has the same $(d/r)^2$ scaling but a different prefactor — recover it from the truncated multipole expansion.
 3. **Line of charge.** Replace the ring with a finite line $-L/2 \le x' \le L/2$ at $y = 0$, $z = 0$, total charge $Q$. Compute $E_z$ on the perpendicular axis $(0, 0, z)$ by 1-D quadrature. Check the limits: $L \to 0$ should reproduce a point charge; $L \to \infty$ should give the infinite-line result $E_\rho = \lambda/(2\pi\varepsilon_0\rho)$ from Gauss's law (Lesson 03).
 4. **Ring with off-axis test point.** Compute $\vec E$ at a point in the ring's plane but outside the ring, e.g. $(2R, 0, 0)$. The transverse components no longer cancel — get them right by numerical integration and compare to a perturbative expansion in $R/r$.
-5. **Energy in the dipole.** Compute the electrostatic energy $U = \tfrac12\varepsilon_0\int|\vec E|^2\,dV$ on the grid (use `trapz` twice). Then refine the grid at fixed $d$ and confirm $U$ grows without bound — the cells nearest each charge carry an unphysical *self-energy* that diverges with resolution, a Lesson 03 reminder that point charges have infinite field energy. For a sharper exercise, tabulate $U(d)$ at fixed grid and isolate the $d$-dependent part: it tracks the interaction energy $-k_e q^2/d$.
+5. **Energy in the dipole.** Compute the electrostatic energy $U = \tfrac12\varepsilon_0\int|\vec E|^2\,dV$ on the grid (use `trapz` twice). Then refine the grid at fixed $d$ and confirm $U$ grows without bound — the cells nearest each charge carry an unphysical *self-energy* that diverges with resolution, a Lesson 03 reminder that point charges have infinite field energy. For a sharper exercise, isolate the *interaction* energy — the cross term $\varepsilon_0\iint\vec E_1\cdot\vec E_2\,dA$ of the two single-charge fields, with the cells within a few $\Delta$ of each charge masked out to suppress the divergent self-energy — and confirm it converges to $-k_e q^2/d^2$ (in J/m: the in-plane slice of the 3-D $-k_e q^2/d$ interaction law), negative and growing in magnitude as $d$ shrinks.
 
 ## What's next
 

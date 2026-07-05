@@ -1,13 +1,13 @@
 # Lesson 10: FDFD — Frequency-Domain Maxwell Solver
 
-The four full-wave equations from Lesson 09 — $\nabla\cdot\vec D=\rho$, $\nabla\cdot\vec B=0$, $\nabla\times\vec E=-\partial_t\vec B$, $\nabla\times\vec H=\vec J+\partial_t\vec D$ — describe propagation, polarisation, scattering, and resonance for **all** electromagnetic systems. For the broad class of problems that ask a single-frequency question — "drive port 1 at 2.45 GHz, what is $S_{11}$ and the field pattern?" — running a time-domain solver to steady state is wasteful. Substituting $\partial_t\to-i\omega$ collapses the whole system into a *single complex-valued sparse linear system* $A(\omega)\,\vec E = \vec b(\omega)$, handed straight to `spsolve`. This is the **frequency-domain finite-difference (FDFD)** method, the same engine that runs much of commercial electromagnetic simulation. This lesson assembles the operator, validates the **stretched-coordinate PML** that lets the discrete domain pretend to be infinite, and walks through three canonical geometries: a 1-D stratified anti-reflection coating, a 2-D dielectric scatterer, and a closed cavity whose modes appear as Lorentzian peaks in a frequency sweep.
+The four full-wave equations from Lesson 08 — $\nabla\cdot\vec D=\rho$, $\nabla\cdot\vec B=0$, $\nabla\times\vec E=-\partial_t\vec B$, $\nabla\times\vec H=\vec J+\partial_t\vec D$ — describe propagation, polarisation, scattering, and resonance for **all** electromagnetic systems. For the broad class of problems that ask a single-frequency question — "drive port 1 at 2.45 GHz, what is $S_{11}$ and the field pattern?" — running a time-domain solver to steady state is wasteful. Substituting $\partial_t\to-i\omega$ collapses the whole system into a *single complex-valued sparse linear system* $A(\omega)\,\vec E = \vec b(\omega)$, handed straight to `spsolve`. This is the **frequency-domain finite-difference (FDFD)** method, the same engine that runs much of commercial electromagnetic simulation. This lesson assembles the operator, validates the **stretched-coordinate PML** that lets the discrete domain pretend to be infinite, and walks through three canonical geometries: a 1-D stratified anti-reflection coating, a 2-D dielectric scatterer, and a closed cavity whose modes appear as Lorentzian peaks in a frequency sweep.
 
 ## Learning Objectives
 
 - Derive the time-harmonic Maxwell equations and the resulting scalar TMz Helmholtz form
 - Discretise $\nabla^2 + k_0^2\varepsilon$ on a uniform grid with column-major flattening matching `laplacian_2d`
 - Apply a **stretched-coordinate Perfectly Matched Layer** (SC-PML) on all four boundaries; understand why the stretching factor lives at *primal* and *dual* (face-centred) grid positions
-- Validate the PML by checking radial symmetry and ~80 dB attenuation against an analytic test case
+- Validate the PML by checking assembly symmetry (the cardinal samples of a centred point source agree to round-off) and by contrasting hard-wall against open-boundary fields
 - Solve three problem classes: 1-D stratification with a quarter-wave AR coating, 2-D plane-wave scattering off a dielectric cylinder via the scattered-field formulation, and a closed cavity's frequency response
 - Recognise the `lessons/_shared/em.rlab` library as the curriculum-side Phase-1 implementation of the upstream Yee/PML feature request
 
@@ -29,7 +29,7 @@ For 2-D problems with $\vec J = J_z\hat z$ and translational invariance in $\hat
 
 $$\nabla^2 E_z + \omega^2\mu_0\varepsilon(x,y)\,E_z = -i\omega\mu_0\,J_z(x,y).$$
 
-(For TEz polarisation — only $H_z$ non-zero — the same scalar form applies to $H_z$ with $\varepsilon\leftrightarrow\mu$.) Discretising the Laplacian on a uniform grid with the standard 5-point stencil produces a sparse complex-valued matrix $A(\omega)$ that is
+(For TEz polarisation — only $H_z$ non-zero — the same scalar form applies to $H_z$ with $\varepsilon\leftrightarrow\mu$ in piecewise-uniform regions; a spatially varying $\varepsilon$ instead gives $\nabla\!\cdot\!(\varepsilon^{-1}\nabla H_z) + k_0^2\mu_r H_z = 0$.) Discretising the Laplacian on a uniform grid with the standard 5-point stencil produces a sparse complex-valued matrix $A(\omega)$ that is
 
 - real symmetric but *indefinite* in its bare form (Laplacian stencil plus a real $\omega^2\varepsilon$ mass term); adding the SC-PML stretching factors — and/or any lossy $\varepsilon$ — makes the entries complex, so the matrix becomes **complex symmetric** ($A^T = A$) but **not Hermitian** ($A^\dagger \ne A$);
 - routed by `spsolve` automatically through the **complex sparse LU** path (the SPD pre-check rejects the operator as soon as its entries go complex);
@@ -92,7 +92,7 @@ b_v = -j * omega_v * mu0_v * J_v(:)';
 % Hard walls — laplacian_2d + diagonal mass. A 1e-12 j loss promotes
 % the operator to complex so spsolve will accept the complex RHS.
 L_v   = laplacian_2d(nx_v, ny_v, dx_v, dy_v);
-A_box = L_v + (omega_v / c0_v)^2 * (1 - 1e-12 * j) * speye(nx_v * ny_v);
+A_box = L_v + (omega_v / c0_v)^2 * (1 + 1e-12 * j) * speye(nx_v * ny_v);
 E_box_flat = spsolve(A_box, b_v);
 E_box = reshape(E_box_flat, ny_v, nx_v);
 
@@ -266,7 +266,7 @@ The right-hand side is non-zero only inside the scatterer — a **polarisation c
 
 ### Example — $\varepsilon_r = 4$ cylinder, $R = 0.4\lambda_0$
 
-A $161\times 161$ grid at 12 cells per $\lambda$ spans about $13.4\lambda\times 13.4\lambda$, of which roughly $10.4\lambda\times 10.4\lambda$ is interior once the 18-cell PML on each side is excluded. The cylinder is centred. Plot $\mathrm{Re}(E_{\rm total})$ to show the incident plane wave bending around the scatterer, $|E_{\rm total}|$ to expose the standing-wave intensity pattern, and $|E_{\rm scat}|$ in isolation to see the radiation pattern.
+A $161\times 161$ grid at 12 cells per $\lambda$ spans about $13.4\lambda\times 13.4\lambda$, of which roughly $10.4\lambda\times 10.4\lambda$ is interior once the 18-cell PML on each side is excluded. The cylinder is centred. Plot $\mathrm{Re}(E_{\rm total})$ to show the incident plane wave bending around the scatterer, $\lvert E_{\rm total}\rvert$ to expose the lit-side interference and the shadow the cylinder casts in its $+x$ lee, and $\lvert E_{\rm scat}\rvert$ in isolation to see the outgoing radiation pattern.
 
 ```rustlab
 clf;
@@ -297,7 +297,7 @@ A_2 = fdfd_tmz_pml_2d(eps_total, omega_2, dx_2, dy_2, npml_2, sigma_max_2);
 E_inc_2  = exp(j * k0_2 * Xg_2);
 contrast = eps_total - 1;
 src_2 = -k0_2 * k0_2 * (contrast .* E_inc_2);
-b_2 = src_2(:)';
+b_2 = src_2(:).';
 E_scat_flat = spsolve(A_2, b_2);
 E_scat = reshape(E_scat_flat, ny_2, nx_2);
 E_tot  = E_inc_2 + E_scat;
@@ -310,13 +310,39 @@ ylabel("y")
 
 ```rustlab
 clf;
+imagesc(abs(E_tot), "viridis");
+title("|E_z total|  —  lit-side interference and +x shadow");
+xlabel("x");
+ylabel("y")
+```
+
+```rustlab
+clf;
 imagesc(abs(E_scat), "viridis");
 title("|E_z scat|  —  outgoing scattered radiation only");
 xlabel("x");
 ylabel("y")
 ```
 
-The total-field shows the classic optical signatures: a bright **lit side** on the source-facing surface where the field constructively interferes, and a **shadow region** on the far side where the cylinder casts a dim spot. The scattered-only image isolates the outgoing radiation; the back-scatter (toward the source) is brighter than the forward-scatter for this size, consistent with the analytic 2-D Mie series for a moderately strong dielectric scatterer.
+```rustlab
+% Probe the scattered field on a 1.5*lambda0 circle, and gauge the
+% shadow as mean |E_total| just behind the cylinder (+x lee) vs just in
+% front (-x lit side). With ka ~ 2.5 the scattering is forward-dominant.
+ic = round(ny_2 / 2);
+jc = round(nx_2 / 2);
+r_test = round(1.5 * lambda_2 / dx_2);
+print(abs(E_scat(ic, jc + r_test)))    % forward  (+x, shadow-forming lobe)
+print(abs(E_scat(ic, jc - r_test)))    % backward (-x, toward the source)
+rows_ax  = (ic - 5):(ic + 5);
+lit_cols = (jc - 20):(jc - 6);
+lee_cols = (jc + 6):(jc + 20);
+lit_blk = abs(E_tot(rows_ax, lit_cols));
+lee_blk = abs(E_tot(rows_ax, lee_cols));
+print(mean(lit_blk(:)))                % lit side  (mean |E_total| in front)
+print(mean(lee_blk(:)))                % shadow    (mean |E_total| behind)
+```
+
+The total-field images show the classic optical signatures: a bright **lit side** on the source-facing ($-x$) surface where the incident and scattered fields interfere constructively, and a **shadow** in the $+x$ lee where the cylinder casts a dim spot — the probe block reads mean $\lvert E_{\rm total}\rvert \approx 1.03$ just in front against $\approx 0.64$ just behind. The scattered-only image isolates the outgoing radiation, and its brightest lobe points **forward** (the $+x$, shadow-forming direction): on a $1.5\lambda_0$ circle the scattered amplitude is $\approx 1.21$ forward versus $\approx 0.32$ backward, a forward/back ratio of $\approx 3.8$. That forward dominance is exactly what the analytic 2-D Mie series predicts for a scatterer of this size ($ka \approx 2.5$): the shadow is *built* by the forward-scattered lobe interfering destructively with the incident wave behind the obstacle, so a bright forward scatter and a deep shadow are two views of the same physics.
 
 ## Closed-Cavity Resonance Sweep
 
@@ -416,13 +442,13 @@ xlabel("x cell index");
 ylabel("y cell index")
 ```
 
-How precisely do the sweep peaks land on the analytic frequencies? The dominant limit is simply the sweep spacing: 121 points over 3 GHz is a 25 MHz step, so a peak location is only readable to roughly half that — about 1 % at 2.5 GHz, comparable to the Lorentzian's FWHM of $f_{11}/Q \approx 12.5$ MHz. The grid itself is far better: the 5-point stencil's eigenfrequency error at this resolution is only ~ 0.01 %, converging quadratically as the grid is refined. The TM$_{11}$ snapshot shows a single half-sine lobe in both $x$ and $y$ — maximum $|E_z| \approx 0.71$ at the cavity centre, zero on all four PEC walls — the lowest mode the cavity supports. Lesson 12 returns to these modes with a cleaner approach: directly solve the generalised eigenvalue problem $A\phi = k_c^2\phi$ with `eigs` instead of sweeping the frequency.
+How precisely do the sweep peaks land on the analytic frequencies? The dominant limit is simply the sweep spacing: 121 points over 3 GHz is a 25 MHz step, so a peak location is only readable to roughly half that — about 0.5 % at 2.5 GHz, comparable to the Lorentzian's FWHM of $f_{11}/Q \approx 12.5$ MHz. The grid itself is far better: the 5-point stencil's eigenfrequency error at this resolution is only ~ 0.01 %, converging quadratically as the grid is refined. The TM$_{11}$ snapshot shows a single half-sine lobe in both $x$ and $y$ — maximum $|E_z| \approx 0.71$ at the cavity centre, zero on all four PEC walls — the lowest mode the cavity supports. Lesson 12 returns to these modes with a cleaner approach: directly solve the generalised eigenvalue problem $A\phi = k_c^2\phi$ with `eigs` instead of sweeping the frequency.
 
 ## Standalone Scripts
 
 | Script | What it computes |
 |---|---|
-| `fdfd_1d_layers.rlab` | 1-D Helmholtz on stratified ε(x); quarter-wave AR coating vs uncoated substrate; $|E|$ profile and frequency sweep |
+| `fdfd_1d_layers.rlab` | 1-D Helmholtz on stratified ε(x); quarter-wave AR coating vs uncoated substrate; $\lvert E\rvert$ profile and frequency sweep |
 | `fdfd_pml_demo.rlab` | Same point source with hard Dirichlet walls vs SC-PML on all sides |
 | `fdfd_2d_tmz.rlab` | TMz scattering off a dielectric cylinder via the scattered-field formulation |
 | `fdfd_resonator.rlab` | Frequency sweep of a closed PEC cavity; Lorentzian peaks at TM$_{mn}$ |
@@ -436,8 +462,11 @@ Run the lesson with `make lesson-10`, or one script at a time via `rustlab run l
 | Quantity | Expected Value |
 |---|---|
 | 1-D AR ripple at $f_0$ | ~ 1 % (only the discretisation residual) |
-| 1-D no-AR ripple at $f_0$ | ~ 0.64 ($|R|=1/3$, VSWR $= 2$) |
+| 1-D no-AR ripple at $f_0$ | ~ 0.64 ($\lvert R\rvert=1/3$, VSWR $= 2$) |
 | 2-D PML cardinal-sample symmetry error | ~ $10^{-14}$ (round-off; exact grid symmetry) |
+| 2-D scattering forward probe $\lvert E_{\rm scat}\rvert$ (1.5$\lambda_0$, $+x$) | $\approx 1.21$ |
+| 2-D scattering backward probe $\lvert E_{\rm scat}\rvert$ (1.5$\lambda_0$, $-x$) | $\approx 0.32$ (forward/back $\approx 3.8$, forward-dominant) |
+| 2-D shadow: mean $\lvert E_{\rm total}\rvert$ front / behind cylinder | $\approx 1.03$ / $\approx 0.64$ |
 | Cavity TM$_{11}$ (lowest) analytic frequency | $c/2\,\sqrt{a^{-2}+b^{-2}} \approx 2.498\,\text{GHz}$ |
 | Cavity TM$_{21}$ analytic frequency | $\approx 3.603\,\text{GHz}$ |
 | Sweep response at $c/(2a) = 1.50\,\text{GHz}$ | no peak — TM$_{10}$ does not exist ($m,n\ge1$) |

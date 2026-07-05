@@ -7,7 +7,7 @@
 # replumbing the FDTD, we model the patch's input impedance with the
 # standard textbook narrow-band approximation:
 #
-#     Z_in(f) ≈ R_0 / (1 + j Q (f/f_0 − f_0/f))    (series RLC sketch)
+#     Z_in(f) ≈ R_0 / (1 + j Q (f/f_0 − f_0/f))    (parallel-RLC / anti-resonant sketch)
 #
 # with f_0 ≈ 2.45 GHz, Q ≈ 30 (typical FR-4 patch), and R_0 = 40 Ω
 # slightly off the 50 Ω feed (well-tuned but not perfectly matched).
@@ -31,7 +31,7 @@ R0_patch = 40.0;
 # === Frequency grid: dense around resonance ===
 fs = linspace(1.0, 5.0, 801) * 1e9;
 
-# Series-RLC sketch (one resonance).
+# Parallel-RLC (anti-resonant) sketch (one resonance).
 Zin = R0_patch ./ (1 + j * Q_patch * (fs / f0_patch - f0_patch ./ fs));
 G   = (Zin - Z0) ./ (Zin + Z0);
 

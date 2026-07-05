@@ -3,9 +3,9 @@
 # Physical content: the Smith chart is the bilinear transform
 #     Γ = (z − 1) / (z + 1),     z = Z / Z_0   (normalised impedance)
 # rendered on the complex Γ-plane. The unit disk |Γ| ≤ 1 is the
-# entire space of passive loads; constant-r circles run vertically,
-# constant-x circles run horizontally, and matched (Z = Z_0) sits at
-# the origin.
+# entire space of passive loads; constant-r circles nest toward Γ = +1
+# along the real axis, constant-x arcs meet them at right angles, and
+# matched (Z = Z_0) sits at the origin.
 #
 # rustlab ships smith(...) / marker(...) / smith_circle(...) — this
 # helper just exercises every form so the later L16 scripts can lean

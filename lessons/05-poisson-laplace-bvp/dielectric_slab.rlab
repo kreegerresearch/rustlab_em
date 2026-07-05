@@ -22,6 +22,7 @@ dyd = Lyd / (nyd - 1);
 xsd = linspace(0, Lxd, nxd);
 ysd = linspace(0, Lyd, nyd);
 [Xd, Yd] = meshgrid(xsd, ysd);
+j_mid = (nxd + 1) / 2;         # centre column (x = 2.5 mm) — nxd = 21 → 11
 
 # === Permittivity map ===
 # Bottom half (y < Ly/2) is the ε_r = 4 dielectric; top half is air.
@@ -59,7 +60,7 @@ V_flat = spsolve(A_d, b_d);
 V_d = real(reshape(V_flat, nyd, nxd));
 
 figure();
-plot(ysd * 1000, V_d(:, nxd / 2), "V(y) at the centre column");
+plot(ysd * 1000, V_d(:, j_mid), "V(y) at the centre column");
 xlabel("y (mm)");
 ylabel("V (V)");
 savefig("dielectric_V_profile.svg");
@@ -68,15 +69,15 @@ savefig("dielectric_V_profile.svg");
 [Exd, Eyd] = gradient(V_d, dxd, dyd);
 Eyd = -Eyd;
 
-i_diel = nyd / 4;          # mid-dielectric (y ≈ 2.5 mm)
-i_air  = 3 * nyd / 4;      # mid-air (y ≈ 7.5 mm)
-print(abs(real(Eyd(i_diel, nxd / 2))))    # ≈ 40 V/m  in eps=4
-print(abs(real(Eyd(i_air,  nxd / 2))))    # ≈ 159 V/m in eps=1
-print(real(Eyd(i_air, nxd / 2)) / real(Eyd(i_diel, nxd / 2)))   # → 4 exactly
+i_diel = 21;               # mid-dielectric (y = 2.5 mm exactly)
+i_air  = 61;               # mid-air (y = 7.5 mm exactly)
+print(abs(real(Eyd(i_diel, j_mid))))    # ≈ 40 V/m  in eps=4
+print(abs(real(Eyd(i_air,  j_mid))))    # ≈ 159 V/m in eps=1
+print(real(Eyd(i_air, j_mid)) / real(Eyd(i_diel, j_mid)))   # → 4 exactly
 
 eps0 = 8.8541878128e-12;
-D_diel = eps0 * 4.0 * real(Eyd(i_diel, nxd / 2));
-D_air  = eps0 * 1.0 * real(Eyd(i_air,  nxd / 2));
+D_diel = eps0 * 4.0 * real(Eyd(i_diel, j_mid));
+D_air  = eps0 * 1.0 * real(Eyd(i_air,  j_mid));
 print(real(D_diel))                        # ≈ -1.41e-9
 print(real(D_air))                         # same to six digits — D continuity
 
@@ -84,7 +85,7 @@ print(real(D_air))                         # same to six digits — D continuity
 d_air  = Lyd / 2;
 d_diel = Lyd / 2;
 C_an   = eps0 / (d_air + d_diel / 4.0);
-sigma_top = -eps0 * real(Eyd(nyd - 1, nxd / 2));
+sigma_top = -eps0 * real(Eyd(nyd - 1, j_mid));
 C_num  = abs(sigma_top) / 1.0;
 print(real(C_an))                          # ≈ 1.42e-9 F/m²
 print(real(C_num))                         # matches analytic to ~10⁻²

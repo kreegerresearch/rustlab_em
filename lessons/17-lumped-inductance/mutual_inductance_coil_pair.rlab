@@ -8,7 +8,7 @@
 # Verifies:   M matches the exact coaxial-loop elliptic-integral formula
 #                 M = μ₀√(R₁R₂)[(2/k − k)K(k) − (2/k)E(k)],
 #                 k² = 4R₁R₂/((R₁+R₂)² + d²),
-#             to < 0.1 %, and approaches the magnetic-dipole asymptote
+#             to a max relative error ≈ 5.4e-7, and approaches the magnetic-dipole asymptote
 #             M_dip = μ₀πR⁴/(2d³) only slowly as d/R grows. The coupling
 #             coefficient k_c = M/√(L₁L₂) decays monotonically with d/R
 #             (k_c ≈ 0.22 at d/R = 0.5 for these thin single-turn loops —
@@ -94,7 +94,7 @@ end
 
 print(M_num * 1e9)                              # numerical flux nH
 print(M_ex  * 1e9)                              # exact elliptic nH
-print(max(abs(M_num - M_ex) ./ M_ex))           # max rel. error vs exact → < 1e-3
+print(max(abs(M_num - M_ex) ./ M_ex))           # max rel. error vs exact → ≈ 5.4e-7
 print(M_dip * 1e9)                              # dipole-asymptote nH
 print(kc)                                        # coupling coefficient
 

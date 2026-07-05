@@ -15,7 +15,7 @@
 
 Z0 = 50.0;
 
-# === Loads — short, matched, mismatched real, pure reactive ===
+# === Loads — two real (25, 100 Ω), one pure reactive (j100), one complex ===
 Z_loads = [25.0, 100.0, 100 * j, 25 - 50 * j];
 labels  = {"Z_L = 25 Ω", "Z_L = 100 Ω", "Z_L = j100 Ω", "Z_L = 25 − j50 Ω"};
 
@@ -62,11 +62,11 @@ for k = 1:length(Z_loads)
   Gd = GL * exp(-2 * j * beta_d);
   smith(Gd);
 end
-vswrs = [2.0, 2.0, 1e9, 4.0];                            # |Γ| → VSWR
 for k = 1:length(Z_loads)
   ZL = Z_loads(k);
   GL = (ZL - Z0) / (ZL + Z0);
-  smith_circle(0, abs(GL), sprintf("VSWR ≈ %.2f", vswrs(k)));
+  vswr = (1 + abs(GL)) / (1 - abs(GL));                  # |Γ| → VSWR (∞ for j100)
+  smith_circle(0, abs(GL), sprintf("VSWR ≈ %.2f", vswr));
 end
 hold off;
 title("Loci + constant-VSWR circles");

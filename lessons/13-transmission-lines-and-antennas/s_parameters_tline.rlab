@@ -141,10 +141,12 @@ print(S21_td)                       # ≈ 0.943
 # Broadband S-param extraction would average over many frequencies.
 # Here the source has a narrow spectrum centred at f_c; reporting the
 # FFT magnitude at the bin closest to f_c gives a single-frequency
-# comparison to the time-domain result. There is a small residual
-# (~ few %) bias from how the leapfrog handles the sharp impedance
-# step on a staggered grid; commercial solvers smooth the junction
-# over a handful of cells to suppress it.
+# comparison to the time-domain result. At the magic time step (S = 1)
+# there is no numerical dispersion in 1-D, so the reflected/transmitted
+# pulses keep the incident shape exactly and this FFT ratio reproduces
+# |Gamma| to ~0.1 % — sharper than the time-domain peak ratio. Break
+# S = 1 (Exercise 2) and dispersion reshapes the pulses; only then does
+# tapering the sharp junction over a handful of cells start to matter.
 F_inc   = fft(V_inc);
 F_refl  = fft(V_refl);
 F_trans = fft(V_trans);
@@ -155,9 +157,9 @@ S11_mag = abs(F_refl  ./ (F_inc + 1e-30));
 S21_mag = abs(F_trans ./ (F_inc + 1e-30)) * sqrt(Z01 / Z02);
 
 k_pick  = argmin(abs(fs - f_c));
-print(fs(k_pick) / 1e9)             # ~ f_c in GHz
-print(real(S11_mag(k_pick)))        # near 0.333 (off by step-staggering)
-print(real(S21_mag(k_pick)))        # near 0.943
+print(fs(k_pick) / 1e9)             # ~ f_c in GHz (nearest bin ≈ 4.98)
+print(real(S11_mag(k_pick)))        # 0.3337 — matches |Gamma| = 1/3 to ~0.1 %
+print(real(S21_mag(k_pick)))        # 0.9427 — matches 2√(Z1 Z2)/(Z1+Z2)
 
 # === Plots ===
 N_half = round(N_fft / 2);

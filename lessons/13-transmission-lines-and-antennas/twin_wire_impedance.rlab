@@ -6,8 +6,8 @@
 # total voltage difference V₀. The TEM transverse field obeys
 # ∇²V = 0 in the vacuum between the conductors; we solve it on a large
 # box with Dirichlet V = 0 on the box boundary (an "infinity" stand-in;
-# the box edge sits ~5d from the wire pair so image-charge artefacts
-# are below the percent level).
+# the box is ~5d wide, so its edge sits ~2d from the nearest wire and
+# image-charge artefacts stay near the percent level).
 #
 # Per-unit-length capacitance via the energy method,
 #   C' = 2 U_E' / V₀²,   U_E' = (1/2) ε₀ ∫_vac |E|² dA,

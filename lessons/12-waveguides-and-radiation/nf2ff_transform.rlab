@@ -39,7 +39,8 @@ I0_dl  = 1.0;                # current-moment normalisation (A·m)
 # Half-side a = λ/4 puts S in the transition region just outside the
 # reactive zone (kr ≈ π/2 at the face centres, vs the kr = 1 boundary),
 # so the 1/(kr)² and 1/(kr)³ terms of the Hertzian field are still
-# significant (~40 % and ~26 % of the radiating term) — a strong test
+# significant (~64 % and ~41 % of the radiating term — i.e. 1/kr and
+# 1/(kr)² at kr = π/2) — a strong test
 # that the integral picks out the correct asymptotic far-field pattern.
 a   = lambda / 4;
 M   = 21;

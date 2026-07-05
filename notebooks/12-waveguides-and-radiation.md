@@ -25,9 +25,12 @@ $$-\nabla^2_\perp\,\phi = k_c^2\,\phi, \qquad \phi = 0\ \text{on metal}.$$
 
 For TM modes, $\phi = E_z$; for the eigenmodes of a 2-D cavity, $\phi$ is the same scalar TM field $E_z$ in the standing-wave decomposition. The discrete Laplacian `laplacian_2d` already encodes the Dirichlet boundary condition. Sign convention: `laplacian_2d` returns $+\nabla^2$, so $-L$ is SPD and its eigenvalues are exactly $k_c^2$. The first $n$ smallest-magnitude eigenvalues correspond to the lowest-cutoff modes, and `eigs(-L, n, "sm")` (sparse Lanczos) finds them in $O(\text{nnz}(L)\cdot n^2)$ time — far cheaper than dense `eig` on a $\sim 10^3 \times 10^3$ system.
 
-**Lanczos convergence caveat.** When two analytic eigenvalues sit within a few percent of each other (a "cluster"), basic Lanczos without implicit restart may converge to one of them twice and skip the other, or return them in the wrong order. The robust workaround is to request more modes than you need — `eigs(L, 4 n_{\rm wanted})` — and slice the first $n$ from the (now well-resolved) returned values. The rustlab docs flag implicit-restart and shift-invert as deferred enhancements; the over-request pattern is the curriculum-grade workaround.
+**Lanczos convergence caveat.** When two analytic eigenvalues sit within a few percent of each other (a "cluster"), basic Lanczos without implicit restart may converge to one of them twice and skip the other, or return them in the wrong order. The robust workaround is to request more modes than you need — `eigs(L, 4*n_wanted, "sm")` — and slice the first $n$ from the (now well-resolved) returned values. The rustlab docs flag implicit-restart and shift-invert as deferred enhancements; the over-request pattern is the curriculum-grade workaround.
 
 ### Example — TM cutoff modes of a $40\times 25$ mm waveguide
+
+> [!NOTE]
+> This lesson solves the **TM** family only — modes with $E_z = 0$ on the metal wall, a Dirichlet condition that `laplacian_2d` encodes directly, so the lowest TM cutoff is TM$_{11}$ at 7.071 GHz. That is *not* the guide's dominant mode: the true lowest cutoff is **TE$_{10}$** at $c/2a = 3.75\,\text{GHz}$. TE modes satisfy a Neumann ($\partial_n H_z = 0$) wall condition instead, which needs `laplacian_2d(nx, ny, dx, dy, "neumann")` (shipped) rather than the Dirichlet operator used here — the door to the TE family (Exercise 1 is a natural place to open it).
 
 The analytic cutoffs (in GHz) for the lowest few TM modes:
 
@@ -247,11 +250,11 @@ A full-wave solver only ever computes fields in a finite box, yet the antenna pa
 
 $$\vec F(\hat r) \propto \int_S\bigl[\eta_0\vec J_s - \hat r\times\vec M_s\bigr]\,e^{+jk\hat r\cdot\vec r'}\,dS',$$
 
-projected onto the plane $\perp\hat r$. So a single near-zone solve yields the entire 3-D pattern — the technique Lesson 14's capstone uses to turn a patch antenna's FDTD near field into a gain pattern.
+projected onto the plane $\perp\hat r$ (an $e^{+j\omega t}$ time convention, so outgoing waves carry $e^{-jkr}$ and the integral phase is $e^{+jk\hat r\cdot\vec r'}$). So a single near-zone solve yields the entire 3-D pattern — the technique a 3-D production version of Lesson 14's capstone would apply to turn a patch antenna's FDTD near field into a gain pattern (see the capstone's 2-D→3-D table).
 
 ### Example — recovering $\sin\theta$ from a Hertzian near field
 
-`nf2ff_transform.rlab` samples the analytic Hertzian-dipole near field on a cube of half-side $\lambda/4$ — $kr \approx \pi/2$ at the face centres, in the transition region just outside the reactive zone ($kr = 1$), where the $1/(kr)^2$ and $1/(kr)^3$ terms are still significant (about $40\,\%$ and $26\,\%$ of the radiating term here) — forms the Love currents, and integrates. The E-plane cut should reproduce the textbook $\sin\theta$ — a clean unit test of the kernel, isolated from any solver.
+`nf2ff_transform.rlab` samples the analytic Hertzian-dipole near field on a cube of half-side $\lambda/4$ — $kr \approx \pi/2$ at the face centres, in the transition region just outside the reactive zone ($kr = 1$), where the $1/(kr)^2$ and $1/(kr)^3$ terms are still significant (about $64\,\%$ and $41\,\%$ of the radiating term here — i.e. $1/kr$ and $1/(kr)^2$ at $kr = \pi/2$) — forms the Love currents, and integrates. The E-plane cut should reproduce the textbook $\sin\theta$ — a clean unit test of the kernel, isolated from any solver.
 
 ```rustlab
 clf;
@@ -271,7 +274,7 @@ title("NF->FF transform recovers the Hertzian sin(theta) pattern");
 legend("NF->FF integral", "sin(theta)");
 ```
 
-At full resolution the integral matches $\sin\theta$ to a maximum error of $\approx 1\times 10^{-5}$, and the equatorial ($\theta=\pi/2$) cut is flat in $\varphi$ to $\approx 0.02\,\%$ — confirming the kernel is both accurate and rotationally symmetric. Love's equivalence is exact for any closed surface, so the only residual is the cube's finite $21\times 21$-per-face sampling. This is exactly the transform that converts the capstone's boxed near field into a radiation pattern.
+At full resolution the integral matches $\sin\theta$ to a maximum error of $\approx 1\times 10^{-5}$, and the equatorial ($\theta=\pi/2$) cut is flat in $\varphi$ to $\approx 0.02\,\%$ — confirming the kernel is both accurate and rotationally symmetric. Love's equivalence is exact for any closed surface, so the only residual is the cube's finite $21\times 21$-per-face sampling. This is exactly the transform a 3-D production capstone would use to convert its boxed near field into a radiation pattern — Lesson 14 maps it as the 3-D extension, not the shipped 2-D run.
 
 ## Standalone Scripts
 
@@ -281,7 +284,7 @@ At full resolution the integral matches $\sin\theta$ to a maximum error of $\app
 | `cavity_resonances.rlab` | TM resonances of a 2-D rectangular cavity; 4 mode images |
 | `hertzian_dipole.rlab` | Hertzian polar pattern, radiated-power integral, analytic-vs-numerical check |
 | `half_wave_dipole.rlab` | Half-wave pattern (numerical + analytic), polar comparison, $R_{\rm rad}$ |
-| `nf2ff_transform.rlab` | Love's equivalence-principle surface integral on a cubic Huygens surface around an analytic Hertzian dipole; recovers $\sin\theta$ to $\sim 10^{-5}$. Lesson 14 reuses the kernel on the patch antenna's near field. |
+| `nf2ff_transform.rlab` | Love's equivalence-principle surface integral on a cubic Huygens surface around an analytic Hertzian dipole; recovers $\sin\theta$ to $\sim 10^{-5}$. A 3-D production version of the capstone would reuse the kernel on the patch antenna's near field (mapped in Lesson 14's 2-D→3-D table). |
 
 Run all five with `make lesson-12`, or one script at a time via `rustlab run lessons/12-waveguides-and-radiation/<name>.rlab`.
 
@@ -306,7 +309,7 @@ Run all five with `make lesson-12`, or one script at a time via `rustlab run les
 2. **Perturbed cavity.** Place a small dielectric inclusion ($\varepsilon_r = 4$, radius $0.05\,a$) at one corner of the cavity in `cavity_resonances`. Use the *generalised* form `eigs(A, B, n)` where $B$ is the diagonal mass matrix from the $\varepsilon$ map. Verify the frequency shifts against first-order perturbation theory.
 3. **3-D Hertzian doughnut.** In `hertzian_dipole`, build a $(\theta, \varphi)$ meshgrid and `surf` the 3-D radiation pattern $r(\theta, \varphi) = \sin\theta$. Save it as an HTML to rotate interactively.
 4. **Off-resonance dipole.** Sweep dipole length from $L = 0.1\lambda$ to $L = 2\lambda$ in 11 steps; compute $R_{\rm rad}$ for each. Plot the curve and identify the resonance peak near $L = 0.48\lambda$ (slightly shorter than $\lambda/2$ for thin wires).
-5. **NF→FF transform from FDTD.** The shipped `nf2ff_transform.rlab` validates the integral against an analytically populated near field. Rerun it with the near field generated by a 3-D FDTD instead — adapt `fdtd_2d_scattering` to add a $z$-axis with $\hat z$-symmetry, sample $\vec E$ and $\vec H$ on the cubic Huygens surface at steady state, and feed those into the same surface integral. The recovered $\sin\theta$ should still hold to $\sim 1\,\%$. This proves the L14 capstone's gain-pattern chain end-to-end.
+5. **NF→FF transform from FDTD.** The shipped `nf2ff_transform.rlab` validates the integral against an analytically populated near field. Rerun it with the near field generated by a 3-D FDTD instead — adapt `fdtd_2d_scattering` to add a $z$-axis with $\hat z$-symmetry, sample $\vec E$ and $\vec H$ on the cubic Huygens surface at steady state, and feed those into the same surface integral. The recovered $\sin\theta$ should still hold to $\sim 1\,\%$. This is the gain-pattern chain a 3-D production capstone would run end-to-end — the shipped 2-D capstone (Lesson 14) stops at the resonance spectrum.
 
 ## What's next
 

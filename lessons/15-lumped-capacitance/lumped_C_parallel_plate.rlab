@@ -16,14 +16,17 @@
 # requires re-solving for each ratio, so we run a single representative
 # L/d = 5 point and overlay it on the analytic curve.
 #
+# The Kirchhoff form here is the 2-D infinite-strip edge correction; a
+# square plate has two fringing edge-pairs, so this curve is really a
+# LOWER bound for the true square-plate C (published square-plate
+# numerics give C/C₀ ≈ 1.56 at L/d = 5, versus the strip value 1.28).
 # At this resolution (d = 2 cells, L = 10 cells, box margin ~ 6 cells)
-# the energy method tracks the ideal C₀ to within a few percent — the
-# Dirichlet box wall cuts the fringing field off too aggressively for
-# the volume integral to see it. The Gauss method, integrating right
-# at the plate face, catches the strong field near the conductor edges
-# and overshoots Kirchhoff by ~10 %. The two bracket the analytic
-# Kirchhoff value from below and above. Refining the grid (Exercise 1)
-# tightens both onto Kirchhoff.
+# the energy method sits just above the ideal C₀ but below the strip
+# estimate (the Dirichlet box wall clips the fringing field the volume
+# integral would see). The Gauss method, integrating right at the plate
+# face, lands above the strip estimate near the true square-plate value.
+# The two straddle the strip curve from below and above; refining the
+# grid (Exercise 1) tightens both onto the true square-plate C.
 #
 # Units: SI throughout. C in F (printed in pF for readability).
 #

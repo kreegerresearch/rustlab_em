@@ -8,7 +8,7 @@
 # (torus) with a null on-axis and a peak in the equatorial plane.
 #
 # Radiated power:
-#   P_rad = (η₀ |I_0|² |k dℓ|²) / (12 π) ≈ 80 π² (dℓ/λ)² |I_0|²/2 / η₀^{-1}
+#   P_rad = (η₀ |I_0|² |k dℓ|²) / (12 π) ≈ 80 π² (dℓ/λ)² |I_0|²/2
 # We compute P_rad both analytically and by numerically integrating
 # the Poynting flux over a unit-radius sphere; the two should agree
 # to within the trapezoidal-rule discretisation error.

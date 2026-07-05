@@ -76,8 +76,8 @@ end
 # === Headline transformer: long, densely wound (ℓ/R1 = 16) ===
 ellR_head = 16.0;
 ell = ellR_head * R1;
-N1 = round(turns_per_R * ellR_head);           # 24 primary turns
-N2 = round(ratio * N1);                        # 48 secondary turns
+N1 = round(turns_per_R * ellR_head);           # 96 primary turns
+N2 = round(ratio * N1);                        # 192 secondary turns
 z1 = linspace(-ell/2, ell/2, N1);
 z2 = linspace(-ell/2, ell/2, N2);
 L1 = stack_self(z1, R1, a, mu0);

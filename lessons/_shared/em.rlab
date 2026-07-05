@@ -32,7 +32,7 @@
 #       above at primal and dual locations; outside the PML, s = 1
 #       and the operator reduces to the Helmholtz form.
 #       Solve with
-#           E_flat = spsolve(A, -j * omega * mu0 * J(:)');
+#           E_flat = spsolve(A, -j * omega * mu0 * J(:).');
 #           E_grid = reshape(E_flat, ny, nx);
 #
 # Conventions:

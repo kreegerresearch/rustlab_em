@@ -9,9 +9,9 @@
 # or equivalently from the field energy
 #   C' = 2 U_E' / V_0², U_E' = (1/2) ε₀ ∫|E|² dA.
 # For TEM in a homogeneous dielectric, L' C' = μ₀ ε₀, so
-#   Z_0 = sqrt(L'/C') = sqrt(μ₀/(ε₀ * (C'/ε₀)²)) · ε₀  → simplify to
-#   Z_0 = η_0 / (2π) · ln(b/a)
-# which is the well-known analytic coax formula.
+#   L' = μ₀ ε₀ / C'  ⇒  Z_0 = sqrt(L'/C') = sqrt(μ₀ ε₀) / C'
+# and substituting C' = 2π ε₀ / ln(b/a) recovers the textbook
+#   Z_0 = η_0 / (2π) · ln(b/a).
 #
 # Reference: ../../notebooks/13-transmission-lines-and-antennas.md.
 

@@ -146,10 +146,13 @@ print(E_bot_max)
 print(E_right_max)
 print(E_left_max)
 
-# Inside the box: the recorded trace should track the analytic
-# incident wave. Compare envelope.
+# Inside the box: the recorded trace tracks the AUXILIARY-grid incident
+# (E_tf_inc = Ez_aux(j_tf)), not the analytic wave. Because both fields
+# obey the same discrete dispersion, they agree to round-off. (Compared
+# against the *analytic* plane wave the residual would instead be the
+# grid's ~1e-3 dispersion error — that is what Exercise 2 exposes.)
 err_tf = max(abs(E_tf_trace - E_tf_inc));
-print(err_tf)                 # → ~ 1e-2 or smaller (dispersion-limited)
+print(err_tf)                 # → round-off (~1e-15): same aux-grid incident on both sides
 print(max(abs(E_tf_inc)))     # incident peak ≈ 1.0
 
 # === Plots ===

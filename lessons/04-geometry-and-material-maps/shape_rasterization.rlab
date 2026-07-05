@@ -30,7 +30,7 @@ imagesc(D, "viridis");
 title("disk_mask: centre (0, 0), radius 1.0");
 savefig("disk_mask.svg");
 
-# Area should be ~ pi (closed mask overshoots slightly: ~3.135 vs pi).
+# Area should be ~ pi (staircase mask undershoots slightly here: ~3.135 vs pi).
 print(sum(sum(D)) * dx * dy)        # ≈ 3.135
 print(pi)                           # 3.14159...
 

@@ -38,7 +38,7 @@ N   = 401;
 dz  = 1e-3;
 S   = 0.95;
 dt  = S * dz / v_prop;
-n_step = 1200;
+# (Each run's step count is set inside run_tline as n_step_l = 780.)
 
 # === Source — Gaussian pulse on the V end ===
 t0  = 30 * dt;
