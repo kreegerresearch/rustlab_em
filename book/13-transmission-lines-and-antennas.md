@@ -109,9 +109,9 @@ print(Z0_ana)                   % textbook 60 ln(b/a) ≈ 83.2 Ω for b/a = 4
 
 <!-- rustlab:output-start -->
 ```text
-37.484133938205574-0.00000000000000459048206743806j
+37.484133938205574
 40.13036795002273
-88.9880757913102+0.000000000000010897895275085122j
+88.9880757913102
 83.12011880924634
 ```
 
@@ -130,7 +130,7 @@ ylabel("y cell")
 
 <!-- rustlab:output-end -->
 
-The 2-D potential matches the analytic $\ln(b/r)/\ln(b/a)$ shape to grid precision in the bulk; near the rasterised circular conductors a staircase error of $\approx 7\,\%$ shows up in the extracted $C'$ ($37.5$ vs $40.1$ pF/m, $6.6\,\%$ low) and propagates into $Z_0$ ($89.0$ vs $83.1\,\Omega$, $7.1\,\%$ high). Refining the grid drops the error like $h^2$.
+The 2-D potential matches the analytic $\ln(b/r)/\ln(b/a)$ shape to grid precision in the bulk; near the rasterised circular conductors a staircase error of $\approx 7\,\%$ shows up in the extracted $C'$ ($37.5$ vs $40.1$ pF/m, $6.6\,\%$ low) and propagates into $Z_0$ ($89.0$ vs $83.1\,\Omega$, $7.1\,\%$ high). Refining the grid drops the error roughly like $h$ — the first-order staircase boundary error dominates the second-order interior stencil ($C'$ errors $11\% \to 6.6\% \to 3.4\%$ at $n_x = 61/121/241$ cells).
 
 ## Twin-Wire Line — Parallel Conductors
 
@@ -219,6 +219,8 @@ tau_t = 8 * dt_t;
 k_src = 30;
 
 function V_out = run_tline(Z_L_, load_kind_)
+  % rustlab functions see only their own scope — re-declare the line
+  % constants here rather than inheriting them from the block above.
   mu0_l  = 4 * pi * 1e-7;
   eps0_l = 8.854187817e-12;
   c0_l   = 1 / sqrt(mu0_l * eps0_l);
@@ -283,11 +285,13 @@ legend("matched", "open", "short", "Z_L = 2 Z_0")
 
 ```rustlab
 % Reflected-pulse amplitude near the source — peak |V| in a window
-% around k_src after the pulse has reflected.
-print(max(abs(real(V_match(20:80)))))     % ~ 0
-print(max(abs(real(V_open(20:80)))))      % ~ source peak  (|Γ| = 1)
-print(max(abs(real(V_short(20:80)))))     % ~ source peak  (|Γ| = 1, sign flipped)
-print(max(abs(real(V_mis(20:80)))))       % ~ source peak / 3
+% around k_src after the pulse has reflected. The soft source injects
+% ≈ half its nominal unit peak, so the launched pulse is ≈ 0.53 and the
+% reflections scale from that launched amplitude, not from 1.0.
+print(max(abs(real(V_match(20:80)))))     % ~ 0 (matched: pulse absorbed)
+print(max(abs(real(V_open(20:80)))))      % ≈ 0.53 = launched-pulse amplitude (|Γ| = 1)
+print(max(abs(real(V_short(20:80)))))     % ≈ 0.53 (|Γ| = 1, sign flipped)
+print(max(abs(real(V_mis(20:80)))))       % ≈ 0.18 ≈ incident / 3  (|Γ| = 1/3)
 ```
 
 <!-- rustlab:output-start -->
@@ -427,7 +431,7 @@ legend("analytic", "time-domain");
 
 <!-- rustlab:output-end -->
 
-The time-domain peak-ratio extraction matches the analytic values to sub-percent ($\lvert S_{11}\rvert = 0.335$, $\lvert S_{21}\rvert = 0.944$) and conserves energy ($0.335^2 + 0.944^2 = 1.00$). The script also reports a single-bin **FFT** estimate; at a *sharp* impedance step the staggered-grid junction biases that estimate substantially (it does not conserve energy), which is why production solvers taper the junction over several cells — the subject of Exercise 2. For a clean step, trust the time-domain peak ratio.
+Both extractions land close to the analytic values, and here the single-bin **FFT** estimate is the *sharper* of the two: it reports $\lvert S_{11}\rvert = 0.3337$ (0.12 % high) and $\lvert S_{21}\rvert = 0.9427$ (0.015 % low), conserving energy to $0.3337^2 + 0.9427^2 = 1.0000$. That near-exactness is a gift of the **magic time step** ($S = 1$): with zero numerical dispersion in 1-D the reflected and transmitted pulses keep the incident shape *exactly*, so the FFT magnitude ratio reproduces $\lvert\Gamma\rvert$ at every in-band bin. The time-domain **peak-ratio** extraction carries the slightly larger residual — $\lvert S_{11}\rvert = 0.3346$ (0.38 % high), $\lvert S_{21}\rvert = 0.9437$, energy $1.0026$ — because reading one peak amplitude is more sensitive to how the discrete grid samples the pulse crest than an FFT bin is. Break the magic condition ($S < 1$) and numerical dispersion reshapes the pulses; then the FFT estimate degrades and tapering the junction over several cells starts to matter — the subject of Exercise 2.
 
 ## Dipole Current as an Open-Ended Stub
 
@@ -531,7 +535,7 @@ print(real(R_half))                   % ~ 73.08 Ohm  (textbook 73.13)
 
 <!-- rustlab:output-start -->
 ```text
-73.07901015618272
+73.07901015618273
 ```
 
 <!-- rustlab:output-end -->
@@ -545,9 +549,9 @@ The integral returns $73.08\,\Omega$ at $L=\lambda/2$ — within 0.07 % of the t
 | `coax_impedance.rlab` | 2-D Laplace on the coax cross-section; energy-method $C'$; sweep $b/a$ |
 | `twin_wire_impedance.rlab` | Same energy-method on two parallel conductor disks; verify $Z_0 = (\eta_0/\pi)\cosh^{-1}(d/2a)$ |
 | `telegrapher_propagation.rlab` | 1-D V/I leapfrog; matched / open / short / mismatch loads; reflection check |
-| `vswr_standing_wave.rlab` | CW-driven 50 Ω line with 100 Ω load; envelope $|V(z)|$ ; numerical VSWR |
+| `vswr_standing_wave.rlab` | CW-driven 50 Ω line with 100 Ω load; envelope $\lvert V(z)\rvert$ ; numerical VSWR |
 | `s_parameters_tline.rlab` | 1-D FDTD of a 50→100 Ω step; $S_{11}$, $S_{21}$ via time-domain peak ratio and FFT |
-| `dipole_standing_wave.rlab` | Analytic $I(z) = I_0\sin[k(L/2-\|z\|)]$ for several $L/\lambda$; $\cos(kz)$ recovery at $L = \lambda/2$ |
+| `dipole_standing_wave.rlab` | Analytic $I(z) = I_0\sin[k(L/2-\lvert z\rvert)]$ for several $L/\lambda$; $\cos(kz)$ recovery at $L = \lambda/2$ |
 | `radiation_resistance.rlab` | Numerical pattern integral on the dipole current; verify $R_{\rm rad}\approx 73.1\,\Omega$ at $L=\lambda/2$ and $20\pi^2 (L/\lambda)^2$ for short dipoles |
 
 Run all seven with `make lesson-13`, or one script at a time via `rustlab run lessons/13-transmission-lines-and-antennas/<name>.rlab`.
@@ -560,10 +564,10 @@ Run all seven with `make lesson-13`, or one script at a time via `rustlab run le
 | Coax $Z_0$, $b/a = 4$ | $\approx 83.2\,\Omega$ |
 | Twin-wire $Z_0$, $d/2a = 2$ | $157.9\,\Omega$ analytic; $\approx 166\,\Omega$ numerical |
 | Numerical-vs-analytic $Z_0$ error (either) | $\sim 5\text{–}7\,\%$ (staircase rasterisation + finite-box BC) |
-| Open-load reflected pulse amplitude | $\approx$ source peak |
-| Matched-load reflected amplitude | $\approx 0$ |
-| Mismatched ($Z_L = 2 Z_0$) reflected | $\approx$ source peak $/ 3$ |
-| VSWR from $|V|_{env}$ at $Z_L = 2 Z_0$ | $\approx 2.000$ |
+| Open-load reflected pulse amplitude | $\approx 0.53$ = launched-pulse amplitude (soft source injects $\approx$ half its nominal unit peak) |
+| Matched-load reflected amplitude | $\approx 0$ ($\approx 8\times10^{-4}$) |
+| Mismatched ($Z_L = 2 Z_0$) reflected | $\approx 0.18 \approx$ incident $/\,3$ |
+| VSWR from $\lvert V\rvert_{\rm env}$ at $Z_L = 2 Z_0$ | $\approx 2.000$ |
 | S-params of 50→100 Ω step (time-domain) | $\lvert S_{11}\rvert = 0.335$, $\lvert S_{21}\rvert = 0.944$ |
 | Dipole $\cos(kz)$ recovery at $L=\lambda/2$ | $\lesssim 10^{-15}$ |
 | $R_{\rm rad}$ at $L=\lambda/2$ | $73.08\,\Omega$ (textbook 73.13 assumes $\eta_0 = 120\pi$) |
@@ -572,11 +576,11 @@ Run all seven with `make lesson-13`, or one script at a time via `rustlab run le
 ## Exercises
 
 1. **Twin-wire $b/a$-style sweep.** `twin_wire_impedance.rlab` runs the numerical solve at $d/2a = 2$ and the analytic curve over $d/a \in [2, 50]$. Extend it by running the numerical solver at three more $d/a$ values (scale the box with $d$) and overlay the numerical points on the analytic curve to confirm agreement out to large spacings.
-2. **Smooth the impedance step.** `s_parameters_tline.rlab` reports the time-domain $S_{11}$, $S_{21}$ to sub-percent and the FFT-extracted values within ~10%. The discrepancy is the staggered-grid coefficient choice at a sharp junction. Replace the abrupt $Z_{0,1} \to Z_{0,2}$ step by a linear taper over $\sim 10$ cells and verify both extractions agree to sub-percent.
+2. **Break the magic time step, then tame the junction.** At $S = 1$ both extractions already nail the analytic values — the FFT to ~0.1 %. Re-run `s_parameters_tline.rlab` with `S_cfl = 0.95` so numerical dispersion reappears: the pulses broaden and change shape, the single-bin FFT estimate drifts off $\lvert\Gamma\rvert = 1/3$ by a few percent, and the extracted energy no longer sums to exactly 1. Then replace the abrupt $Z_{0,1} \to Z_{0,2}$ step by a linear taper over $\sim 10$ cells and confirm the taper suppresses the reflection artifact — the reason production solvers smooth impedance junctions rather than stepping them.
 3. **Lossy line.** Add a small series resistance $R'$ to the telegrapher leapfrog (modify the $V$ update by $-R'\Delta t \cdot I$). Compute the attenuation constant and verify the standing-wave envelope decays exponentially along $z$.
 4. **Dipole standing-wave current from FDTD.** `dipole_standing_wave.rlab` plots the analytic $I(z)$. Reproduce the same profile from an FDTD run: apply the telegrapher leapfrog to an *open-ended* line ($Z_L = \infty$) of length $\lambda/2$, drive at one end, run to steady state, and compare the recorded $I(z)$ envelope to the analytic $\cos(kz)$.
 5. **Radiation resistance from FDTD dipole.** Plug the FDTD-extracted current from exercise 4 into the radiation-pattern integral in `radiation_resistance.rlab` and confirm it recovers $R_{\rm rad}\approx 73\,\Omega$ — the same value, this time built entirely from FDTD.
 
 ## What's next
 
-Lesson 14 is the capstone: one device, one script, end-to-end. A microstrip-fed patch antenna on FR-4 substrate at 2.45 GHz, with geometry from Lesson 04, FDTD core from Lesson 11, waveport excitation and $S_{11}$ extraction from this lesson, and NF→FF transform from Lesson 12. Everything the curriculum has built, finally composed.
+Lesson 14 is the capstone: one device, one script, end-to-end. A microstrip-fed patch antenna on an FR-4 substrate, with geometry from Lesson 04, FDTD core from Lesson 11, and a pulsed feed and probe-trace FFT built from this lesson's port machinery; the full waveport-$S_{11}$ and NF→FF steps are mapped out as the 3-D extension. Everything the curriculum has built, finally composed.

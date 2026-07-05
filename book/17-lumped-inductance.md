@@ -8,7 +8,7 @@ Lesson 15 extracted lumped **capacitance** from a Laplace solve — the electric
 
 - Extract a single-loop **self-inductance** from the Biot-Savart flux through the loop interior, regularising the filament singularity by cutting the flux at the inner wire edge $r = R - a$, and verify against $L = \mu_0 R[\ln(8R/a) - 2]$.
 - Build the **per-unit-length inductance matrix** $L'_{ij}$ of coupled conductors with a factor-once-solve-many cached LU — the natural fit for a *current* drive, which enters purely as a right-hand-side source term (the capacitance matrix admits the same fixed-operator trick; see L15 Exercise 2).
-- Compute the **mutual inductance** of coaxial loops by flux integration and validate it against the exact complete-elliptic-integral formula to $\lesssim 10^{-6}$.
+- Compute the **mutual inductance** of coaxial loops by flux integration and validate it against the exact complete-elliptic-integral formula to a max relative error of $\approx 5.4\times10^{-7}$.
 - Assemble multi-turn coils into a **transformer**, read off $L_1$, $L_2$, $M$, and the coupling $k = M/\sqrt{L_1 L_2}$, and watch the open-circuit ratio $V_2/V_1 \to N_2/N_1$ in the dense long-solenoid limit.
 - Quantify the **finite-solenoid end effect** (Nagaoka coefficient) and the **virtual-work force** $F = \tfrac12 I^2\,\partial L/\partial x$ on a movable core.
 
@@ -21,7 +21,7 @@ Lesson 15 extracted lumped **capacitance** from a Laplace solve — the electric
 | potential $V$ | vector potential $A_z$ |
 | permittivity $\varepsilon$ | reluctivity $1/\mu$ |
 | $\nabla\!\cdot\!(\varepsilon\nabla V) = -\rho$ | $\nabla\!\cdot\!(\mu_r^{-1}\nabla A_z) = -\mu_0 J_z$ |
-| charge $Q = \oint \varepsilon\vec E\cdot d\vec A$ | flux linkage $\lambda = \oint \vec B \cdot d\vec A$ |
+| charge $Q = \oint \varepsilon\vec E\cdot d\vec A$ | flux linkage $\lambda = \int_S \vec B \cdot d\vec A$ |
 | $C = Q/V = 2U_E/V^2$ | $L = \lambda/I = 2U_M/I^2$ |
 | $F = \tfrac12 V^2\,\partial C/\partial x$ | $F = \tfrac12 I^2\,\partial L/\partial x$ |
 
@@ -53,6 +53,7 @@ R = 0.05;
 % Numerical result from lumped_L_loop.rlab at a = 1 mm.
 L_num = 247.67e-9;                 % H (flux cut at r = R - a)
 L_ana_at_1mm = 250.79e-9;          % mu0 R [ln(8R/a) - 2]
+print(L_num / L_ana_at_1mm)        % 0.988 (the shortfall is the formula's O(a/R) truncation)
 
 % Analytic L(a) over a span of wire radii — the ln signature.
 a_sweep = linspace(0.3e-3, 4.0e-3, 60);
@@ -69,11 +70,15 @@ legend("analytic", "numerical");
 ```
 
 <!-- rustlab:output-start -->
+```text
+0.9875593125722717
+```
+
 ![plot 1](plots/17-lumped-inductance/plot-1-e8e82240.svg)
 
 <!-- rustlab:output-end -->
 
-The lone numerical point sits right on the analytic curve. The ratio $L_{\rm num}/L_{\rm analytic} = 0.988$ — the small shortfall is the finite radial/azimuthal resolution of the near-singular integrand.
+The lone numerical point sits right on the analytic curve. The ratio $L_{\rm num}/L_{\rm analytic} = 0.988$, but that $1.2\%$ shortfall is **not** a resolution error: the flux integral is essentially exact — it reproduces the exact coplanar-loop mutual $M(R,\,R-a) = 247.66$ nH (complete elliptic integrals, $k^2 = 0.999898$) to five digits. The gap is the $O(a/R)$ truncation of the *asymptotic* thin-wire formula $\mu_0 R[\ln(8R/a) - 2] = 250.79$ nH, which drops the higher-order terms in $a/R$; at $a/R = 0.02$ those omitted terms are worth about a percent. Refining the grid converges $L_{\rm num}$ to the exact $247.66$ nH, not to the asymptotic $250.79$.
 
 ## Per-Unit-Length Inductance Matrix — Cached LU Done Right
 
@@ -100,6 +105,8 @@ clf;
 sep_mm = [2.0, 3.0, 4.0, 6.0, 8.0];
 L11_s  = [469.65, 469.53, 469.34, 468.58, 466.75];   % nH/m (self)
 L12_s  = [ 85.93,  43.44,  24.16,   8.71,   3.41];   % nH/m (mutual)
+print(L11_s(2))                    % 469.53 nH/m — self, at 3 mm spacing
+print(L12_s(2))                    % 43.44 nH/m — mutual, at 3 mm spacing
 
 hold on;
 plot(sep_mm, L11_s, "L_{11} (self)");
@@ -112,6 +119,11 @@ legend("L_{11}", "L_{12}");
 ```
 
 <!-- rustlab:output-start -->
+```text
+469.53
+43.44
+```
+
 ![plot 2](plots/17-lumped-inductance/plot-2-366e452d.svg)
 
 <!-- rustlab:output-end -->
@@ -137,6 +149,8 @@ dR    = [0.5, 0.75, 1.0, 1.5, 2.0, 3.0, 4.0];
 M_num = [55.63, 36.18, 24.70, 12.64, 7.09, 2.75, 1.30];   % nH (flux integral)
 M_ex  = [55.63, 36.18, 24.70, 12.64, 7.09, 2.75, 1.30];   % nH (exact elliptic)
 M_dip = [789.6, 233.9, 98.70, 29.24, 12.34, 3.66, 1.54];  % nH (dipole asymptote)
+print(M_num(3))                    % 24.70 nH — M at d/R = 1 (matches exact elliptic)
+print(M_dip(7) / M_num(7))         % 1.18 — dipole asymptote still ~18% high at d/R = 4
 
 hold on;
 plot(dR, M_num, "numerical flux");
@@ -150,11 +164,16 @@ legend("numerical", "exact", "dipole");
 ```
 
 <!-- rustlab:output-start -->
+```text
+24.7
+1.1846153846153846
+```
+
 ![plot 3](plots/17-lumped-inductance/plot-3-946b38e1.svg)
 
 <!-- rustlab:output-end -->
 
-Numerical and exact overlap to $\lesssim 10^{-6}$ — the flux integration is essentially perfect. The dipole asymptote is wildly off near $d/R = 0.5$ and is still ~18 % high at $d/R = 4$ (1.54 vs. 1.30 nH), a reminder that "far field" arrives later than intuition suggests. The coupling coefficient $k_c = M/\sqrt{L_1 L_2}$ stays modest (peak $\approx 0.22$ at $d/R = 0.5$): thin single-turn filaments self-link a *lot* of flux, so two of them couple weakly.
+Numerical and exact overlap to a max relative error of $\approx 5.4\times10^{-7}$ — the flux integration is essentially perfect. The dipole asymptote is wildly off near $d/R = 0.5$ and is still ~18 % high at $d/R = 4$ (1.54 vs. 1.30 nH), a reminder that "far field" arrives later than intuition suggests. The coupling coefficient $k_c = M/\sqrt{L_1 L_2}$ stays modest (peak $\approx 0.22$ at $d/R = 0.5$): thin single-turn filaments self-link a *lot* of flux, so two of them couple weakly.
 
 ## Transformer — Where the Turns Ratio Comes From
 
@@ -176,6 +195,7 @@ clf;
 ellR = [2.0, 4.0, 8.0, 16.0, 24.0];
 Vr   = [1.767, 1.833, 1.867, 1.885, 1.890];   % V2/V1 = M/L1
 kc   = [0.833, 0.858, 0.871, 0.877, 0.879];   % coupling coefficient
+print(Vr(4))                       % 1.885 — V2/V1 at l/R = 16 (ideal N2/N1 = 2)
 
 hold on;
 plot(ellR, Vr, "V2/V1 = M/L1");
@@ -189,6 +209,10 @@ legend("V2/V1", "N2/N1 = 2", "k");
 ```
 
 <!-- rustlab:output-start -->
+```text
+1.885
+```
+
 ![plot 4](plots/17-lumped-inductance/plot-4-dbac0945.svg)
 
 <!-- rustlab:output-end -->
@@ -215,6 +239,7 @@ clf;
 ellR   = [1.0, 2.0, 3.0, 4.0, 6.0, 10.0, 15.0, 20.0];
 K_num  = [0.512, 0.678, 0.762, 0.813, 0.870, 0.921, 0.948, 0.963];
 K_whee = [0.526, 0.690, 0.769, 0.816, 0.870, 0.917, 0.943, 0.957];
+print(K_num(8))                    % 0.963 — Nagaoka K at l/R = 20
 
 hold on;
 plot(ellR, K_num,  "numerical  L / L_inf");
@@ -227,11 +252,15 @@ legend("numerical", "Wheeler");
 ```
 
 <!-- rustlab:output-start -->
+```text
+0.963
+```
+
 ![plot 5](plots/17-lumped-inductance/plot-5-19a4ac89.svg)
 
 <!-- rustlab:output-end -->
 
-The turn-stack result tracks Wheeler's current-sheet coefficient to better than ~3 % at $\ell/R = 1$, improving to under 1 % beyond $\ell/R \approx 3$, and reaches $K = 0.96$ for a coil twenty radii long. (Wheeler's $1/(1 + 0.9 R/\ell)$ form itself carries roughly 1 % error against the exact Nagaoka coefficient at small $\ell/R$, so part of the residual belongs to the benchmark.) The agreement is non-trivial — it confirms that a sum over discrete round-wire turns reproduces the continuous current-sheet idealisation once the winding is dense.
+The turn-stack result tracks Wheeler's current-sheet coefficient to better than ~3 % at $\ell/R = 1$, improving to under 1 % beyond $\ell/R \approx 3$, and reaches $K = 0.96$ for a coil twenty radii long. (Wheeler's $1/(1 + 0.9 R/\ell)$ form is itself within $\approx 0.2\%$ of the exact Nagaoka coefficient here — $K = 0.5255$ vs. Wheeler $0.5263$ at $\ell/R = 1$ — so almost all of the $\approx 2.7\%$ residual there is the discreteness of the finite winding, only 12 turns at $\ell/R = 1$, not the benchmark.) The agreement is non-trivial — it confirms that a sum over discrete round-wire turns reproduces the continuous current-sheet idealisation once the winding is dense.
 
 ## Force on a Movable Core — Virtual Work
 
@@ -247,14 +276,15 @@ and the closed-form force is $F = \tfrac12 I^2 N^2 \mu_0 A\,(1 - 1/\mu_r)\,/\,[(
 
 ### Example — pull-in force vs. insertion
 
-`tunable_L_force.rlab` computes $L(x)$ by both the reluctance model and the field-energy method (they agree to machine precision), then finite-differences for the force.
+`tunable_L_force.rlab` drives the coil at $I_0 = 1$ A and computes $L(x)$ two ways — the series-reluctance model and a field-energy integral — then finite-differences $\partial L/\partial x$ for the force. (The mN force values scale with $I_0^2$, so the $I_0 = 1$ A choice sets their magnitude.) Both $L(x)$ routes are built from the *same* lumped magnetic-circuit reluctances, so their machine-precision agreement is **by construction**: this example validates the virtual-work / finite-difference *force* machinery, not the field physics. A genuine field-solve version — meshing the plunger and re-solving $\nabla\!\cdot\!(\mu_r^{-1}\nabla A_z) = -\mu_0 J_z$ per position — would follow L15's `tunable_C_force` pattern.
 
 ```rustlab
 clf;
-% From tunable_L_force.rlab (R = 1 cm, l = 10 cm, N = 200, mu_r = 1000).
+% From tunable_L_force.rlab (R = 1 cm, l = 10 cm, N = 200, mu_r = 1000, I_0 = 1 A).
 x_mm  = [10, 20, 30, 50, 70, 85, 95];
 F_num = [0.974, 1.232, 1.608, 3.149, 8.724, 34.66, 303.97];   % mN
 F_ana = [0.974, 1.232, 1.608, 3.149, 8.723, 34.66, 303.86];   % mN
+print(max(abs(F_num - F_ana) ./ abs(F_ana)))   % 3.6e-4 — max rel. err. (num vs closed form)
 
 hold on;
 plot(x_mm, F_num, "numerical  (1/2) I^2 dL/dx");
@@ -267,11 +297,15 @@ legend("numerical", "analytic");
 ```
 
 <!-- rustlab:output-start -->
+```text
+0.0003620088198512922
+```
+
 ![plot 6](plots/17-lumped-inductance/plot-6-6035e1d4.svg)
 
 <!-- rustlab:output-end -->
 
-Numerical and analytic agree to better than $4\times10^{-4}$. The force grows sharply as the plunger nears full insertion — the air reluctance $\propto (\ell - x)$ vanishes, the inductance diverges, and a solenoid valve "snaps" shut, exactly the runaway every actuator designer accounts for.
+Numerical and analytic agree to better than $4\times10^{-4}$. The force grows sharply as the plunger nears full insertion — the air reluctance $\propto (\ell - x)$ collapses toward the small core reluctance, so the inductance climbs toward its finite $\mu_r$-times-larger core-filled value $L(\ell) = \mu_0\mu_r N^2 A/\ell \approx 158$ mH and the force scales like $\mu_r^2$ near full insertion. A solenoid valve "snaps" shut, exactly the runaway every actuator designer accounts for. (A true divergence would need $\mu_r \to \infty$; the plunger force stays finite at any real $\mu_r$.)
 
 ## Standalone Scripts
 
@@ -294,7 +328,8 @@ Run all six with `make lesson-17`, or one at a time via `rustlab run lessons/17-
 | Microstrip $L'_{11}$ at 3 mm spacing | $\approx 469$ nH/m |
 | Microstrip $L'_{12}$ at 3 mm spacing | $\approx 43$ nH/m |
 | Microstrip reciprocity error | $\lesssim 10^{-7}$ |
-| Coaxial $M$ at $d/R = 1$ | $\approx 24.7$ nH (numerical vs. exact, rel. err. $\lesssim 10^{-6}$) |
+| Coaxial $M$ at $d/R = 1$ | $\approx 24.7$ nH (numerical vs. exact, max rel. err. $\approx 5.4\times10^{-7}$) |
+| Coaxial dipole asymptote at $d/R = 4$ | $\approx 18\%$ high (1.54 vs. 1.30 nH) |
 | Coil-pair coupling $k_c$ at $d/R = 0.5$ | $\approx 0.22$ |
 | Transformer $V_2/V_1$ at $\ell/R = 16$ | $\approx 1.89$ (ideal $N_2/N_1 = 2$), $k \approx 0.88$ |
 | Solenoid Nagaoka $K$ at $\ell/R = 20$ | $\approx 0.96$ (Wheeler 0.957) |

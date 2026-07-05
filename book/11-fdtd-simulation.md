@@ -50,9 +50,9 @@ $$|t_1 \cdot t_2| = \left|\frac{2n_1}{n_1+n_2}\right|\cdot\left|\frac{2n_2}{n_1+
 
 The reflected pulse at a probe between source and slab arrives later than the incident pulse and has amplitude $|R|\cdot |E_{\rm inc}| = (1/3)\cdot|E_{\rm inc}|$.
 
-**Mur first-order ABC**: at $S = 1$ a wave travels exactly one cell per step, so the boundary cell at the *new* time level should take the value its neighbour held at the *old* time level: $E_y^{n+1}(1) = E_y^{n}(2)$, and mirrored at $x_N$. Implementation detail that matters: save the neighbour values **before** the E-update, then assign them after. Copying the *same*-time-step neighbour ($E_y^{n+1}(1) = E_y^{n+1}(2)$) looks almost identical in code but is actually a zero-gradient Neumann wall that reflects with $|R| \approx 1$. With the correct one-step-delayed copy at $S = 0.99$ the measured boundary reflection is only ~ 0.5 % — much simpler than PML in 1-D.
+**Mur first-order ABC (the $S = 1$ limit)**: the full first-order Mur boundary reflects an outgoing wave with coefficient $(1-S)/(1+S)$; at $S = 1$ a wave travels exactly one cell per step, so the boundary cell at the *new* time level simply takes the value its neighbour held at the *old* time level — a one-step-delayed copy $E_y^{n+1}(1) = E_y^{n}(2)$, mirrored at $x_N$. Implementation detail that matters: save the neighbour values **before** the E-update, then assign them after. Copying the *same*-time-step neighbour ($E_y^{n+1}(1) = E_y^{n+1}(2)$) looks almost identical in code but is actually a zero-gradient Neumann wall that reflects with $|R| \approx 1$. With the correct one-step-delayed copy at $S = 0.99$ the measured boundary reflection is only ~ 0.5 %, matching $(1-S)/(1+S) = 0.005$ — much simpler than PML in 1-D.
 
-### Example — 600-cell run with $\lambda \approx 30\,\text{cm}$ pulse
+### Example — 600-cell run, ~12 mm Gaussian pulse through an $\varepsilon_r = 4$ slab
 
 ```rustlab
 clf;
@@ -111,7 +111,7 @@ saveanim("fdtd_1d_pulse.gif", 24)
 ```
 
 <!-- rustlab:output-start -->
-![animation 1](plots/11-fdtd-simulation/anim-1-5c31bc71.gif)
+![animation 1](plots/11-fdtd-simulation/anim-1-2a19fff5.gif)
 
 <!-- rustlab:output-end -->
 
@@ -208,7 +208,7 @@ saveanim("fdtd_2d_scattering.gif", 24)
 ```
 
 <!-- rustlab:output-start -->
-![animation 2](plots/11-fdtd-simulation/anim-2-c025a4e3.gif)
+![animation 2](plots/11-fdtd-simulation/anim-2-899bd2d8.gif)
 
 <!-- rustlab:output-end -->
 
@@ -323,7 +323,7 @@ legend("before film", "after film")
 
 <!-- rustlab:output-end -->
 
-Comparing the source frequency to the plasma frequency tells the story: at $f_{\rm src} = 2$ GHz $< f_p = 3$ GHz, the transmitted amplitude is suppressed by roughly $5\times$ relative to the incident (0.101 vs 0.505 at the probes — ratio 0.20). Re-running with $f_{\rm src} > f_p$ (e.g. 5 GHz) would yield near-unity transmission. The qualitative point — a frequency-selective filter that the same FDTD code captures without any pre-set $\varepsilon(\omega)$ — is what gives FDTD its broad reach into photonics, antennas, plasmas, and biomedical EM.
+Comparing the source frequency to the plasma frequency tells the story: at $f_{\rm src} = 2$ GHz $< f_p = 3$ GHz, the transmitted amplitude is suppressed by roughly $5\times$ relative to the incident (0.101 vs 0.505 at the probes — ratio 0.20). Re-running with $f_{\rm src} > f_p$ (e.g. 5 GHz) lifts the ratio to $\approx 0.63$ (0.320 vs 0.505 at the probes) — well above the sub-$\omega_p$ value but still short of 1, because the residual damping $\gamma = 2\pi\times 1$ GHz and the vacuum/film index mismatch keep the film lossy. The qualitative point — a frequency-selective filter that the same FDTD code captures without any pre-set $\varepsilon(\omega)$ — is what gives FDTD its broad reach into photonics, antennas, plasmas, and biomedical EM.
 
 ## Total-Field / Scattered-Field Plane-Wave Injection
 
@@ -357,13 +357,13 @@ legend("leakage ~1e-15", "incident ~1");
 
 <!-- rustlab:output-end -->
 
-The scattered-field probes sit at $\sim 1.5\times10^{-15}$ while the incident wave inside the box has unit amplitude — a **15-order-of-magnitude** separation, i.e. perfect injection. Inside the box the recorded wave matches the analytic incident to $\sim 10^{-15}$ as well. Exercise 2 shows that swapping the auxiliary grid for an analytic accessor degrades the leak to $\sim 10^{-3}$ — the dispersion residual the auxiliary-grid trick removes.
+The scattered-field probes sit at $\sim 1.5\times10^{-15}$ while the incident wave inside the box has unit amplitude — a **15-order-of-magnitude** separation, i.e. perfect injection. Inside the box the recorded wave matches the **auxiliary-grid** incident to round-off ($\sim 10^{-15}$) — the two share the same discrete dispersion; measured against the *analytic* plane wave the residual would instead be the grid's $\sim 10^{-3}$–$10^{-4}$ dispersion error. Exercise 2 shows exactly that: swapping the auxiliary grid for an analytic accessor degrades the leak to $\sim 10^{-3}$ — the dispersion residual the auxiliary-grid trick removes.
 
 ## Split-Field PML Depth Sweep
 
 ### Theory
 
-An open-domain simulation needs the grid edge to *absorb* outgoing waves. Bérenger's **split-field perfectly matched layer (PML)** replaces a band of boundary cells with anisotropic absorbing media, impedance-matched at the inner edge (zero analytic reflection) and lossy through the layer. The split-field form decomposes $E_z$ into $E_{zx} + E_{zy}$, each damped by the conductivity along its own axis, with the magnetic conductivity $\sigma^* = \sigma\mu_0/\varepsilon_0$ chosen for matching. A cubic $\sigma$ ramp keeps the impedance gradient smooth. In the continuum the round-trip attenuation is exponential in the layer's optical depth, but on a grid the measured residual is dominated by *discretisation* reflection — the small numerical mismatch generated wherever $\sigma$ changes appreciably between adjacent cells. With $\sigma_{\max}$ scaled so every depth targets the same theoretical $-80$ dB, deepening the layer only smooths the profile, so the residual falls **polynomially** (a power law in $d$), not exponentially.
+An open-domain simulation needs the grid edge to *absorb* outgoing waves. Bérenger's **split-field perfectly matched layer (PML)** replaces a band of boundary cells with anisotropic absorbing media, impedance-matched at the inner edge (zero analytic reflection) and lossy through the layer. The split-field form decomposes $E_z$ into $E_{zx} + E_{zy}$, each damped by the conductivity along its own axis, with the magnetic conductivity $\sigma^* = \sigma\mu_0/\varepsilon_0$ chosen for matching. A cubic $\sigma$ ramp keeps the impedance gradient smooth. In the continuum the round-trip attenuation is exponential in the layer's optical depth, but on a grid the measured residual is dominated by *discretisation* reflection — the small numerical mismatch generated wherever $\sigma$ changes appreciably between adjacent cells. With $\sigma_{\max}$ scaled so every depth targets the same theoretical reflection $R_{\rm target} = 10^{-8}$, deepening the layer only smooths the profile, so the residual falls **polynomially** (a power law in $d$), not exponentially.
 
 ### Example — depth sweep $d \in \{4, 8, 16\}$
 
@@ -386,16 +386,16 @@ legend("|R(d)|");
 
 <!-- rustlab:output-end -->
 
-Doubling the layer depth drops the residual reflection by roughly a factor of ~2.2–2.8 each time (0.16 → 0.073 → 0.026) — a power law of roughly $d^{-1.3}$, *not* an exponential. That is the expected signature of discretisation-limited absorption: the profile is designed for the same $-80$ dB theoretical reflection at every depth, so what the sweep measures is the numerical reflection from the discretised cubic ramp, which only falls polynomially as the same total attenuation is spread over more cells. Even a modest 16-cell PML pushes spurious wall reflections below 3 % — enough for the open-domain radiation problems of Lessons 12 and 14.
+Doubling the layer depth drops the residual reflection by roughly a factor of ~2.2–2.8 each time (0.16 → 0.073 → 0.026) — a power law of roughly $d^{-1.3}$, *not* an exponential. That is the expected signature of discretisation-limited absorption: the profile is designed for the same $R_{\rm target} = 10^{-8}$ theoretical reflection at every depth, so what the sweep measures is the numerical reflection from two discretisation choices — the sampled cubic $\sigma$ ramp, and the script's **co-located** magnetic conductivity $\sigma^*$ (evaluated at the $E_z$ cells rather than face-centred at the $H$ positions, the very shortcut Lesson 10's SC-PML warns against) — both of which only fall polynomially as the same total attenuation is spread over more cells. Even a modest 16-cell PML pushes spurious wall reflections below 3 % — enough for the open-domain radiation problems of Lessons 12 and 14.
 
 ## Standalone Scripts
 
 | Script | What it computes |
 |---|---|
-| `fdtd_1d.rlab` | 1-D Yee FDTD pulse; vacuum + dielectric slab; animated; probes for $|t_1 t_2|$ verification |
+| `fdtd_1d.rlab` | 1-D Yee FDTD pulse; vacuum + dielectric slab; animated; probes for $\lvert t_1 t_2\rvert$ verification |
 | `fdtd_2d_scattering.rlab` | 2-D TMz; CW line source + PEC cylinder; animated; bulk-loss absorbing strips |
 | `fdtd_dispersive.rlab` | 1-D ADE for Drude film; trapezoidal-stable $J_p$ update; FFT-based rough transmission spectrum |
-| `fdtd_tfsf_validation.rlab` | TF/SF plane-wave injection with auxiliary 1-D grid; $\|E_z\|$ outside TF box stays at machine zero ($\sim 10^{-15}$) |
+| `fdtd_tfsf_validation.rlab` | TF/SF plane-wave injection with auxiliary 1-D grid; $\lvert E_z\rvert$ outside TF box stays at machine zero ($\sim 10^{-15}$) |
 | `fdtd_pml_depth.rlab` | Bérenger split-field PML on a 2-D vacuum grid; residual reflection vs PML depth $d \in \{4, 8, 16\}$ |
 
 Run all five with `make lesson-11`, or one script at a time via `rustlab run lessons/11-fdtd-simulation/<name>.rlab`.
@@ -408,9 +408,9 @@ Run all five with `make lesson-11`, or one script at a time via `rustlab run les
 | 1-D transmitted-pulse peak ($n_2 = 2$ slab) | $\approx 0.446$; ratio $0.882$ vs $8/9 \approx 0.889$ |
 | 1-D slab reflected-pulse / incident | $\approx 0.335$ vs $\lvert R\rvert = 1/3$ |
 | 1-D Mur ABC boundary echo (delayed copy, $S = 0.99$) | $\sim 0.5\,\%$ of incident |
-| 2-D PEC shadow depth (lee probe vs lit-side max, late window) | $\sim 0.03$ |
+| 2-D PEC shadow depth (lee vs lit-side, late window; `fdtd_2d_scattering.rlab` print) | lee $\approx 0.034$ / lit $\approx 0.52$ (ratio $\approx 0.065$) |
 | Drude transmitted/incident below $\omega_p$ (2 GHz vs 3 GHz) | $0.101 / 0.505 \approx 0.20$ |
-| Drude transmitted/incident above $\omega_p$ (exercise) | $\to 1$ |
+| Drude transmitted/incident above $\omega_p$ (5 GHz, exercise) | $\approx 0.63$ ($0.320/0.505$; $\gamma$ + index mismatch keep it $<1$) |
 | TF/SF scattered-zone $\lvert E_z\rvert$ (empty box) | $\sim 1.5\times10^{-15}$ (machine zero) |
 | PML residual reflection at $d = 4 / 8 / 16$ | $0.160 / 0.073 / 0.026$ (power law $\sim d^{-1.3}$) |
 
@@ -419,7 +419,7 @@ Run all five with `make lesson-11`, or one script at a time via `rustlab run les
 1. **Per-cell Yee timing.** Rewrite the vectorised 2-D Yee step as nested `for i, for j` loops (one per field component), run the same number of steps, and time both versions. The per-cell form is more transparent to the textbook update equations; the vectorised form runs roughly an order of magnitude faster in interpreted rustlab.
 2. **TF/SF leak under broken corrections.** `fdtd_tfsf_validation.rlab` already passes the machine-zero leak test by driving the four TF/SF faces from an auxiliary 1-D Yee grid. Replace the auxiliary by an *analytic* incident-field accessor (`g_inc(t − x/c)`) and rerun: the leak should jump from $\sim 10^{-15}$ to a few $\times 10^{-3}$ — that's pure numerical-dispersion residual, the standard motivation for the auxiliary-grid trick.
 3. **PML reflection at oblique angles.** `fdtd_pml_depth.rlab` measures the residual reflection from a centred point source — equal weighting of all incidence angles. Modify it to use a directional plane-wave TF/SF source (re-using `fdtd_tfsf_validation.rlab`) and sweep the angle of incidence. Verify that the PML still suppresses reflections at grazing angles, just with a worse coefficient than at normal incidence.
-4. **Above-$\omega_p$ Drude.** Change the source frequency in `fdtd_dispersive.rlab` to $f_{\rm src} = 5\,\text{GHz}$ ($> f_p$) and observe that the transmission ratio jumps from $\sim 0.2$ to near unity — the metal becomes a window.
+4. **Above-$\omega_p$ Drude.** Change the source frequency in `fdtd_dispersive.rlab` to $f_{\rm src} = 5\,\text{GHz}$ ($> f_p$) and observe the transmission ratio jump from $\sim 0.2$ to $\approx 0.6$–$0.7$ — the metal turns from a mirror into a still-slightly-lossy window; the residual damping $\gamma$ and the index mismatch keep it below 1.
 5. **Slab Fabry-Perot.** In `fdtd_1d`, place a probe inside the slab ($k = 400$, halfway through). Plot its trace. Identify the etalon bounces as multiple regularly-spaced echoes, and fit their spacing to $2 n_2 d_{\rm slab}/c_0$.
 
 ## What's next

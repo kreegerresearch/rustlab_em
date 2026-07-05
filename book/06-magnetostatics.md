@@ -10,7 +10,7 @@ Steady currents produce static magnetic fields. Lesson 02 added up Coulomb's law
 - Combine many loops into a finite solenoid; observe uniform interior $B_z$ and end fall-off
 - Find the Helmholtz-pair separation that flattens $\vec B$ near the midplane
 - Solve the 2-D vector-potential Poisson equation $\nabla^2 A_z = -\mu_0 J_z$ on a grid and recover $\vec B = \nabla\times\vec A$
-- Use `laplacian_eps_2d(1/\mu_r, \cdot)` to handle piecewise-constant magnetic permeability and observe field concentration / external shielding
+- Use `laplacian_eps_2d(inv_mu, dx, dy)` to handle piecewise-constant magnetic permeability, observe flux concentration, and see why exterior shielding requires an applied external field (Exercise 5)
 
 ## Background
 
@@ -80,7 +80,7 @@ print(real(mu0 * Iloop / (2 * R)))             % closed-form  μ₀I/(2R)
 
 <!-- rustlab:output-start -->
 ```text
-0.000012566370614359209
+0.000012566370614359204
 0.000012566370614359172
 ```
 
@@ -182,7 +182,7 @@ print(B_fin)                                % ≈ 5.83e-4 T, ~1.7% above numeric
 
 <!-- rustlab:output-start -->
 ```text
-0.0005732925467861275
+0.0005732925467861276
 0.0006283185307179586
 0.0005833791102228984
 ```
@@ -279,7 +279,7 @@ The middle line ($d/R = 1$) is visibly flattest near $z = 0$; the printed `Bz_of
 
 ### Theory
 
-Sums get unwieldy for arbitrary current shapes — and they buy nothing once magnetic materials enter the picture, since the Biot-Savart kernel assumes vacuum. The **vector potential** $\vec A$ defined by $\vec B = \nabla\times\vec A$ trades a vector field for a vector field that satisfies a Poisson equation in the Coulomb gauge $\nabla\cdot\vec A = 0$:
+Sums get unwieldy for arbitrary current shapes — and they buy nothing once magnetic materials enter the picture, since the Biot-Savart kernel assumes vacuum. The **vector potential** $\vec A$ defined by $\vec B = \nabla\times\vec A$ trades the Biot–Savart *integral* for a potential $\vec A$ that satisfies a Poisson equation in the Coulomb gauge $\nabla\cdot\vec A = 0$:
 
 $$\nabla^2\vec A = -\mu_0\vec J.$$
 
@@ -365,21 +365,22 @@ ylabel("y (m)")
 j_mid  = nx / 2;
 i_test = round((0.05 + Ly/2) / dy);              % y ≈ 0.05 m above the midpoint
 y_test = ys(i_test);
-r2     = (d_wires/2)^2 + y_test^2;
-By_an  = -mu0 * I_wire * d_wires / (2 * pi * r2);
-print(real(By_w(i_test, j_mid)))                 % numerical ≈ -2.4e-6 T
-print(By_an)                                     % analytic  ≈ -2.7e-6 T
+d_act  = xs(j_pos) - xs(j_neg);                  % actual snapped wire separation
+r2     = (d_act/2)^2 + y_test^2;
+By_an  = -mu0 * I_wire * d_act / (2 * pi * r2);
+print(real(By_w(i_test, j_mid)))                 % numerical ≈ -2.38e-6 T
+print(By_an)                                     % analytic  ≈ -2.78e-6 T (snapped geometry)
 ```
 
 <!-- rustlab:output-start -->
 ```text
 -0.000002376753965347522
--0.0000026966318711941665
+-0.0000027797501643655478
 ```
 
 <!-- rustlab:output-end -->
 
-The numerical $B_y$ on the symmetry axis above the wires comes within ~12 % of the infinite-wire analytic formula. The remaining gap has two pieces: each wire is approximated as a single cell (so the near-wire kernel is regularised at the cell scale), and the grounded outer boundary distorts the dipolar tail. Both errors shrink under refinement — Exercise 4 walks through the convergence study. The pipeline — solve a scalar Poisson, take a 2-D curl — is now ready to handle magnetic materials, which Biot–Savart cannot.
+Measured against the **snapped-geometry** reference — the analytic two-wire formula evaluated at the wires' actual grid positions ($d_{\rm act} = 0.0417$ m rather than the nominal $0.04$ m) — the numerical $B_y$ on the symmetry axis sits about 14.5 % below it. That residual is genuine discretization error with two pieces: each wire is approximated as a single cell (so the near-wire kernel is regularised at the cell scale), and the grounded outer boundary distorts the dipolar tail; both shrink under grid refinement. (The sample column itself lands ~1 mm off the true midline, a reminder to read the geometry off the grid rather than the nominal coordinates.) The pipeline — solve a scalar Poisson, take a 2-D curl — is now ready to handle magnetic materials, which Biot–Savart cannot.
 
 ## Magnetic Materials and Variable $\mu$
 
@@ -477,9 +478,9 @@ print(mu0 * 1.0 / (2 * pi * 0.09))
 
 <!-- rustlab:output-start -->
 ```text
-0.0039570930262576385
-0.0000030000908545821005
-0.0000026374607745301706
+0.003957093026257639
+0.000003000090854582102
+0.0000026374607745301693
 0.000002857142857142857
 0.000002222222222222222
 ```
@@ -507,7 +508,7 @@ The iron ring carries roughly three orders of magnitude more $|\vec B|$ than the
 | `solenoid_field.rlab` | 50-turn finite solenoid; axial $B_z(z)$ vs the $\mu_0 n I$ Ampère limit |
 | `helmholtz_pair.rlab` | $d/R$ sweep showing the Helmholtz uniformity sweet spot |
 | `vector_potential_2d.rlab` | Two parallel opposing wires via $A_z$-Poisson; recovered $\vec B$ vs analytic |
-| `iron_core_shielding.rlab` | Wire inside an iron annulus ($\mu_r = 1000$); flux concentration + exterior shielding |
+| `iron_core_shielding.rlab` | Wire inside an iron annulus ($\mu_r = 1000$); flux concentration + bare-wire exterior check |
 
 Run all five with `make lesson-06`, or individually via `rustlab run lessons/06-magnetostatics/<name>.rlab`.
 
@@ -519,7 +520,7 @@ Run all five with `make lesson-06`, or individually via `rustlab run lessons/06-
 | Solenoid centre $B_z$ | $\approx 5.73\times10^{-4}$ T, 8.8 % under $\mu_0 n I \approx 6.28\times10^{-4}$ T ($n = 500$ turns/m) |
 | Finite-solenoid closed form $B(0)$ | $\approx 5.83\times10^{-4}$ T (factor $\approx 0.928$); numerical agrees to ~1.7 % |
 | Helmholtz $B_{\rm off}/B_0$ ratio at $d/R = 1$ | closest to 1 across the three cases |
-| Two-wire $B_y$ above midpoint | analytic / numerical agree within ~12 % (single-cell source + grounded box) |
+| Two-wire $B_y$ above midpoint | numerical $\approx -2.38\times10^{-6}$ T, ~14.5 % below the snapped-geometry reference $\approx -2.78\times10^{-6}$ T (single-cell source + grounded box) |
 | $\lvert B\rvert$ in iron shell | $\sim 1000\times$ larger than just outside |
 | $\lvert B\rvert$ outside iron at $r = 7$ cm | within ~5 % of the $\mu_0 I/(2\pi r)$ reference ($r = 9$ cm reads ~19 % high — grounded-box effect) |
 
