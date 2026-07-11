@@ -60,9 +60,10 @@ k_meas = ij2k(i_meas, j_meas, ny);
 
 # === Frequency sweep (parallel) ===
 # Each frequency is an independent sparse solve. parmap dispatches the
-# trials across rayon worker threads; the lambda must be pure (no plot
-# / savefig / state mutation) and must reconstruct L, b, etc. itself
-# since rustlab functions don't capture the enclosing scope.
+# trials across rayon worker threads; the trial must be pure (no plot
+# / savefig / state mutation). A lambda would capture a snapshot of
+# the enclosing workspace and also works; we use a named function that
+# reconstructs L, b, etc. itself so the trial is fully self-contained.
 f_lo = 1.0e9;
 f_hi = 4.0e9;
 Nf   = 121;

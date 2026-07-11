@@ -58,25 +58,11 @@ L_lap = laplacian_2d(nx, ny, dx, dy);
 A_base = -1 * L_lap;
 N = nx * ny;
 
-# Pin function — set a Dirichlet cell (Az = val) in the operator.
-function [A_out, b_out] = pin(A, b, i, j, ny, nx, val)
-  k = ij2k(i, j, ny);
-  A(k, k) = 1.0;
-  if i > 1;   A(k, ij2k(i-1, j, ny)) = 0.0; end
-  if i < ny;  A(k, ij2k(i+1, j, ny)) = 0.0; end
-  if j > 1;   A(k, ij2k(i, j-1, ny)) = 0.0; end
-  if j < nx;  A(k, ij2k(i, j+1, ny)) = 0.0; end
-  b(k) = val;
-  A_out = A;
-  b_out = b;
-end
-
-# Pin the PEC ground plane Az = 0 (same operator for every drive).
-A_g = A_base;
-b_zero = zeros(1, N);
-for jj = 1:nx
-  [A_g, b_zero] = pin(A_g, b_zero, i_ground, jj, ny, nx, 0.0);
-end
+# Pin the PEC ground plane Az = 0 (same operator for every drive),
+# via the pin_dirichlet builtin (L05 teaches the row-pin mechanism by hand).
+mask_gnd = zeros(ny, nx);
+mask_gnd(i_ground, :) = 1;
+[A_g, b_zero] = pin_dirichlet(A_base, zeros(1, N), mask_gnd, 0.0);
 
 # === Factor ONCE — the dominant cost — then back-solve per drive ===
 F = lu(A_g);
@@ -119,7 +105,7 @@ print(real(L11) * 1e9)                        # self-inductance, trace 1
 print(real(L22) * 1e9)                        # ≈ L11 by symmetry
 print(real(L12) * 1e9)                        # mutual
 print(real(L21) * 1e9)                        # = L12 by reciprocity
-print(abs(L12 - L21) / max(abs(L12), 1e-30))  # reciprocity error → ~machine ε
+print(abs(L12 - L21) / max(abs(L12), 1e-30))  # reciprocity error ≈ 1.4e-7 (direct-solve round-off)
 
 # === Field snapshot ===
 figure();

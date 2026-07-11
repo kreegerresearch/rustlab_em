@@ -481,6 +481,8 @@ Short dipole: $R_{\rm rad} = 20\pi^2(L/\lambda)^2$.
 
 **Motivation:** Every prior lesson built one piece of the mini-Ansys pipeline: geometry, materials, solver, post-processing. The capstone runs all of them on a real device from start to finish — a rectangular microstrip-fed patch antenna. This is the same workflow an engineer follows in commercial software, just transparently spelled out.
 
+> **Shipped scope (2026-07):** the published lesson implements this plan's pipeline in **2-D** (geometry → material map → FDTD → probe-trace resonance spectrum). The waveport-$S_{11}$ extraction (step 5) and NF→FF gain pattern (step 6) below remain the documented 3-D production extension — the lesson's *From 2-D to 3-D* section maps each step. The 3-D objectives in this section are the plan's target, not the shipped deliverable.
+
 ### Learning Objectives
 
 - Describe a 3D device as a stack of primitives + material assignments (Lesson 04)

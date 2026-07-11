@@ -1,7 +1,8 @@
 # Request: `smith_chart()` Background Helper
 
-**Status**: Filed
+**Status**: **Landed** — shipped under a different API: `smith()` / `marker()` / `smith_circle()` (plus the wider S-parameter toolbox; see `rustlab docs smith`). The proposed `smith_chart()` / `smith_chart_load()` names were not used. All seven Lesson 16 scripts use the shipped API and hand-roll nothing.
 **Date**: 2026-05-15
+**Date landed**: 2026-05-17 (rustlab S-parameter toolbox, `dev/plans/closed/sparameters.md`)
 **Origin**: `rustlab_em` Lesson 16 (planned) — Smith Chart & Impedance Matching
 
 ## Motivation

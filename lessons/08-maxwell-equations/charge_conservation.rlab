@@ -30,7 +30,7 @@ freq  = 1.0e6;                # 1 MHz drive
 omega = 2 * pi * freq;
 I0    = 1e-3;                 # 1 mA peak
 
-C_cap = eps0 * A / d;         # 0.886 pF
+C_cap = eps0 * A / d;         # 0.885 pF
 print(C_cap)
 
 # === Time traces ===

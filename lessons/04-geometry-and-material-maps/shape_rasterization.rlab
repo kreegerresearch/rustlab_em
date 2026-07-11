@@ -30,7 +30,7 @@ imagesc(D, "viridis");
 title("disk_mask: centre (0, 0), radius 1.0");
 savefig("disk_mask.svg");
 
-# Area should be ~ pi (closed mask overshoots slightly: ~3.135 vs pi).
+# Area should be ~ pi (staircase mask undershoots slightly here: ~3.135 vs pi).
 print(sum(sum(D)) * dx * dy)        # ≈ 3.135
 print(pi)                           # 3.14159...
 
@@ -44,5 +44,7 @@ imagesc(T, "viridis");
 title("polygon_mask: triangle (-1,-0.7)-(1,-0.7)-(0,1)");
 savefig("polygon_mask.svg");
 
-# Triangle area = 0.5 * base * height = 0.5 * 2.0 * 1.7 = 1.70 m².
-print(sum(sum(T)) * dx * dy)        # ≈ 1.70
+# Analytic area = 0.5 * base * height = 0.5 * 2.0 * 1.7 = 1.70 m²; the
+# staircase mask prints ≈ 1.686, a 0.83 % undershoot — about 4× the disk's
+# relative error, since three slanted edges leave more partially-covered cells.
+print(sum(sum(T)) * dx * dy)        # ≈ 1.686

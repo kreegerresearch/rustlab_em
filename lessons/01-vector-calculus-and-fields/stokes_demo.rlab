@@ -42,21 +42,24 @@ ys_grid = linspace(-a, a, M);
 [Xs, Ys] = meshgrid(xs_grid, ys_grid);
 curlF   = curl(-Ys, Xs, 2 * a / (M - 1), 2 * a / (M - 1));
 
-# 2-D trapezoidal rule: integrate along rows (one per i), then along
-# the resulting column. The per-row integral is a closure of i → scalar;
-# `arrayfun` maps it across all row indices to return a length-M vector.
-row_int          = arrayfun(@(i) trapz(xs_grid, curlF(i, :)), 1:M);
-surface_integral = trapz(ys_grid, row_int);
+# 2-D trapezoidal rule with the matrix form of `trapz`: the inner call
+# integrates each column down the rows (∫ curl dy for every x), returning
+# a 1×M row; the outer call integrates that row over x.
+surface_integral = trapz(xs_grid, trapz(ys_grid, curlF));
 
 print(surface_integral)                     # ≈ 8
 print(circulation / surface_integral)       # ≈ 1.0
 
 # === Plot: field quiver with the loop drawn on top ===
 [Xq, Yq] = meshgrid(linspace(-1.5, 1.5, 16), linspace(-1.5, 1.5, 16));
+[Xf, Yf] = meshgrid(linspace(-1.5, 1.5, 121), linspace(-1.5, 1.5, 121));
 figure();
 hold on;
 quiver(Xq, Yq, -Yq, Xq, "F = (-y, x) with Stokes loop");
-plot([-a, a, a, -a, -a], [-a, -a, a, a, -a], "color", "r");
+# The loop is the a-level contour of max(|x|, |y|); the SVG backend
+# currently drops plot() line series from figures containing a quiver,
+# but contour overlays render.
+contour(Xf, Yf, max(abs(Xf), abs(Yf)), [a], "r");
 hold off;
 savefig("stokes_loop.svg");
 

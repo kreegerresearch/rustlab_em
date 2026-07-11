@@ -13,7 +13,7 @@
 # Radiation resistance (input impedance's real part):
 #   R_rad = (η₀ / 2π) ∫_0^π [cos²(π/2 · cos θ) / sin θ] dθ ≈ 73.13 Ω
 # The numerical integration below matches the textbook value to
-# ~ 0.01 Ω.
+# ~ 0.05 Ω (the η₀-convention offset, not numerical error).
 #
 # Reference: ../../notebooks/12-waveguides-and-radiation.md.
 
@@ -65,7 +65,7 @@ savefig("halfwave_polar_numerical.svg");
 
 # Compare numerical vs analytic
 err_pattern = max(abs(F_anal_n - F_num_n));
-print(err_pattern)               # ~ 1e-4 to 1e-3
+print(err_pattern)               # ~ 7e-6
 
 # === Radiation resistance via numerical surface integral ===
 # R_rad = (η₀ / 2π) ∫_0^π [cos²(π/2 cos θ) / sin θ] dθ

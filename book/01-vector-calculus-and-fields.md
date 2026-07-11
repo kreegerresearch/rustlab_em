@@ -8,7 +8,7 @@ Maxwell's equations are statements about $\nabla$, $\nabla\cdot$, and $\nabla\ti
 
 - Compute gradient, divergence, and curl on 2D/3D uniform grids via central differences
 - Interpret $\nabla f$, $\nabla\cdot\vec{F}$, $\nabla\times\vec{F}$ as slopes, sources/sinks, and rotation
-- Verify the divergence theorem and Stokes' theorem numerically on simple test fields
+- Verify Stokes' theorem numerically on a simple test field (the divergence theorem is Exercise 2 and returns as Gauss's law in Lesson 03)
 - Recognize the geometric content of flux and circulation
 
 ## Background
@@ -123,7 +123,7 @@ hold off;
 ```
 
 <!-- rustlab:output-start -->
-![plot 1](plots/01-vector-calculus-and-fields/plot-1-7c230805.svg)
+![plot 1](plots/01-vector-calculus-and-fields/plot-1-42cc9b43.svg)
 
 <!-- rustlab:output-end -->
 
@@ -174,7 +174,7 @@ quiver(X, Y, Ux, Uy, "Radial field F = (x, y)")
 ```
 
 <!-- rustlab:output-start -->
-![plot 3](plots/01-vector-calculus-and-fields/plot-3-1aa992b7.svg)
+![plot 3](plots/01-vector-calculus-and-fields/plot-3-2b2178f3.svg)
 
 <!-- rustlab:output-end -->
 
@@ -223,7 +223,7 @@ quiver(X, Y, Vx, Vy, "F = (-y, x)  —  pure rotation")
 ```
 
 <!-- rustlab:output-start -->
-![plot 5](plots/01-vector-calculus-and-fields/plot-5-f669d6c6.svg)
+![plot 5](plots/01-vector-calculus-and-fields/plot-5-2f978538.svg)
 
 <!-- rustlab:output-end -->
 
@@ -258,7 +258,7 @@ print(laplV(11, 11))     % ≈ 4
 
 <!-- rustlab:output-start -->
 ```text
-4
+4.000000000000001
 ```
 
 <!-- rustlab:output-end -->
@@ -320,7 +320,7 @@ print(circulation)       % ≈ 8
 
 ### Example — Surface integral of curl over the same square
 
-Compute curl on a 41×41 grid over the same square and integrate by 2-D trapezoidal.
+Compute curl on a 41×41 grid over the same square and integrate with two nested `trapz` calls. On a matrix, `trapz` integrates each column down the rows — here the $y$-direction — returning one $\int (\nabla\times\vec F)_z\,dy$ per $x$-column; a second `trapz` integrates that row over $x$.
 
 ```rustlab
 M = 41;
@@ -329,11 +329,7 @@ ys_grid = linspace(-a, a, M);
 [Xs, Ys] = meshgrid(xs_grid, ys_grid);
 curlF   = curl(-Ys, Xs, 2 * a / (M - 1), 2 * a / (M - 1));
 
-row_int = zeros(M);
-for i = 1:M
-  row_int(i) = trapz(xs_grid, curlF(i, :));
-end
-surface_integral = trapz(ys_grid, row_int);
+surface_integral = trapz(xs_grid, trapz(ys_grid, curlF));
 print(surface_integral)  % ≈ 8
 ```
 
@@ -344,7 +340,7 @@ print(surface_integral)  % ≈ 8
 
 <!-- rustlab:output-end -->
 
-Both expressions for the same physical quantity agree to within sub-percent discretization error — a direct numerical check of Stokes' theorem.
+Both expressions for the same physical quantity agree to machine precision here — every discrete operation is exact for this linear field; a field with a spatially varying curl would expose genuine discretization error (as the curved Gaussian does in Exercises 1–2). This is a direct numerical check of Stokes' theorem.
 
 ## Numerical Grid Convention
 
@@ -352,11 +348,11 @@ Rustlab's `gradient`, `divergence`, and `curl` use a 2nd-order central-differenc
 
 $$\frac{\partial f}{\partial x}\bigg|_{i,j} \approx \frac{f_{i,\,j+1} - f_{i,\,j-1}}{2\,\Delta x}$$
 
-in interior cells and a 2nd-order one-sided stencil at boundary cells, so the output keeps the input shape and stays accurate at the edges. Each axis must have length $\geq 3$. See `../rustlab/docs/quickref.md` for the full API.
+in interior cells and a 2nd-order one-sided stencil at boundary cells, so the output keeps the input shape and stays accurate at the edges. Each axis must have length $\geq 3$. See `docs/quickref.md` in the rustlab repository for the full API.
 
 ## Standalone Scripts
 
-For shell-based experimentation, three rustlab scripts in this directory reproduce the demos above as standalone programs:
+For shell-based experimentation, three rustlab scripts in `lessons/01-vector-calculus-and-fields/` reproduce the demos above as standalone programs:
 
 | Script | What it computes |
 |---|---|
@@ -364,7 +360,7 @@ For shell-based experimentation, three rustlab scripts in this directory reprodu
 | `divergence_curl.rlab` | Radial and rotational fields side by side |
 | `stokes_demo.rlab` | Square-loop circulation vs surface-integrated curl |
 
-Run all three with `make lesson-01` from the repo root (or `rustlab run lessons/01-vector-calculus-and-fields/<name>.rlab` for one). Each writes SVGs to `outputs/` (gitignored).
+Run all three with `make lesson-01` from the repo root (or `rustlab run lessons/01-vector-calculus-and-fields/<name>.rlab` for one). SVGs land next to each script in `lessons/01-vector-calculus-and-fields/` and are gitignored.
 
 ## Expected Numerical Outputs Summary
 

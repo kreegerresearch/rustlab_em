@@ -37,7 +37,7 @@ eps_map = ones(ny, nx);
 # Source: single cell at the centre.
 J = zeros(ny, nx);
 J(round(ny / 2), round(nx / 2)) = 1.0 / (dx * dy);
-b = -j * omega * mu0 * J(:)';
+b = -j * omega * mu0 * J(:).';
 
 # === (a) No-PML reference ===
 # Build a constant-coefficient Helmholtz operator L + k0² I from
@@ -46,7 +46,7 @@ b = -j * omega * mu0 * J(:)';
 # RHS — the loss is far below any physical scale of interest.
 L     = laplacian_2d(nx, ny, dx, dy);
 k0sq  = (omega / c0)^2;
-A_box = L + k0sq * (1 - 1e-12 * j) * speye(nx * ny);
+A_box = L + k0sq * (1 + 1e-12 * j) * speye(nx * ny);
 E_box_flat = spsolve(A_box, b);
 E_box = reshape(E_box_flat, ny, nx);
 

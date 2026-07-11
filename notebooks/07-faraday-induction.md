@@ -97,10 +97,8 @@ phi   = phi(1:N_seg);
 dphi  = 2 * pi / N_seg;
 rxs   = b_o * cos(phi);
 rys   = b_o * sin(phi);
-rzs   = zeros(N_seg);
 dlx   = -b_o * sin(phi) * dphi;
 dly   =  b_o * cos(phi) * dphi;
-dlz   = zeros(N_seg);
 
 % Field grid covering the inner disk
 Ng  = 41;
@@ -140,11 +138,11 @@ Phi_inner  = sum(sum(real(Bz_grid) .* inner_disk)) * dxg * dyg;
 M_num = Phi_inner / I1;
 
 M_an  = mu0 * pi * a_i^2 / (2 * b_o);     % a ≪ b limit
-print(M_num)                              % ≈ 7.94e-9 H
-print(M_an)                               % ≈ 7.90e-9 H — within ~0.5 % for a/b = 0.2
+print(M_num)                              % ≈ 7.94e-9 H — quadrature, ~1.0% below exact 8.02e-9
+print(M_an)                               % ≈ 7.90e-9 H — small-a/b formula, ~1.5% below exact
 ```
 
-The two values agree to within a few percent at $a/b = 0.2$; refining the grid or shrinking $a/b$ tightens the match. Reciprocity ($M_{12} = M_{21}$) is built into the formula but worth checking by hand on Exercise 2 — flip which loop carries the current and recompute. The pipeline directly extends to non-concentric, non-coplanar, and non-circular loops where no closed form exists.
+The numerical quadrature ($M_{\rm num} \approx 7.94\times10^{-9}$ H) and the small-$a/b$ formula ($M_{\rm an} \approx 7.90\times10^{-9}$ H) both sit roughly 1–1.5 % *below* the exact elliptic-integral value $M = 8.02\times10^{-9}$ H, so they happen to agree with **each other** to ~0.5 % at $a/b = 0.2$. That mutual agreement is fortuitous: refining the grid converges $M_{\rm num}$ toward the exact value — pulling it *away* from the formula, which omits the exact series' next term $+\tfrac38(a/b)^2 \approx 1.5\%$ — while only shrinking $a/b$ makes the formula itself accurate. Reciprocity ($M_{12} = M_{21}$) is guaranteed by the underlying Neumann double-integral form (not obvious from the flux integral we compute), but worth checking by hand on Exercise 2 by flipping which loop carries the current. The pipeline directly extends to non-concentric, non-coplanar, and non-circular loops where no closed form exists.
 
 ## Eddy Currents in a Conducting Plate
 
@@ -155,6 +153,8 @@ A thin conducting plate (thickness $t \ll$ plate dimensions, conductivity $\sigm
 - Ohm's law in the plate: $\vec J = \sigma\vec E_{\rm in}$,
 - Charge conservation: $\nabla\cdot\vec J = 0$,
 - Faraday's law: $\nabla\times\vec E_{\rm in} = -\partial\vec B/\partial t = -\dot B_z\,\hat z$.
+
+We take $B_z$ as the *imposed* field only — the eddy currents' own magnetic field is neglected, an approximation valid when the applied field changes slowly compared with the magnetic diffusion time $\mu_0\sigma t R/4$ (~1 ms for a mm-thick copper disk).
 
 Because $\vec J$ is divergence-free in the plane, write it as the curl of a **stream function** $\psi(x, y)$,
 
@@ -174,10 +174,11 @@ so the induced current circulates in the *opposite sense* to $\dot B_z$ — Lenz
 
 ### Example — Circular plate with $\dot B_z = 1$ T/s
 
-Solve the Poisson problem on a $0.20\times0.20$ m grid with a 0.06 m–radius copper plate ($\sigma = 5.8\times10^7$ S/m), $\dot B_z = 1$ T/s. Pin every cell *outside* the plate to $\psi = 0$ and solve $\nabla^2\psi = -\sigma\dot B_z$ inside.
+Solve the Poisson problem on a $0.20\times0.20$ m grid with a 0.06 m–radius copper plate ($\sigma = 5.8\times10^7$ S/m), $\dot B_z = 1$ T/s. Pin every cell *outside* the plate to $\psi = 0$ — one `pin_dirichlet` call with the inverted mask — and solve $\nabla^2\psi = -\sigma\dot B_z$ inside.
 
 ```rustlab
 clf;
+set_default_axis("xy");           % physics y-axis for every imagesc panel below
 sigma_cu = 5.8e7;
 Bdot     = 1.0;                   % T/s
 nx3 = 100; ny3 = 100;
@@ -199,24 +200,14 @@ title("Conducting plate mask (1 inside the disk, 0 outside)")
 L_p = laplacian_2d(nx3, ny3, dx3, dy3);
 A_p = -1 * L_p;
 n_p = nx3 * ny3;
-b_p = zeros(1, n_p);
 src = sigma_cu * Bdot;
 
-for i = 1:ny3
-  for j = 1:nx3
-    k = ij2k(i, j, ny3);
-    if plate_mask(i, j) > 0.5
-      b_p(1, k) = src;                          % interior of plate
-    else
-      A_p(k, k) = 1.0;                          % pin ψ = 0 outside
-      if i > 1;   A_p(k, ij2k(i-1, j, ny3)) = 0.0; end
-      if i < ny3; A_p(k, ij2k(i+1, j, ny3)) = 0.0; end
-      if j > 1;   A_p(k, ij2k(i, j-1, ny3)) = 0.0; end
-      if j < nx3; A_p(k, ij2k(i, j+1, ny3)) = 0.0; end
-      b_p(1, k) = 0.0;
-    end
-  end
-end
+% Source σḂ in the plate cells; the column-major flatten of the mask
+% matches the ij2k node ordering of laplacian_2d.
+b_p = src * reshape(plate_mask, 1, n_p);
+
+% Pin ψ = 0 on every cell outside the plate in one call.
+[A_p, b_p] = pin_dirichlet(A_p, b_p, 1 - plate_mask, 0.0);
 
 psi = real(reshape(spsolve(A_p, b_p), ny3, nx3));
 ```
@@ -255,10 +246,10 @@ r_s  = sqrt(xs3(j_s)^2 + ys3(i_c)^2);                 % actual sampled radius
 print(r_s)                                            % ≈ 0.0406 m (vs 0.7R = 0.042 m)
 print(real(Jmag(i_c, j_s)))                           % near-edge sample
 print(sigma_cu * Bdot * r_s / 2.0)                    % analytic at the sampled radius
-print(real(Jmag(i_c, nx3 / 2 + 1)))                   % near centre
+print(real(Jmag(i_c, nx3 / 2 + 1)))                   % near-centre sample, r ≈ 1.4 mm (not r = 0)
 ```
 
-The grid column nearest $0.7R$ actually sits at $r \approx 0.0406$ m (not exactly $0.042$ m), and evaluating the analytic $\sigma\dot B_z r/2$ at that sampled radius the numerical $|J|$ matches it to better than $0.2\,\%$; near $r = 0$ both go to zero. The eddy-current pattern this produces — circular flow lines, current density growing linearly outward — is the same one industrial-induction-heating cookers exploit (a strong $\dot B$ from a coil drives huge $J$ in the steel pan, which dissipates as $\int|\vec J|^2/\sigma$). The drift of these eddies into a conductor is also why **transformer cores must be laminated**: replacing solid iron with thin insulated sheets confines the eddy stream-function support to each lamination's small disk, killing $\propto R^4$ eddy losses to a manageable level.
+The grid column nearest $0.7R$ actually sits at $r \approx 0.0406$ m (not exactly $0.042$ m), and evaluating the analytic $\sigma\dot B_z r/2$ at that sampled radius the numerical $|J|$ matches it to better than $0.2\,\%$. The "near-centre" sample sits at $r \approx 1.4$ mm — the nearest grid cell to the axis, not the axis itself — where the linear ramp gives $|J| \approx \sigma\dot B_z r/2 \approx 4.1\times10^4$ A/m²; the current density vanishes only in the limit $r \to 0$. The eddy-current pattern this produces — circular flow lines, current density growing linearly outward — is the same one industrial-induction-heating cookers exploit (a strong $\dot B$ from a coil drives huge $J$ in the steel pan, which dissipates as $\int|\vec J|^2/\sigma$). These same eddies, driven in a solid iron core, are why **transformer cores must be laminated**: replacing solid iron with thin insulated sheets confines the eddy stream-function support to each lamination's small disk, killing $\propto R^4$ eddy losses to a manageable level.
 
 ## Standalone Scripts
 
@@ -280,15 +271,15 @@ Run all three with `make lesson-07`, or one at a time via `rustlab run lessons/0
 | Analytic small-$a/b$ $M$ | $\mu_0\pi a^2/(2b) \approx 7.90\times10^{-9}$ H |
 | Sampled radius $r_s$ (grid column nearest $0.7R$) | $\approx 0.0406$ m |
 | Eddy $\lvert J\rvert$ at $r_s$ on Cu plate | $\approx \sigma\dot B_z r_s/2 \approx 1.18\times10^{6}$ A/m² (numeric $1.1756\times10^{6}$, analytic $1.1776\times10^{6}$ — $<0.2\,\%$ apart) |
-| Eddy $\lvert J\rvert$ near $r = 0$ | $\approx 0$ |
+| Eddy $\lvert J\rvert$ at near-centre sample ($r \approx 1.4$ mm) | $\approx \sigma\dot B_z r/2 \approx 4.1\times10^{4}$ A/m² ($\to 0$ only as $r \to 0$) |
 
 ## Exercises
 
 1. **Slowly varying linear ramp.** Replace the sinusoidal $B(t)$ with a piecewise-linear ramp $B(t) = B_0\,t/\tau$ for $0 \le t \le \tau$, $B_0$ thereafter. Plot $\Phi(t)$ and $\varepsilon(t)$ and verify $\varepsilon$ is constant during the ramp and zero afterwards.
-2. **Reciprocity check.** In the mutual-inductance example, swap the roles: drive the *inner* loop with $I_2 = 1$ A and integrate $B_z$ from it over the *outer* loop's disk. Verify $M_{21} = M_{12}$ to a few percent.
-3. **Self-inductance via energy.** Compute the self-inductance of a single loop of radius $R$ via the energy formulation $L = 2 U_B/I^2$ where $U_B = (1/2\mu_0)\int|\vec B|^2\,dV$ and $\vec B$ is the loop's own field. The integral is logarithmically divergent at the wire's surface, so add a wire-radius cutoff $a \ll R$ and verify $L \approx \mu_0 R[\ln(8R/a) - 2]$ (the textbook formula).
-4. **Square plate eddy currents.** Replace the circular plate with a square plate of side $L = 0.10$ m (use `rect_mask`) and re-solve. Verify the eddy stream lines now match the square's symmetry (four 45° symmetry axes), and that $J$ pinches at the corners — the same effect the corner singularity from Lesson 05 produced for $V$.
-5. **Two-region plate.** Cut the circular plate into two halves with an insulating thin strip down the middle. Pin $\psi = 0$ on both the outer boundary *and* the strip. Show that the two halves develop independent eddy systems, and compute the total dissipated power as $P = (1/\sigma)\int|\vec J|^2\,dA$ for both the cut and uncut cases — quantifying the "lamination wins" intuition.
+2. **Reciprocity check.** In the mutual-inductance example, swap the roles: drive the *inner* loop with $I_2 = 1$ A and integrate $B_z$ from it over the *outer* loop's disk. Verify $M_{21} = M_{12}$ to a few percent. (The inner loop's wire now sits *inside* the outer integration disk, so the Biot–Savart kernel is singular on the sampled area — use a finer grid near the ring, or integrate $A_\varphi$ around the outer loop instead of $B_z$ over its disk.)
+3. **Self-inductance via energy.** Compute the self-inductance of a single loop of radius $R$ via the energy formulation $L = 2 U_B/I^2$ where $U_B = (1/2\mu_0)\int|\vec B|^2\,dV$ and $\vec B$ is the loop's own field. The integral is logarithmically divergent at the wire's surface, so add a wire-radius cutoff $a \ll R$ and verify $L \approx \mu_0 R[\ln(8R/a) - 2]$ (the textbook formula). Work in the $(\rho, z)$ half-plane with volume element $2\pi\rho\,d\rho\,dz$ so the 3-D energy integral collapses to a 2-D quadrature.
+4. **Square plate eddy currents.** Replace the circular plate with a square plate of side $L = 0.10$ m (use `rect_mask`) and re-solve. Verify the eddy stream lines now match the square's symmetry (four 45° symmetry axes), and that $|\vec J|$ goes to *zero* at the four corners and peaks at the edge midpoints — the classic Prandtl torsion-membrane pattern, and the *opposite* of Lesson 05's re-entrant-corner field enhancement, because these are convex interior 90° corners where the stream function $\psi$ is pinned on both adjoining edges, so $|\vec J| = |\nabla\psi| \to 0$ there.
+5. **Two-region plate.** Cut the circular plate into two halves with an insulating thin strip down the middle. Pin $\psi = 0$ on both the outer boundary *and* the strip. Show that the two halves develop independent eddy systems, and compute the total dissipated power as $P = (t/\sigma)\int|\vec J|^2\,dA$ for both the cut and uncut cases, with $t$ the plate thickness (with $\vec J$ in A/m², the $1/\sigma$ integral alone is power per unit thickness; the cut-vs-uncut ratio is independent of $t$) — quantifying the "lamination wins" intuition.
 
 ## What's next
 

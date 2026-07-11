@@ -4,6 +4,7 @@
 lessons/*/*.svg
 lessons/*/*.html
 lessons/*/*.png
+lessons/*/*.gif
 
 # Interactive HTML notebook build — auto-generated `make html` output
 # living alongside the committed *.md (large Plotly bundles, regenerable).

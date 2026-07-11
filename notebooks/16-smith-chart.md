@@ -20,11 +20,19 @@ Lesson 13 (transmission-line $\Gamma$, VSWR, $S_{11}$ extraction), Lesson 14 (pa
 
 ## The Bilinear Map
 
+### Theory
+
 The Smith chart is the unit-disk image of the right-half $Z$-plane under
 
 $$\Gamma = \frac{z - 1}{z + 1}, \qquad z = \frac{Z}{Z_0}, \qquad z = \frac{1 + \Gamma}{1 - \Gamma}.$$
 
 Four landmarks fix the geometry: $z=1 \to \Gamma = 0$ (matched, chart centre), $z=\infty \to \Gamma = +1$ (open, right edge), $z=0 \to \Gamma = -1$ (short, left edge), $z = j \to \Gamma = j$ (purely inductive, top edge). The unit circle $|\Gamma|=1$ is the entire boundary of passive loads. Lossless TL transformations preserve $|\Gamma|$ — they rotate clockwise (toward generator) by $2\beta d$.
+
+Curves of constant normalised resistance, reactance, or conductance map to circles on the $\Gamma$-plane — the grid the chart is printed on:
+
+- **constant-$r$ circles**: centre $r/(1+r)$ on the real axis, radius $1/(1+r)$; they nest toward $\Gamma = +1$ as $r \to \infty$.
+- **constant-$x$ arcs**: centre $1 + j/x$, radius $1/\lvert x\rvert$; they spring from $\Gamma = +1$ and cross the constant-$r$ circles at right angles.
+- **constant-$g$ circles** (admittance grid): the $\Gamma \to -\Gamma$ mirror of the constant-$r$ family, centre $-g/(1+g)$, radius $1/(1+g)$. The double-stub forbidden boundary below is the $g = 2$ member of this family.
 
 **VSWR** is a one-number summary of mismatch:
 
@@ -32,7 +40,7 @@ $$\text{VSWR} = \frac{1 + |\Gamma|}{1 - |\Gamma|}.$$
 
 A constant-VSWR contour is a single constant-$|\Gamma|$ circle.
 
-### Example — Landmark points and constant-VSWR circles
+### Example — Landmark points
 
 `smith(...)` seeds the chart background; `marker(...)` drops labelled scatter points; `smith_circle(centre, radius, label)` overlays parametric circles for VSWR or stability contours.
 
@@ -52,6 +60,8 @@ marker(G_pure,  "Z = jZ_0");
 title("Smith chart — canonical loads");
 ```
 
+### Example — Constant-VSWR circles
+
 ```rustlab
 clf;
 smith(0);                                       % background only
@@ -66,13 +76,13 @@ title("Constant-|Γ| circles → constant-VSWR contours");
 
 ## Translating Along a Lossless Line
 
+### Theory
+
 A lossless line of length $d$ rotates $\Gamma$ clockwise by $2\beta d$:
 
 $$\Gamma(d) = \Gamma_L\,e^{-2 j \beta d}, \qquad |\Gamma(d)| = |\Gamma_L|.$$
 
 This single identity does the heavy lifting in every matching-network synthesis below.
-
-### Theory
 
 The input impedance looking into a lossless line of length $d$ terminated in $Z_L$ is
 
@@ -113,7 +123,7 @@ print(real(Z_quarter))                          %  100   Ω  (= Z_0²/Z_L)
 
 ## L-Section Matching
 
-Two reactive elements (one series, one shunt) match any complex load to a real $Z_0$. The ordering is set by chart geometry: for $R_L < Z_0$ the constant-$r$ circle through $z_L$ crosses the unit-conductance circle, so a series reactance alone can walk the load onto $g = 1$ — series element first, then a shunt element to cancel the residual susceptance. For $R_L > Z_0$ that constant-$r$ circle never reaches $g = 1$, so the shunt element must come first.
+Two reactive elements (one series, one shunt) match any complex load to a real $Z_0$. The ordering is set by chart geometry. A series reactance walks the load along its constant-$r$ circle onto the unit-conductance ($g = 1$) circle (**series-then-shunt**); a shunt susceptance walks it along its constant-$g$ circle onto the unit-resistance ($r = 1$) circle (**shunt-then-series**). Series-first is *forced* only when $g_L > 1$ (the constant-$g$ circle then never reaches $r = 1$); shunt-first only when $r_L > 1$. The load $Z_L = 30 + j50$ has $r_L = 0.6$ and $g_L = 0.44$ — outside *both* unit circles — so **both** orderings match: the series-first pair is computed below, and deriving this load's two shunt-first networks makes a good extension (Exercise 1 practices shunt-first synthesis on a load with $r_L > 1$, where that ordering is the only option).
 
 ### Theory
 
@@ -230,7 +240,7 @@ Two shunt stubs at fixed spacing $d_{12}$ remove the variable-position constrain
 
 ### Theory
 
-Let $t = \tan(\beta d_{12})$. The two stub susceptances are real-valued only when
+The two stub susceptances are real-valued only when
 
 $$g_L \,\le\, \frac{1}{\sin^2(\beta d_{12})}.$$
 
@@ -255,6 +265,7 @@ ZL_b = 10.0;
 G_L_b = (ZL_b - Z0) / (ZL_b + Z0);
 smith(G_L_b);
 g_thr = 2;
+% constant-g circle from the Bilinear Map theory: centre −g/(1+g), radius 1/(1+g).
 smith_circle(-g_thr / (g_thr + 1), 1 / (g_thr + 1), sprintf("forbidden g = %.0f", g_thr));
 marker(G_L_b, "Z_L = 10 Ω (g_L = 5)");
 marker(0,     "matched (unreachable)");

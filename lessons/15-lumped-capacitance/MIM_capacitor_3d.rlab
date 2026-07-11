@@ -53,26 +53,14 @@ A = -1 * L_lap;
 b = zeros(1, N);
 V0 = 1.0;
 
-function [A_out, b_out] = pin_cell(A, b, ii, jj, kk, n, V_val)
-  k = ijk2k(ii, jj, kk, n, n);
-  A(k, k) = 1.0;
-  if ii > 1;  A(k, ijk2k(ii-1, jj, kk, n, n)) = 0.0; end
-  if ii < n;  A(k, ijk2k(ii+1, jj, kk, n, n)) = 0.0; end
-  if jj > 1;  A(k, ijk2k(ii, jj-1, kk, n, n)) = 0.0; end
-  if jj < n;  A(k, ijk2k(ii, jj+1, kk, n, n)) = 0.0; end
-  if kk > 1;  A(k, ijk2k(ii, jj, kk-1, n, n)) = 0.0; end
-  if kk < n;  A(k, ijk2k(ii, jj, kk+1, n, n)) = 0.0; end
-  b(k) = V_val;
-  A_out = A;
-  b_out = b;
-end
-
-for jj = xy_lo:xy_hi
-  for ii = xy_lo:xy_hi
-    [A, b] = pin_cell(A, b, ii, jj, z_hi, n, +V0 / 2);
-    [A, b] = pin_cell(A, b, ii, jj, z_lo, n, -V0 / 2);
-  end
-end
+# Pin the plates via pin_dirichlet (Tensor3 masks in the column-major
+# laplacian_3d layout; L05 teaches the row-pin mechanism by hand).
+mask_top = zeros3(n, n, n);
+mask_top(xy_lo:xy_hi, xy_lo:xy_hi, z_hi) = 1;
+mask_bot = zeros3(n, n, n);
+mask_bot(xy_lo:xy_hi, xy_lo:xy_hi, z_lo) = 1;
+[A, b] = pin_dirichlet(A, b, mask_top, +V0 / 2);
+[A, b] = pin_dirichlet(A, b, mask_bot, -V0 / 2);
 
 # === Solve ===
 V_flat = spsolve(A, b);
@@ -88,7 +76,7 @@ print(real(V(ic, ic, z_lo)))                  # −0.5
 [Ex, Ey, Ez] = gradient3(V, dx, dy, dz);
 Ex = -Ex; Ey = -Ey; Ez = -Ez;
 E_sq = Ex .* Ex + Ey .* Ey + Ez .* Ez;
-E_sq_flat = reshape(E_sq, 1, N);
+E_sq_flat = E_sq(:);
 
 # Build a flat ε mask: ε_r inside the gap, 1 outside. The gap is
 # everywhere with kk strictly between z_lo and z_hi (z_lo + 1 .. z_hi − 1).

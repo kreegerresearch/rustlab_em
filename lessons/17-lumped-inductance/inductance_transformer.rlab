@@ -26,24 +26,13 @@ a  = 0.2e-3;                                   # wire radius
 turns_per_R = 6.0;                             # primary winding density (turns per R1 of length)
 ratio = 2.0;                                   # N2/N1
 
-# --- Complete elliptic integrals K(m), E(m) via AGM (m = k²) ---
-function [K, E] = ellipke_agm(m)
-  a = 1.0;  b = sqrt(1.0 - m);  c = sqrt(m);
-  s = 0.5 * c^2;  pw = 1.0;
-  for it = 1:12
-    an = 0.5 * (a + b);  bn = sqrt(a * b);  cn = 0.5 * (a - b);
-    s = s + pw * cn^2;  pw = pw * 2.0;
-    a = an;  b = bn;  c = cn;
-  end
-  K = pi / (2.0 * a);
-  E = K * (1.0 - s);
-end
-
 # --- Exact mutual inductance of two coaxial loops (radii R1,R2, axial gap d) ---
+# ellipke is the builtin complete-elliptic-integral pair; it takes the
+# parameter m = k² (not the modulus k).
 function M = mutual_exact(Ra, Rb, d, mu0)
   k2 = 4.0 * Ra * Rb / ((Ra + Rb)^2 + d^2);
   kk = sqrt(k2);
-  [K, E] = ellipke_agm(k2);
+  [K, E] = ellipke(k2);
   M = mu0 * sqrt(Ra * Rb) * ((2.0 / kk - kk) * K - (2.0 / kk) * E);
 end
 
@@ -76,8 +65,8 @@ end
 # === Headline transformer: long, densely wound (ℓ/R1 = 16) ===
 ellR_head = 16.0;
 ell = ellR_head * R1;
-N1 = round(turns_per_R * ellR_head);           # 24 primary turns
-N2 = round(ratio * N1);                        # 48 secondary turns
+N1 = round(turns_per_R * ellR_head);           # 96 primary turns
+N2 = round(ratio * N1);                        # 192 secondary turns
 z1 = linspace(-ell/2, ell/2, N1);
 z2 = linspace(-ell/2, ell/2, N2);
 L1 = stack_self(z1, R1, a, mu0);

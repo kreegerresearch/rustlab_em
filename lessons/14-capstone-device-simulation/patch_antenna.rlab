@@ -1,6 +1,6 @@
 # patch_antenna.rlab — End-to-end capstone: 2-D side-view FDTD of a
 # microstrip patch antenna driven by a pulsed feed, with the
-# resonance read off the time series via FFT.
+# driven-response spectrum read off the time series via FFT.
 #
 # A faithful 3-D production simulation requires Tensor3 fields,
 # Bérenger PML on all six faces, and TF/SF excitation — every piece
@@ -12,7 +12,9 @@
 #   2. ε_r and PEC arrays         → Lesson 04
 #   3. Vectorised 2-D Yee FDTD    → Lesson 11 (cat-rebuild updates)
 #   4. Pulsed-feed waveport       → Lesson 13
-#   5. Probe FFT → S_11           → Lesson 13 (port + FFT pattern)
+#   5. Probe-trace FFT (informal) → Lesson 13 (port + FFT pattern;
+#                                    no S_11 here — that needs the 3-D
+#                                    waveport, see the notebook table)
 #   6. Animated field             → Lesson 09 frame()/saveanim()
 #
 # Geometry (side view, 2-D TMz):
@@ -85,11 +87,14 @@ f0     = 2.5e9;
 omega0 = 2 * pi * f0;
 tau_s  = 0.4e-9;
 t0_s   = 3 * tau_s;
-j_feed = x_lo;
+j_feed  = x_lo;
 i_probe = y_g + 2;
+j_probe = j_feed + 5;    # probe 5 cells off the driven feed column, still
+                         # under the patch — reads the substrate response
+                         # rather than the cell the source injects into.
 
 # === Records ===
-Ez_probe = linspace(0, 0, n_step);
+Ez_probe = zeros(n_step);
 
 figure();
 for step = 1:n_step
@@ -123,7 +128,7 @@ for step = 1:n_step
   Ez = Ez .* field_mask;
 
   # ----- Probe -----
-  Ez_probe(step) = real(Ez(i_probe, j_feed));
+  Ez_probe(step) = real(Ez(i_probe, j_probe));
 
   if mod(step, 40) == 0
     imagesc(real(Ez), "viridis");
@@ -138,12 +143,17 @@ saveanim("patch_antenna_animation.gif", 24);
 # === Time trace + FFT spectrum ===
 ts = (1:n_step) * dt;
 figure();
-plot(ts * 1e9, Ez_probe, "E_z(t) at feed probe");
+plot(ts * 1e9, Ez_probe, "E_z(t) at substrate probe");
 xlabel("t  (ns)");
 ylabel("E_z");
-title("Time trace at the feed probe — pulse + patch ring-down");
+title("Time trace at the probe — driven response under the patch");
 savefig("patch_time_trace.svg");
 
+# Driven window: the source is still on for most of these samples, so
+# the spectrum below is the *driven response* and its dominant peak is
+# the drive carrier. For the ring-down diagnostic of Exercises 1-2,
+# raise n_step to 6000 (skip the animation) and FFT the post-drive
+# tail Ez_probe(1300:n_step) instead.
 trace = Ez_probe(200:n_step);
 Sp = abs(fft(trace));
 Nw = length(trace);
@@ -155,7 +165,7 @@ plot(fs(1:half) / 1e9, Sp(1:half), "|FFT|");
 xlim([0.5, 8.0]);
 xlabel("frequency  (GHz)");
 ylabel("|E_z(f)|");
-title("Feed-probe spectrum — patch resonance peaks");
+title("Feed-probe spectrum — driven-response peaks");
 savefig("patch_spectrum.svg");
 
 [Sp_max, kmax] = max(Sp(1:half));

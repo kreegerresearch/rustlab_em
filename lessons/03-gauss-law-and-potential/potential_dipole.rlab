@@ -20,18 +20,28 @@ dx = xs(2) - xs(1);
 dy = ys(2) - ys(1);
 
 # === Far-field dipole potential ===
-# Bounded by ~ k_e p / dx² at the nearest-to-origin column (~45 kV here), so
-# no clipping needed — the 1e-12 floor on r² protects the (0,0) cell.
+# The 1e-12 floor on r² protects the (0,0) cell; the columns beside the
+# origin still reach ~ k_e p / dx² ≈ ±45 kV.
 r3 = (X .^ 2 + Y .^ 2 + 1e-12) .^ 1.5;
 V  = ke * p * X ./ r3;
 
+# imagesc colors by magnitude, so display |V| (sign is trivial: V > 0 for
+# x > 0, V < 0 for x < 0), clipped at 8 kV so the near-origin cells don't
+# wash out the kV-scale lobes.
+absV = abs(V);
 figure();
-hold on;
-imagesc(V, "viridis");
-contour(X, Y, V, 12, "k");
-title("Dipole potential V(x, y)");
-hold off;
+imagesc(min(absV, 8000), "viridis");
+title("Dipole |V|  (V, clipped at 8 kV; grid indices)");
 savefig("potential_dipole_heatmap.svg");
+
+# Contours use explicit levels — auto levels would chase the near-singular
+# values and cluster at the origin. Each |V| = c contour is the V = +c
+# lobe (right) plus the V = -c lobe (left).
+levels = [0.5, 1, 2, 4, 8] * 1000;      # equipotentials at ±{0.5, 1, 2, 4, 8} kV
+figure();
+contour(X, Y, absV, levels, "k");
+title("Equipotentials |V| = 0.5, 1, 2, 4, 8 kV  (x, y in m)");
+savefig("potential_dipole_contours.svg");
 
 # === Recover E = -∇V and compare to far-field at a clean test cell ===
 [Vx, Vy] = gradient(V, dx, dy);
@@ -40,8 +50,8 @@ Ey_fromV = -Vy;
 
 # Test cell at (x=0, y=0.04) — perpendicular bisector, far from charges.
 # Far-field analytic:  E_x = -k_e p / y³.
-print(real(Ex_fromV(46, 26)))     # ≈ -2798 V/m  (~0.4% stencil error vs closed form)
-print(real(Ey_fromV(46, 26)))     # ≈ 0  by symmetry
+print(Ex_fromV(46, 26))           # ≈ -2798 V/m  (~0.4% stencil error vs closed form)
+print(Ey_fromV(46, 26))           # ≈ 0  by symmetry
 print(-ke * p / (0.04 ^ 3))       # closed-form check ≈ -2808.6 V/m
 
 # === Plot the recovered field as a quiver overlay ===

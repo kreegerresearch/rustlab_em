@@ -8,7 +8,7 @@
 # (torus) with a null on-axis and a peak in the equatorial plane.
 #
 # Radiated power:
-#   P_rad = (η₀ |I_0|² |k dℓ|²) / (12 π) ≈ 80 π² (dℓ/λ)² |I_0|²/2 / η₀^{-1}
+#   P_rad = (η₀ |I_0|² |k dℓ|²) / (12 π) ≈ 80 π² (dℓ/λ)² |I_0|²/2
 # We compute P_rad both analytically and by numerically integrating
 # the Poynting flux over a unit-radius sphere; the two should agree
 # to within the trapezoidal-rule discretisation error.
@@ -37,7 +37,7 @@ P    = F .^ 2;            # |F|² ∝ sin²θ
 ths_full = linspace(0, 2 * pi, 2 * N_th - 1);
 P_full   = abs(sin(ths_full));   # |sin θ| works as a one-sided "doughnut" trace
 figure();
-polar(ths_full, P_full, "|F(theta)|^2  (Hertzian)");
+polar(ths_full, P_full, "|F(theta)|  (Hertzian)");
 title("Hertzian dipole far-field pattern  —  |F| ∝ sin θ");
 savefig("hertzian_polar.svg");
 
@@ -58,10 +58,13 @@ print(P_rad)                     # ~ small number for a Hertzian element
 
 # === Numerical Poynting integral over a unit-radius sphere ===
 # Drop the 1/r² distance falloff by setting r = 1 (we want the angular
-# integral). The angular factor of |E_θ|² for the Hertzian is
-#   (ω μ₀ I₀ dℓ / 4π)² · sin²θ.
-prefac = (omega * mu0 * I0 * dell / (4 * pi))^2 / (2 * eta0);   # W/m² at r = 1, divided by sin²θ
-# ∮ angular: ∫_0^π ∫_0^{2π} sin²θ · sinθ dθ dφ = 2π · 8/(3·2) = 8π/3
-P_rad_num = prefac * 8 * pi / 3;
-print(P_rad_num)                 # match analytic
-print(abs(P_rad - P_rad_num) / P_rad)
+# integral). The radial Poynting density at r = 1 is
+#   S_r(θ) = |E_θ|² / (2 η₀) = prefac · sin²θ,
+#   prefac = (ω μ₀ I₀ dℓ / 4π)² / (2 η₀)          (W/m²)
+# so P_rad_num = prefac · 2π ∫ sin³θ dθ, using the *trapz* value of the
+# θ integral computed above — a genuinely numerical check against the
+# closed form (which uses the exact 8π/3).
+prefac = (omega * mu0 * I0 * dell / (4 * pi))^2 / (2 * eta0);
+P_rad_num = prefac * 2 * pi * int_sin3;
+print(P_rad_num)                 # numerical Poynting integral (W)
+print(abs(P_rad - P_rad_num) / P_rad)   # rel. diff — trapz error, ~7e-11

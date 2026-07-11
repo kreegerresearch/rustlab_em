@@ -121,6 +121,13 @@ print(A_inc)               # ~ 0.506 (half of unit Gaussian source)
 print(A_trans)             # ~ 0.446 — first transmitted lobe
 print(A_trans / A_inc)     # ~ 0.882, vs Fresnel 8/9 ≈ 0.889
 
+# Reflected lobe at the k_refl probe: the incident passes first (peak
+# ~ step 140), the slab reflection returns at ~ step 340, and the
+# slab's first internal Fabry-Perot echo does not get back until
+# ~ step 750 — so steps 250..650 isolate the primary reflection.
+A_refl = max(abs(E_refl_hist(250:650)));
+print(A_refl / A_inc)      # ~ 0.335, vs Fresnel |R| = 1/3
+
 # === Static traces plot ===
 figure();
 ts = (1:n_step) * dt;

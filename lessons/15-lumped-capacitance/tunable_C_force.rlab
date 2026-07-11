@@ -36,26 +36,16 @@ L_lap = laplacian_2d(nx, ny, dx, dy);
 A_base = -1 * L_lap;
 N = nx * ny;
 
-function [A_out, b_out] = pin(A, b, i, j, ny, nx, V_val)
-  k = ij2k(i, j, ny);
-  A(k, k) = 1.0;
-  if i > 1;   A(k, ij2k(i-1, j, ny)) = 0.0; end
-  if i < ny;  A(k, ij2k(i+1, j, ny)) = 0.0; end
-  if j > 1;   A(k, ij2k(i, j-1, ny)) = 0.0; end
-  if j < nx;  A(k, ij2k(i, j+1, ny)) = 0.0; end
-  b(k) = V_val;
-  A_out = A;
-  b_out = b;
-end
-
 # === Cap-extraction wrapper ===
+# Plate pinning via the pin_dirichlet builtin (L05 teaches the row-pin
+# mechanism by hand).
 function C_pul = solve_C(A_base, ny, nx, j_lo, j_hi, i_bot, i_top, V0, eps0, dx, dy)
-  A = A_base;
-  b = zeros(1, nx * ny);
-  for jj = j_lo:j_hi
-    [A, b] = pin(A, b, i_top, jj, ny, nx, +V0 / 2);
-    [A, b] = pin(A, b, i_bot, jj, ny, nx, -V0 / 2);
-  end
+  mask_top = zeros(ny, nx);
+  mask_top(i_top, j_lo:j_hi) = 1;
+  mask_bot = zeros(ny, nx);
+  mask_bot(i_bot, j_lo:j_hi) = 1;
+  [A, b] = pin_dirichlet(A_base, zeros(1, nx * ny), mask_top, +V0 / 2);
+  [A, b] = pin_dirichlet(A, b, mask_bot, -V0 / 2);
   V = reshape(spsolve(A, b), ny, nx);
   # Gauss pillbox around top plate.
   # Top face above plate: row i_top + 1.

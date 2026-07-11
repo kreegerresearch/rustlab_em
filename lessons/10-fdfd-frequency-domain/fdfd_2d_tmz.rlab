@@ -64,7 +64,7 @@ contrast = eps_total - eps_bg;
 src = -k0 * k0 * contrast .* E_inc;
 
 # Solve A * E_scat = src(:)
-b = src(:)';
+b = src(:).';
 E_scat_flat = spsolve(A, b);
 E_scat = reshape(E_scat_flat, ny, nx);
 
@@ -72,16 +72,30 @@ E_total = E_inc + E_scat;
 
 # Sanity: scattered field outside the cylinder + PML should be the
 # outgoing wave from the cylinder. Sample at four equidistant points
-# on a circle of radius 1.5 λ from the cylinder centre — magnitudes
-# differ but should be of comparable order (fwd-scatter ≠ back-scatter
-# because the cylinder isn't sub-wavelength).
+# on a circle of radius 1.5 λ from the cylinder centre. For ka ≈ 2.5
+# (R = 0.4 λ₀, ε_r = 4) the 2-D Mie series is forward-dominant, so the
+# forward (+x, shadow-forming) probe should be the largest.
 ic = round(ny / 2);
 jc = round(nx / 2);
 r_test = round(1.5 * lambda0 / dx);
-print(abs(E_scat(ic, jc + r_test)))    # forward
-print(abs(E_scat(ic, jc - r_test)))    # backward
+print(abs(E_scat(ic, jc + r_test)))    # forward  (+x, shadow-forming lobe)
+print(abs(E_scat(ic, jc - r_test)))    # backward (-x, toward the source)
 print(abs(E_scat(ic + r_test, jc)))    # transverse +y
 print(abs(E_scat(ic - r_test, jc)))    # transverse -y
+
+# Shadow depth: mean |E_total| in a lee window (just behind the
+# cylinder, +x side) vs a lit window (just in front, -x side), both
+# hugging the beam axis. The cylinder casts a real shadow, so the lee
+# mean sits well below the lit mean.
+rows_ax  = (ic - 5):(ic + 5);
+lit_cols = (jc - 20):(jc - 6);
+lee_cols = (jc + 6):(jc + 20);
+lit_block = abs(E_total(rows_ax, lit_cols));
+lee_block = abs(E_total(rows_ax, lee_cols));
+mean_lit = mean(lit_block(:));
+mean_lee = mean(lee_block(:));
+print(mean_lit)                        # lit side  (in front of cylinder)
+print(mean_lee)                        # shadow    (behind the cylinder)
 
 figure();
 imagesc(real(E_total), "viridis");

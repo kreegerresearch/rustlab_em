@@ -33,8 +33,8 @@ notebooks-check: notebooks ## Fail if book/ drifted from sources
 	fi
 
 lesson-%:
-	@for f in lessons/$*-*/*.rlab; do echo "=== $$f ==="; rustlab run "$$f" || true; done
+	@set -e; for f in lessons/$*-*/*.rlab; do echo "=== $$f ==="; rustlab run "$$f"; done
 
 clean: ## Delete the interactive HTML build and .rlab script artefacts
 	rm -f $(BOOK)/*.html
-	rm -f lessons/*/*.svg lessons/*/*.html lessons/*/*.png
+	rm -f lessons/*/*.svg lessons/*/*.html lessons/*/*.png lessons/*/*.gif

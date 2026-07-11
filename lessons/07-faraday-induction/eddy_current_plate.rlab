@@ -1,10 +1,12 @@
 # eddy_current_plate.rlab — Eddy currents in a thin conducting disk.
 #
-# Geometry:   copper disk of radius R = 6 cm in a 0.20 × 0.20 m grounded
-#             box, σ = 5.8e7 S/m, axial Ḃz = 1 T/s applied uniformly.
+# Geometry:   copper disk of radius R = 6 cm centred in a 0.20 × 0.20 m
+#             domain, σ = 5.8e7 S/m, axial Ḃz = 1 T/s applied uniformly.
 # Method:     stream function ψ with J = ẑ × ∇ψ. Charge conservation is
 #             automatic; Faraday's law gives ∇²ψ = -σ Ḃz (constant source
-#             inside the plate, ψ = 0 outside).
+#             inside the plate). Pinning ψ = 0 outside the disk enforces
+#             the insulated edge J·n̂ = 0 — a stream-function condition,
+#             not a conductor.
 # Verifies:   |J|(r) = σ Ḃz r / 2 inside the disk, circulating in the
 #             sense that opposes Ḃz (Lenz's law).
 #
@@ -12,6 +14,8 @@
 
 sigma_cu = 5.8e7;
 Bdot     = 1.0;
+
+set_default_axis("xy");        # physics y-axis for every imagesc panel below
 
 nx3 = 100; ny3 = 100;
 Lx3 = 0.20; Ly3 = 0.20;
@@ -33,24 +37,14 @@ savefig("plate_mask.svg");
 L_p = laplacian_2d(nx3, ny3, dx3, dy3);
 A_p = -1 * L_p;
 n_p = nx3 * ny3;
-b_p = zeros(1, n_p);
 src = sigma_cu * Bdot;
 
-for i = 1:ny3
-  for j = 1:nx3
-    k = ij2k(i, j, ny3);
-    if plate_mask(i, j) > 0.5
-      b_p(1, k) = src;                  # interior of plate
-    else
-      A_p(k, k) = 1.0;                  # pin ψ = 0 outside
-      if i > 1;   A_p(k, ij2k(i-1, j, ny3)) = 0.0; end
-      if i < ny3; A_p(k, ij2k(i+1, j, ny3)) = 0.0; end
-      if j > 1;   A_p(k, ij2k(i, j-1, ny3)) = 0.0; end
-      if j < nx3; A_p(k, ij2k(i, j+1, ny3)) = 0.0; end
-      b_p(1, k) = 0.0;
-    end
-  end
-end
+# Source σḂ (A/m³) in the plate cells; the column-major flatten of the
+# mask matches the ij2k node ordering of laplacian_2d.
+b_p = src * reshape(plate_mask, 1, n_p);
+
+# Pin ψ = 0 on every cell outside the plate in one call.
+[A_p, b_p] = pin_dirichlet(A_p, b_p, 1 - plate_mask, 0.0);
 
 psi = real(reshape(spsolve(A_p, b_p), ny3, nx3));
 

@@ -3,7 +3,7 @@
 # Mask algebra (see ../../notebooks/04-geometry-and-material-maps.md):
 #   intersection:   M1 .* M2
 #   complement:     1 - M
-#   union:          M1 + M2 - M1 .* M2     # NOT max() — max is scalar in rustlab
+#   union:          M1 + M2 - M1 .* M2     # or max(M1, M2), elementwise since 0.3.6
 #   difference:     M1 .* (1 - M2)
 
 set_default_axis("xy");        # physics y-axis for every imagesc panel below

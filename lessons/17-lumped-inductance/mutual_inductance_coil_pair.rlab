@@ -8,7 +8,7 @@
 # Verifies:   M matches the exact coaxial-loop elliptic-integral formula
 #                 M = μ₀√(R₁R₂)[(2/k − k)K(k) − (2/k)E(k)],
 #                 k² = 4R₁R₂/((R₁+R₂)² + d²),
-#             to < 0.1 %, and approaches the magnetic-dipole asymptote
+#             to a max relative error ≈ 5.4e-7, and approaches the magnetic-dipole asymptote
 #             M_dip = μ₀πR⁴/(2d³) only slowly as d/R grows. The coupling
 #             coefficient k_c = M/√(L₁L₂) decays monotonically with d/R
 #             (k_c ≈ 0.22 at d/R = 0.5 for these thin single-turn loops —
@@ -36,31 +36,13 @@ cosf  = cos(phi);
 Nr = 1000;
 rs = linspace(0, R, Nr);
 
-# Complete elliptic integrals K(m), E(m) (parameter m = k²) via the
-# arithmetic-geometric mean — quadratic convergence, no library needed.
-function [K, E] = ellipke_agm(m)
-  a = 1.0;
-  b = sqrt(1.0 - m);
-  c = sqrt(m);
-  s = 0.5 * c^2;                                # running E correction
-  pw = 1.0;
-  for it = 1:12
-    an = 0.5 * (a + b);
-    bn = sqrt(a * b);
-    cn = 0.5 * (a - b);
-    s = s + pw * cn^2;                          # weight 2^{it-1} c_it²
-    pw = pw * 2.0;
-    a = an; b = bn; c = cn;
-  end
-  K = pi / (2.0 * a);
-  E = K * (1.0 - s);
-end
-
 # Exact mutual inductance of two coaxial loops, radii R1, R2, gap d.
+# ellipke is rustlab's complete-elliptic-integral builtin (AGM under
+# the hood); its argument is the parameter m = k², not the modulus k.
 function M = mutual_exact(R1, R2, d, mu0)
   k2 = 4.0 * R1 * R2 / ((R1 + R2)^2 + d^2);
   kk = sqrt(k2);
-  [K, E] = ellipke_agm(k2);
+  [K, E] = ellipke(k2);
   M = mu0 * sqrt(R1 * R2) * ((2.0 / kk - kk) * K - (2.0 / kk) * E);
 end
 
@@ -94,7 +76,7 @@ end
 
 print(M_num * 1e9)                              # numerical flux nH
 print(M_ex  * 1e9)                              # exact elliptic nH
-print(max(abs(M_num - M_ex) ./ M_ex))           # max rel. error vs exact → < 1e-3
+print(max(abs(M_num - M_ex) ./ M_ex))           # max rel. error vs exact → ≈ 5.4e-7
 print(M_dip * 1e9)                              # dipole-asymptote nH
 print(kc)                                        # coupling coefficient
 

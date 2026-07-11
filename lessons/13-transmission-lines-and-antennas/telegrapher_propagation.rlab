@@ -38,18 +38,18 @@ N   = 401;
 dz  = 1e-3;
 S   = 0.95;
 dt  = S * dz / v_prop;
-n_step = 1200;
+# (Each run's step count is set inside run_tline as n_step_l = 780.)
 
 # === Source — Gaussian pulse on the V end ===
 t0  = 30 * dt;
 tau = 8 * dt;
 
 # === Termination cases ===
-# Encode each as a per-step boundary update on V(N).
-# - Z_L = Z₀ (matched): one-way absorbing — V(N) ← V(N-1)
-# - open (Z_L = ∞):     I(N+1) = 0, i.e. V(N) ← V(N) − (Δt/(C' dz)) · (0 − I(N))
-# - short (Z_L = 0):    V(N) ← 0
-# - Z_L = 2 Z₀:         I(N+1) = V(N) / Z_L; V update with this I term.
+# All four run through the same load-current boundary update
+#   I_load = V(N) / Z_L;  V(N) ← V(N) − (Δt/(C' dz)) (I_load − I(N))
+# with Z_L = 50 Ω (matched), Z_L = 1e12 Ω (open: I_load ≈ 0) and
+# Z_L = 100 Ω (mismatch). The short (Z_L = 0) is special-cased as
+# V(N) = 0 to avoid the division by zero.
 #
 # Run all four cases sequentially and overlay |V(z)| snapshots.
 
@@ -134,7 +134,8 @@ savefig("tline_reflections.svg");
 # Peak |V| of the reflected pulse near the source — proxy for |Γ|.
 # Window cells 20-80 (around source) for the *second* peak.
 print("--- Reflection check ---")
-print(max(abs(real(V_match(20:80)))))     # ~ 0 (matched)
-print(max(abs(real(V_open(20:80)))))      # ~ source peak (Γ = +1)
-print(max(abs(real(V_short(20:80)))))     # ~ source peak (Γ = -1, sign flip)
-print(max(abs(real(V_mis(20:80)))))       # ~ source_peak / 3 (Γ = +1/3)
+print(max(abs(real(V_match(20:80)))))     # ~ 8e-4 (matched: pulse absorbed)
+print(max(abs(real(V_open(20:80)))))      # ≈ 0.527 = launched-pulse amplitude (Γ = +1;
+                                          #   the soft source injects ≈ half its unit peak)
+print(max(abs(real(V_short(20:80)))))     # ≈ 0.527 (Γ = -1, sign flip)
+print(max(abs(real(V_mis(20:80)))))       # ≈ 0.177 ≈ launched / 3 (Γ = +1/3)

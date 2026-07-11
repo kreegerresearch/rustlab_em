@@ -2,8 +2,14 @@
 #
 # A binary mask resolves a curved boundary as a staircase: every cell is
 # fully inside or fully outside. Subgrid sampling builds a fractional
-# coverage map α ∈ [0, 1] that captures partial coverage and converges
-# to the true geometry as O(h²) instead of O(h).
+# coverage map α ∈ [0, 1] that captures partial coverage. A K×K midpoint-
+# subsampled α map is arithmetically a staircase mask on a K×-finer grid,
+# so its area error is the staircase error at spacing h/K — about K²
+# (here ≈ 83×) smaller on any one grid. Across grids, though, the raw
+# disk-area error is a lattice-count (Gauss-circle) effect that fluctuates
+# in sign and size with N rather than falling as a clean O(h) vs O(h²)
+# pair (notebook Exercise 4); the clean rate separation shows up in solver
+# quantities such as capacitance (Lessons 05/13), not in this area metric.
 #
 # Reference: ../../notebooks/04-geometry-and-material-maps.md.
 
@@ -52,7 +58,7 @@ A_conf  = sum(sum(alpha)) * dx * dy;
 A_true  = pi;
 
 print(A_stair)                              # ≈ 3.135
-print(A_conf)                               # ≈ 3.1414
+print(A_conf)                               # ≈ 3.1417
 print(A_true)                               # 3.14159...
 print(abs(A_stair - A_true) / A_true)       # staircase relative error ≈ 2e-3
-print(abs(A_conf  - A_true) / A_true)       # conformal relative error ≈ 1e-5
+print(abs(A_conf  - A_true) / A_true)       # conformal relative error ≈ 2.4e-5

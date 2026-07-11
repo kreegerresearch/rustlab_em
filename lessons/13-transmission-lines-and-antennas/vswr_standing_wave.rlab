@@ -40,7 +40,7 @@ Iv = zeros(1, N);
 # Track the |V(z)| **envelope** = max over time of |V(z, t)|. For a
 # steady-state standing wave the temporal min is zero at every cell,
 # so we extract the spatial VSWR from the envelope alone.
-V_env = linspace(0, 0, N);
+V_env = zeros(1, N);
 
 watch_from = round(0.75 * n_step);
 
@@ -63,8 +63,7 @@ for step = 1:n_step
 
   # No left ABC — let the source dominate
   if step > watch_from
-    av = abs(real(V));
-    V_env = (V_env + av + abs(V_env - av)) / 2;     # elementwise max
+    V_env = max(V_env, abs(real(V)));     # elementwise two-arg max
   end
 end
 

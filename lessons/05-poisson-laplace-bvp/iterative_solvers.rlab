@@ -2,10 +2,10 @@
 #
 # PDE:        ∇²V = 0  on (0,1)²,  V_top = sin(π x), other edges 0.
 # Methods:    Jacobi, Gauss-Seidel, SOR (with optimal ω).
-# Spectral radii (theory, N×N grid):
-#   Jacobi:   ρ_J  = cos(π/N)
-#   GS:       ρ_GS = cos²(π/N)
-#   SOR:      ρ_w  = (1 - sin(π/N)) / (1 + sin(π/N))   at ω_opt = 2 / (1 + sin(π/N))
+# Spectral radii (theory, N interior cells per side, spacing h = 1/(N+1)):
+#   Jacobi:   ρ_J  = cos(π/(N+1))
+#   GS:       ρ_GS = cos²(π/(N+1))
+#   SOR:      ρ_w  = (1 - sin(π/(N+1))) / (1 + sin(π/(N+1)))   at ω_opt = 2 / (1 + sin(π/(N+1)))
 #
 # Reference: ../../notebooks/05-poisson-laplace-bvp.md (§ Iteration vs Direct).
 
@@ -60,7 +60,7 @@ end
 print(max_err(Vp(2:M+1, 2:M+1), V_an))     # GS @ 1000 iters
 
 # === SOR with optimal ω ===
-omega_opt = 2.0 / (1.0 + sin(pi / M));
+omega_opt = 2.0 / (1.0 + sin(pi / (M + 1)));
 target_sor = 100;
 Vp = init_grid(M, hM);
 for k = 1:target_sor
@@ -71,5 +71,6 @@ for k = 1:target_sor
     end
   end
 end
-print(omega_opt)                           # ≈ 1.729
-print(max_err(Vp(2:M+1, 2:M+1), V_an))     # SOR @ 100 iters — already ≪ GS@1000
+print(omega_opt)                           # ≈ 1.741
+print(max_err(Vp(2:M+1, 2:M+1), V_an))     # SOR @ 100 iters — matches GS@1000's
+                                           # floored error in 10× fewer sweeps

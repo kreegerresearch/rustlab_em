@@ -2,7 +2,7 @@
 
 # Lesson 08: Maxwell's Equations — The Complete Set
 
-The first seven lessons assembled the four laws of classical electromagnetism one at a time: Coulomb (Lesson 02) gave $\nabla\cdot\vec E = \rho/\varepsilon_0$, Gauss for magnetism (Lesson 06) gave $\nabla\cdot\vec B = 0$, Faraday (Lesson 07) gave $\nabla\times\vec E = -\partial\vec B/\partial t$, and Ampère (Lesson 06) — *uncorrected* — gave $\nabla\times\vec B = \mu_0\vec J$. That last one is wrong, in a quietly catastrophic way: it is inconsistent with charge conservation the moment $\rho$ varies in time. Maxwell's fix was to add a single term — the **displacement current** $\mu_0\varepsilon_0\,\partial\vec E/\partial t$ — to Ampère's law. Once that term is in place the four equations become self-consistent, predict electromagnetic waves, and admit a clean energy-conservation theorem (Poynting's). This lesson verifies all three of those statements numerically.
+The first seven lessons assembled the four laws of classical electromagnetism one at a time: Coulomb (Lesson 02) gave $\nabla\cdot\vec E = \rho/\varepsilon_0$, Gauss for magnetism (Lesson 06) gave $\nabla\cdot\vec B = 0$, Faraday (Lesson 07) gave $\nabla\times\vec E = -\partial\vec B/\partial t$, and Ampère (Lesson 06) — *uncorrected* — gave $\nabla\times\vec B = \mu_0\vec J$. That last one is wrong, in a quietly catastrophic way: it is inconsistent with charge conservation the moment $\rho$ varies in time. Maxwell's fix was to add a single term — $\mu_0$ times the **displacement-current density** $\varepsilon_0\,\partial\vec E/\partial t$ — to Ampère's law. Once that term is in place the four equations become self-consistent, predict electromagnetic waves, and admit a clean energy-conservation theorem (Poynting's). This lesson verifies all three of those statements numerically.
 
 ## Learning Objectives
 
@@ -33,6 +33,11 @@ with the constitutive relations $\vec D = \varepsilon\vec E$ and $\vec B = \mu\v
 
 $$
 \oint_{\partial V}\vec D\cdot d\vec A = Q_{\rm enc}, \qquad
+\oint_{\partial V}\vec B\cdot d\vec A = 0,
+$$
+
+$$
+\oint_C \vec E\cdot d\vec\ell = -\frac{d}{dt}\!\int_S \vec B\cdot d\vec A, \qquad
 \oint_C \vec H\cdot d\vec\ell = I_{\rm enc} + \frac{d}{dt}\!\int_S \vec D\cdot d\vec A.
 $$
 
@@ -102,7 +107,7 @@ legend("I_wire (mA)", "I_disp (mA)")
 
 <!-- rustlab:output-end -->
 
-The two traces lie on top of each other to within $10^{-4}$ of $I_0$ — the residual is the centred-difference truncation error on $\partial E/\partial t$, scaling like $(\omega\Delta t)^2/6$. Halving $\Delta t$ would shrink it four-fold.
+The two traces lie on top of each other to within $1.6\times10^{-4}$ of $I_0$ — the residual is the centred-difference truncation error on $\partial E/\partial t$, scaling like $(\omega\Delta t)^2/6$. Halving $\Delta t$ would shrink it four-fold.
 
 ```rustlab
 % Maximum relative discrepancy in the trace interior.
@@ -268,9 +273,9 @@ The two divergence equations $\nabla\cdot\vec E = 0$ and $\nabla\cdot\vec B = 0$
 
 Take Faraday and Ampère, dot them with $\vec H$ and $\vec E$ respectively, and subtract. After one identity ($\nabla\cdot(\vec E\times\vec H) = \vec H\cdot(\nabla\times\vec E) - \vec E\cdot(\nabla\times\vec H)$) the result is **Poynting's theorem**:
 
-$$\frac{\partial u}{\partial t} + \nabla\cdot\vec S = -\vec J\cdot\vec E, \qquad u = \tfrac12(\varepsilon_0 E^2 + B^2/\mu_0), \qquad \vec S = \vec E\times\vec H.$$
+$$\frac{\partial u}{\partial t} + \nabla\cdot\vec S = -\vec J\cdot\vec E, \qquad u = \tfrac12(\vec E\cdot\vec D + \vec B\cdot\vec H), \qquad \vec S = \vec E\times\vec H.$$
 
-The interpretation is local energy conservation: the energy density $u$ in a region changes either because power $\vec J\cdot\vec E$ is being dissipated by free currents (right-hand side) or because the **Poynting vector** $\vec S$ carries energy across the boundary (the divergence on the left). $\vec S$ has units of W/m² — *power per unit area* — and its direction is the local energy flux.
+The interpretation is local energy conservation: the energy density $u$ in a region changes either because power $\vec J\cdot\vec E$ is being dissipated by free currents (right-hand side) or because the **Poynting vector** $\vec S$ carries energy across the boundary (the divergence on the left). $\vec S$ has units of W/m² — *power per unit area* — and its direction is the local energy flux. In vacuum the energy density reduces to $u = \tfrac12(\varepsilon_0 E^2 + B^2/\mu_0)$; the $\vec E\cdot\vec D$ and $\vec B\cdot\vec H$ form written above also counts the energy stored in a linear dielectric or magnetic medium — which is exactly what the coaxial-cable example below, with its dielectric annulus, requires.
 
 The textbook example that first drove the point home historically is the **DC coaxial cable**: even at DC, where there is no time variation at all, energy flows from the source to the load through the *dielectric* between the conductors, not through the wires. The integrated Poynting flux through any cross-section of the dielectric annulus equals the circuit power $V I$. Setting up the geometry as inner radius $a$, outer radius $b$, voltage $V$ between conductors, current $I$ down the axis,
 
@@ -315,7 +320,7 @@ ylabel("y")
 ```
 
 <!-- rustlab:output-start -->
-![plot 5](plots/08-maxwell-equations/plot-5-749d9adc.svg)
+![plot 5](plots/08-maxwell-equations/plot-5-bfab9afe.svg)
 
 <!-- rustlab:output-end -->
 
@@ -366,7 +371,7 @@ Run all three with `make lesson-08`, or one at a time via `rustlab run lessons/0
 | Quantity | Expected Value |
 |---|---|
 | Capacitor capacitance ($A=1\,\text{cm}^2$, $d=1\,\text{mm}$) | $\varepsilon_0 A/d \approx 8.85\times10^{-13}\,\text{F}$ |
-| $\max\|I_{\rm wire}-I_{\rm disp}\|/I_0$ at $N_t = 401$, $f = 1\,\text{MHz}$ | $\sim 1.6\times10^{-4}$ (truncation only) |
+| $\max\lvert I_{\rm wire}-I_{\rm disp}\rvert/I_0$ at $N_t = 401$, $f = 1\,\text{MHz}$ | $\sim 1.6\times10^{-4}$ (truncation only) |
 | Faraday residual / peak at $N = 81$ | $\sim 3\times10^{-3}$ |
 | Ampère residual / peak at $N = 81$ | identical to Faraday (plane-wave dispersion ties them) |
 | Convergence ratio $N \to 2N$ | $\approx 4$ (second-order centred differences) |
@@ -379,7 +384,7 @@ Run all three with `make lesson-08`, or one at a time via `rustlab run lessons/0
 2. **Sourceless Maxwell residuals as a stencil benchmark.** In `maxwell_consistency.rlab` replace the analytic plane wave with a *standing* wave $E_y(x,t) = E_0\sin(k x)\cos(\omega t)$, $B_z = -(E_0/c)\cos(k x)\sin(\omega t)$. Verify the Faraday and Ampère residuals still vanish to truncation order, and that the standing wave is just the superposition of two counter-propagating plane waves.
 3. **Energy conservation along the cable.** Cut the coaxial cable's dielectric into thin axial slabs; compute $\partial u/\partial t$ in each (zero, since DC) and the difference of $\int\vec S\cdot d\vec A$ on the two end caps. Verify the difference is zero — Poynting's theorem at DC reduces to $\nabla\cdot\vec S = 0$ in the dielectric.
 4. **Lossy coax.** Add a small uniform conductivity $\sigma_d$ to the dielectric. Compute $\int\vec J\cdot\vec E\,dV$ in the annulus and verify it equals the *difference* between the input-end and output-end Poynting fluxes — the missing power dissipates as heat. (Numerical: pick $\sigma_d$ small enough that $E_r$ and $H_\varphi$ are still well approximated by their lossless forms, and integrate over a finite cable length.)
-5. **Wave on a 2-D grid.** Build the same plane wave but on a 2-D $(x,y)$ snapshot at a fixed $t$, with $E_y(x,y) = E_0\cos(k_x x + k_y y)$ and propagation direction $\hat k = (k_x, k_y)/k$. Verify $\vec E\perp\vec k$ and $\vec B = \hat k\times\vec E/c$ component by component; then add a second plane wave with the *opposite* $\hat k$ and confirm the result is a 2-D standing wave with stationary nodal lines.
+5. **Wave on a 2-D grid.** Build the same plane wave but on a 2-D $(x,y)$ snapshot at a fixed $t$, polarised *out of plane*: $E_z(x,y) = E_0\cos(k_x x + k_y y)$ with in-plane propagation direction $\hat k = (k_x, k_y)/k$, so transversality $\vec E\perp\hat k$ is automatic. Verify $\vec B = \hat k\times\vec E/c$ component by component — it lies *in* the plane, $\vec B = (E_z/c)\,(k_y, -k_x)/k$, perpendicular to $\hat k$ with magnitude $|E_z|/c$ everywhere; then add a second plane wave with the *opposite* $\hat k$ and confirm the result is a 2-D standing wave with stationary nodal lines. (An in-plane polarisation also works, but it must be chosen perpendicular to $\hat k$, e.g. $\vec E \propto (-k_y, k_x)/k$ — the naive choice $\vec E = E_0\,\hat y$ has $\vec E\cdot\hat k \ne 0$ and violates $\nabla\cdot\vec E = 0$ unless $k_y = 0$.)
 
 ## What's next
 

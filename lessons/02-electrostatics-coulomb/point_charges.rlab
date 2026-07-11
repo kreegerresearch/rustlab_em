@@ -38,10 +38,8 @@ Ex_d += ke * (-q) * rx ./ r3;
 Ey_d += ke * (-q) * ry ./ r3;
 
 # Field at the midpoint between the charges:  E_x = -8 k_e q / d².
-# Wrap with real() because matrix `./` in rustlab stores complex internally;
-# the imaginary part here is float-precision noise (~1e-11 relative).
-print(real(Ex_d(26, 26)))         # ≈ -179750 V/m
-print(real(Ey_d(26, 26)))         # ≈ 0  by symmetry
+print(Ex_d(26, 26))               # ≈ -179750 V/m
+print(Ey_d(26, 26))               # ≈ 0  by symmetry
 
 figure();
 quiver(X, Y, Ex_d, Ey_d, "Dipole:  +q at (+d/2, 0),  -q at (-d/2, 0)");
@@ -73,8 +71,8 @@ for k = 1:size(charges, 1)
 end
 
 # At the origin, the four charges produce E = 0 by symmetry.
-print(real(Ex_q(26, 26)))         # ≈ 0
-print(real(Ey_q(26, 26)))         # ≈ 0
+print(Ex_q(26, 26))               # ≈ 0
+print(Ey_q(26, 26))               # ≈ 0
 
 figure();
 quiver(X, Y, Ex_q, Ey_q, "Quadrupole:  +q on x-axis, -q on y-axis (each at distance d)");

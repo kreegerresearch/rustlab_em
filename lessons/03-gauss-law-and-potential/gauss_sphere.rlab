@@ -23,7 +23,7 @@ Vr = (ke * Q * (3 * R * R - rs .* rs) / (2 * R^3))   .* inside ...
    + (ke * Q ./ rs)                                  .* outside;
 
 # === Sanity checks ===
-print(Er(1))                  # ≈ 0   (linear in r near origin)
+print(Er(1))                  # ≈ 71.9 V/m (small — grows linearly in r near the origin)
 idx_R = argmin(abs(rs - R));
 print(Er(idx_R))              # ≈ 3586 V/m (nearest grid point just inside R; closed form ≈ 3595)
 print(ke * Q / (R * R))       # closed form for the surface value

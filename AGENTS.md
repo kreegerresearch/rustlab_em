@@ -145,7 +145,7 @@ The curriculum targets a "mini Ansys" endpoint: starting from vector calculus, s
 | 11 | FDTD — Time-Domain, Dispersive Materials, PML | Yee grid, leapfrog, TF/SF source, Drude/Debye/Lorentz via ADE, split-field PML | Reviewed |
 | 12 | Waveguides, Cavity Eigenmodes & Radiation | Numerical generalized eigenvalue problem, rectangular modes, NF→FF transform, Hertzian + half-wave dipole | Reviewed |
 | 13 | Transmission Lines, S-Parameters & Antennas | Coax/twin-wire $Z_0$, telegrapher + VSWR, multiport S-parameters via waveport excitation, 73 Ω radiation resistance | Reviewed |
-| 14 | Capstone — End-to-End Device Simulation | Patch antenna + microstrip line: geometry → material map → FDTD → $S_{11}$ + gain pattern | Reviewed |
+| 14 | Capstone — End-to-End Device Simulation | Patch antenna + microstrip feed: geometry → material map → 2-D FDTD → resonance spectrum (waveport $S_{11}$ + NF→FF gain pattern mapped as the 3-D extension) | Reviewed |
 | 15 | Lumped Capacitance Extraction | 3-D / multi-conductor $C$, capacitance matrix via cached LU, fringing correction, MEMS force | Reviewed |
 | 16 | Smith Chart & Impedance Matching | Bilinear $\Gamma$ map, L-match / stub / $\lambda/4$ synthesis, $S_{11}$ locus | Reviewed |
 | 17 | Lumped Inductance Extraction | Loop / solenoid $L$, mutual-inductance matrix, transformer coupling $k$, Nagaoka end-effect | Reviewed |

@@ -13,10 +13,12 @@
 # for each, and compare each run's interior field to a "reference"
 # computed on a much larger grid where reflections never reach the
 # probe within the simulation time. Because sigma_max is rescaled so
-# every depth targets the same theoretical −80 dB, the measured
-# residual |E_residual| / |E_incident| is dominated by the DISCRETE
-# reflection off the sampled cubic ramp; it drops by ~ ×2.5 per
-# doubling of d (a power law ~ d^−1.3), not exponentially.
+# every depth targets the same theoretical reflection R_target = 1e-8,
+# the measured
+# residual |E_residual| / |E_incident| is dominated by DISCRETE
+# reflection — off the sampled cubic ramp AND off the co-located σ*
+# (see the H-conductivity note below); it drops by ~ ×2.5 per doubling
+# of d (a power law ~ d^−1.3), not exponentially.
 #
 # Split-field PML (Bérenger, 1994) for 2-D TMz:
 #   E_z is split into E_zx and E_zy:
@@ -74,14 +76,17 @@ end
 # === One self-contained PML-FDTD run ===
 function E_pr_trace = run_pml(d, nx, ny, dx, dy, dt, n_step, c0, mu0, eps0, ...
                               i_src, j_src, i_pr, j_pr, t0, tau, f0)
-  # Profile design: sigma_max chosen for theoretical −80 dB reflection
-  # at normal incidence; cubic ramp keeps the impedance gradient smooth.
+  # Profile design: sigma_max chosen for a theoretical reflection
+  # R_target = 1e-8 at normal incidence (the -log(1e-8) below); the cubic
+  # ramp keeps the impedance gradient smooth.
   sigma_max = -log(1e-8) * (3 + 1) * eps0 * c0 / (2 * d * dx);
   sig_x_E = build_sigma_x(nx, d, sigma_max);              # at E_z columns
   sig_y_E = build_sigma_x(ny, d, sigma_max);              # at E_z rows
-  # Magnetic conductivity (at H positions: between cells, use half-step
-  # offset; for curriculum precision we approximate by using the same
-  # profile as for E).
+  # Magnetic conductivity σ*. Textbook SC-PML places it face-centred at
+  # the H positions (half-step offset); here we CO-LOCATE it at the E_z
+  # cells by reusing the E profile — the shortcut Lesson 10 warns about.
+  # This co-location is a measurable contributor to the residual-
+  # reflection floor, on top of the discretised cubic ramp.
   sig_x_H = sig_x_E;
   sig_y_H = sig_y_E;
 
