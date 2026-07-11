@@ -78,12 +78,27 @@ print(real(mu0 * Iloop / (2 * R)))             % closed-form  μ₀I/(2R)
 
 ```rustlab
 clf;
-quiver(xs, zs, real(Bxg), real(Bzg), "B in the meridional (x, z) plane");
+% The grid places two nodes exactly on the conductor at (±R, 0), where the
+% discrete Biot-Savart sample is unphysical (|B| ~ 1e24 T). NaN-mask
+% everything within ~1.5 cells of the wire — quiver skips NaN cells — so
+% the arrows scale to the physical field.
+dxm  = xs(2) - xs(1);
+Bx_q = real(Bxg);
+Bz_q = real(Bzg);
+for i = 1:Nm
+  for j = 1:Nm
+    if sqrt((abs(Xg(i, j)) - R)^2 + Zg(i, j)^2) < 1.5 * dxm
+      Bx_q(i, j) = NaN;
+      Bz_q(i, j) = NaN;
+    end
+  end
+end
+quiver(xs, zs, Bx_q, Bz_q, "B in the meridional (x, z) plane");
 xlabel("x (m)");
 ylabel("z (m)")
 ```
 
-The arrows trace the familiar dipole-like pattern with closed field lines through the loop. The on-axis numeric matches the closed form $B_z(0) = \mu_0 I/(2R)$ to machine precision; off-axis, the loop field falls off, and $B_z$ reverses sign at points in the loop's plane outside the wire ($|x| > R$), where the returning field lines point back down.
+The arrows trace the familiar dipole-like pattern with closed field lines through the loop; the two blank spots at $(\pm R, 0)$ are the masked cells around the conductor, where a grid sample would sit on (or within a cell of) the singular line source. The on-axis numeric matches the closed form $B_z(0) = \mu_0 I/(2R)$ to machine precision; off-axis, the loop field falls off, and $B_z$ reverses sign at points in the loop's plane outside the wire ($|x| > R$), where the returning field lines point back down.
 
 ```rustlab
 % On-axis Bz vs closed form along the z-axis (x = 0, ix = 21).
@@ -100,7 +115,7 @@ ylabel("B_z (T)");
 legend("Numerical", "μ₀IR²/[2(R²+z²)^{3/2}]")
 ```
 
-The two curves overlap throughout — the $1/r^3$ kernel is benign on a smooth circular path and 100 segments are enough for plotting-accuracy agreement.
+The two curves overlap throughout. On the axis this is better than fast convergence: every segment sits at the same distance from an axial field point and contributes the same $dB_z$, so the segment sum is a midpoint rule applied to a constant integrand — **exact for any $N_{\rm seg}$**, which is why the on-axis check above agrees to machine precision (the same symmetry argument as Lesson 02's charged ring). Off the axis the integrand genuinely varies with $\phi$, and there the smooth periodic kernel makes the 100-segment sum accurate to far better than plotting precision.
 
 ## Stacking Loops — Solenoids and Ampère's Law
 
@@ -273,7 +288,7 @@ J(i_mid, j_neg) = -I_wire / (dx * dy);
 
 L = laplacian_2d(nx, ny, dx, dy);
 A_mat = -1 * L;
-b = mu0 * J(:)';
+b = mu0 * J(:).';                     % .' = plain transpose (no conjugation)
 Az_flat = spsolve(A_mat, b);
 Az = real(reshape(Az_flat, ny, nx));
 ```
@@ -295,7 +310,10 @@ Bx_w = Az_y;
 By_w = -Az_x;
 
 clf;
-quiver(Xw, Yw, Bx_w, By_w, "B field from ∇×A");
+% Subsample every 5th cell — 30×30 arrows instead of the full 150×150
+% grid's 22,500, which would render as unreadable noise.
+quiver(Xw(1:5:end, 1:5:end), Yw(1:5:end, 1:5:end), ...
+       Bx_w(1:5:end, 1:5:end), By_w(1:5:end, 1:5:end), "B field from ∇×A");
 xlabel("x (m)");
 ylabel("y (m)")
 ```
@@ -366,7 +384,7 @@ J(i_c, j_c) = 1.0 / (dxi * dyi);
 % Variable-permeability Laplacian, grounded outer boundary.
 L_inv = laplacian_eps_2d(inv_mu, dxi, dyi);
 A_inv = -1 * L_inv;
-b_inv = mu0 * J(:)';
+b_inv = mu0 * J(:).';
 Az_inv = real(reshape(spsolve(A_inv, b_inv), ny2, nx2));
 ```
 
@@ -388,16 +406,23 @@ Bmag = sqrt(Bx_i .^ 2 + By_i .^ 2);
 
 % Sample along the +x axis at three points: inside iron, outside, far.
 j_iron  = round((0.05  + Lx2/2) / dxi);   % inside the iron annulus (r ≈ 5 cm)
-j_outer = round((0.07  + Lx2/2) / dxi);   % just outside the iron (r ≈ 7 cm)
-j_far   = round((0.09  + Lx2/2) / dxi);   % well outside (r ≈ 9 cm)
-print(real(Bmag(i_c, j_iron)))    % ≈ 4×10⁻³ T — the iron carries huge flux
-print(real(Bmag(i_c, j_outer)))   % ≈ 3×10⁻⁶ T — within ~5% of bare-wire at r=7cm
-print(real(Bmag(i_c, j_far)))     % ≈ 2.6×10⁻⁶ T — ~19% above bare-wire at r=9cm
-                                  %   (grounded box boundary is only 1 cm away)
+j_outer = round((0.07  + Lx2/2) / dxi);   % just outside the iron
+j_far   = round((0.09  + Lx2/2) / dxi);   % well outside
 
-% Reference: same wire with no iron — μ₀I/(2πr) at r = 0.07 m and r = 0.09 m.
-print(mu0 * 1.0 / (2 * pi * 0.07))
-print(mu0 * 1.0 / (2 * pi * 0.09))
+% Read the sample radii off the grid: the wire cell itself sits at
+% xsi(j_c) ≈ -0.8 mm, so the outer samples land at r = 7.11 cm and
+% 9.09 cm, not the nominal 7 and 9 cm.
+r_out = xsi(j_outer) - xsi(j_c);          % snapped sample radius ≈ 0.0711 m
+r_far = xsi(j_far)   - xsi(j_c);          % snapped sample radius ≈ 0.0909 m
+
+print(real(Bmag(i_c, j_iron)))    % ≈ 4×10⁻³ T — the iron carries huge flux
+print(real(Bmag(i_c, j_outer)))   % ≈ 3×10⁻⁶ T — ~6.6% above bare-wire at r = 7.11 cm
+print(real(Bmag(i_c, j_far)))     % ≈ 2.6×10⁻⁶ T — ~20% above bare-wire at r = 9.09 cm
+                                  %   (grounded box boundary is only ~1 cm away)
+
+% Reference: same wire with no iron — μ₀I/(2πr) at the snapped sample radii.
+print(mu0 * 1.0 / (2 * pi * r_out))
+print(mu0 * 1.0 / (2 * pi * r_far))
 ```
 
 ```rustlab
@@ -406,7 +431,7 @@ imagesc(real(Bmag), "viridis");
 title("|B|(x, y): bright ring is the iron, exterior is bare-wire-like")
 ```
 
-The iron ring carries roughly three orders of magnitude more $|\vec B|$ than the surrounding vacuum — that's the flux concentration that makes transformer cores possible. The exterior field tracks the bare-wire $\mu_0 I/(2\pi r)$ result: in this *cylindrically symmetric* geometry, Ampère's law applied to a circular contour gives $H = I/(2\pi r)$ regardless of $\mu_r$, so the exterior $B = \mu_0 H$ is independent of the iron. The agreement is ~5 % at $r = 7$ cm, but the $r = 9$ cm sample reads ~19 % *above* bare-wire — that point sits only 1 cm from the grounded $A_z = 0$ box wall, which compresses the wire's return flux into the remaining gap. The boundary artefact, not the iron, is what spoils the far sample. True external shielding requires either an external applied field (so that the iron has flux to short-circuit) or a non-axisymmetric source — Exercise 5 walks through the high-$\mu$ shielding setup that exploits this.
+The iron ring carries roughly three orders of magnitude more $|\vec B|$ than the surrounding vacuum — that's the flux concentration that makes transformer cores possible. The exterior field tracks the bare-wire $\mu_0 I/(2\pi r)$ result: in this *cylindrically symmetric* geometry, Ampère's law applied to a circular contour gives $H = I/(2\pi r)$ regardless of $\mu_r$, so the exterior $B = \mu_0 H$ is independent of the iron. Measured against the snapped sample radii, the agreement is ~6.6 % at $r = 7.11$ cm (single-cell source and grounded box, both of which shrink under refinement), while the $r = 9.09$ cm sample reads ~20 % *above* bare-wire — that point sits only ~1 cm from the grounded $A_z = 0$ box wall, which compresses the wire's return flux into the remaining gap. The boundary artefact, not the iron, is what spoils the far sample. True external shielding requires either an external applied field (so that the iron has flux to short-circuit) or a non-axisymmetric source — Exercise 5 walks through the high-$\mu$ shielding setup that exploits this.
 
 ## Standalone Scripts
 
@@ -430,7 +455,7 @@ Run all five with `make lesson-06`, or individually via `rustlab run lessons/06-
 | Helmholtz $B_{\rm off}/B_0$ ratio at $d/R = 1$ | closest to 1 across the three cases |
 | Two-wire $B_y$ above midpoint | numerical $\approx -2.38\times10^{-6}$ T, ~14.5 % below the snapped-geometry reference $\approx -2.78\times10^{-6}$ T (single-cell source + grounded box) |
 | $\lvert B\rvert$ in iron shell | $\sim 1000\times$ larger than just outside |
-| $\lvert B\rvert$ outside iron at $r = 7$ cm | within ~5 % of the $\mu_0 I/(2\pi r)$ reference ($r = 9$ cm reads ~19 % high — grounded-box effect) |
+| $\lvert B\rvert$ outside iron at snapped $r = 7.11$ cm | within ~6.6 % of the $\mu_0 I/(2\pi r)$ reference (snapped $r = 9.09$ cm reads ~20 % high — grounded-box effect) |
 
 ## Exercises
 

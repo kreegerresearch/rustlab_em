@@ -10,7 +10,9 @@
 # only when r_L > 1. Here r_L = 0.6 and g_L = 0.441 — the load sits
 # outside BOTH unit circles, so both orderings match. This script
 # computes the two series-then-shunt networks (the ± sign choices);
-# shunt-then-series yields two more (Exercise 1). Pozar §5.1.
+# shunt-then-series would yield two more for this load (not computed
+# here — Exercise 1 practices shunt-first synthesis on a load with
+# r_L > 1, where that ordering is forced). Pozar §5.1.
 #
 # Closed-form (series jX then shunt jB):
 #   X + X_L = ±√(R_L (Z_0 − R_L))           Re(Y') = 1/Z_0
@@ -35,7 +37,8 @@ print(imag(GL))                               # ≈ 0.562
 
 # === Closed-form solution pair ===
 disc = sqrt(R_L * (Z0 - R_L));                # 24.495
-# Solution A: X+X_L = +disc → X = -25.5 (series C); B = -disc/(R_L*Z0)*... actually compute below
+# Solution A takes the + branch: X_A = +disc − X_L (series C); its
+# shunt susceptance B_A follows from Y'_A below. Solution B is the − branch.
 X_A = +disc - X_L;                            # -25.5
 X_B = -disc - X_L;                            # -74.5
 

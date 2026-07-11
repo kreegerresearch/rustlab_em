@@ -28,7 +28,7 @@ b_bc = zeros(N, N);
 for j = 1:N
   b_bc(N, j) = sin(pi * xs(j)) / (h * h);
 end
-b = b_bc(:)';
+b = b_bc(:).';                 # .' = plain transpose (no conjugation)
 
 V_flat = spsolve(A, b);
 V = reshape(V_flat, N, N);

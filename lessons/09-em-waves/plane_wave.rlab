@@ -66,12 +66,12 @@ savefig("plane_wave_E_vs_B.svg");
 N_frames = 60;
 figure();
 for kf = 1:N_frames
-  t  = (kf - 1) / N_frames * T;
-  Ey = E0 * cos(kw * xs - omega * t);
-  Bz = c * B0 * cos(kw * xs - omega * t);
+  t   = (kf - 1) / N_frames * T;
+  Ey  = E0 * cos(kw * xs - omega * t);
+  cBz = c * B0 * cos(kw * xs - omega * t);   # c·B_z, not B_z itself
   hold on;
-  plot(xs / lambda, Ey, "E_y / E0");
-  plot(xs / lambda, Bz, "c B_z / E0");
+  plot(xs / lambda, Ey,  "E_y / E0");
+  plot(xs / lambda, cBz, "c B_z / E0");
   hold off;
   xlim([0.0, 3.0]);
   ylim([-1.2, 1.2]);

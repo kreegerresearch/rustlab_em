@@ -72,4 +72,5 @@ for k = 1:target_sor
   end
 end
 print(omega_opt)                           # ≈ 1.741
-print(max_err(Vp(2:M+1, 2:M+1), V_an))     # SOR @ 100 iters — already ≪ GS@1000
+print(max_err(Vp(2:M+1, 2:M+1), V_an))     # SOR @ 100 iters — matches GS@1000's
+                                           # floored error in 10× fewer sweeps

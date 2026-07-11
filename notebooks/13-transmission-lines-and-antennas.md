@@ -62,33 +62,15 @@ inner_mask = disk_mask(Xg_c, Yg_c, 0, 0, a_in);
 outer_mask = disk_mask(Xg_c, Yg_c, 0, 0, b_out);
 dielectric = outer_mask - inner_mask;
 
-% Pin inner conductor to V_0, outside-outer to 0; standard Lesson 05 idiom.
+% Pin inner conductor to V_0, outside-outer to 0. pin_dirichlet
+% replaces each masked row of A with an identity row and writes the
+% pinned value into b — the operation Lesson 05 hand-rolled per cell.
 L_lap = laplacian_2d(nx_c, ny_c, dx_c, dy_c);
 A_c = -1 * L_lap;
 N_c = nx_c * ny_c;
 b_c = zeros(1, N_c);
-
-for j = 1:nx_c
-  for i = 1:ny_c
-    if inner_mask(i, j) > 0.5
-      k = ij2k(i, j, ny_c);
-      A_c(k, k) = 1.0;
-      if i > 1;  A_c(k, ij2k(i-1, j, ny_c)) = 0.0; end
-      if i < ny_c; A_c(k, ij2k(i+1, j, ny_c)) = 0.0; end
-      if j > 1;  A_c(k, ij2k(i, j-1, ny_c)) = 0.0; end
-      if j < nx_c; A_c(k, ij2k(i, j+1, ny_c)) = 0.0; end
-      b_c(k) = V0;
-    elseif outer_mask(i, j) < 0.5
-      k = ij2k(i, j, ny_c);
-      A_c(k, k) = 1.0;
-      if i > 1;  A_c(k, ij2k(i-1, j, ny_c)) = 0.0; end
-      if i < ny_c; A_c(k, ij2k(i+1, j, ny_c)) = 0.0; end
-      if j > 1;  A_c(k, ij2k(i, j-1, ny_c)) = 0.0; end
-      if j < nx_c; A_c(k, ij2k(i, j+1, ny_c)) = 0.0; end
-      b_c(k) = 0.0;
-    end
-  end
-end
+[A_c, b_c] = pin_dirichlet(A_c, b_c, inner_mask, V0);
+[A_c, b_c] = pin_dirichlet(A_c, b_c, 1 - outer_mask, 0.0);
 
 V_flat = spsolve(A_c, b_c);
 V_grid = real(reshape(V_flat, ny_c, nx_c));
@@ -304,7 +286,7 @@ omega_v = 2 * pi * f0_v;
 
 V = zeros(1, N_v);
 Iv = zeros(1, N_v);
-V_env = linspace(0, 0, N_v);
+V_env = zeros(1, N_v);
 watch_from = round(0.75 * n_step_v);
 
 for step = 1:n_step_v
@@ -322,8 +304,7 @@ for step = 1:n_step_v
   V = V + src_vec;
 
   if step > watch_from
-    av = abs(real(V));
-    V_env = (V_env + av + abs(V_env - av)) / 2;       % elementwise max
+    V_env = max(V_env, abs(real(V)));       % elementwise two-arg max
   end
 end
 
@@ -497,7 +478,7 @@ Run all seven with `make lesson-13`, or one script at a time via `rustlab run le
 
 1. **Twin-wire $b/a$-style sweep.** `twin_wire_impedance.rlab` runs the numerical solve at $d/2a = 2$ and the analytic curve over $d/a \in [2, 50]$. Extend it by running the numerical solver at three more $d/a$ values (scale the box with $d$) and overlay the numerical points on the analytic curve to confirm agreement out to large spacings.
 2. **Break the magic time step, then tame the junction.** At $S = 1$ both extractions already nail the analytic values — the FFT to ~0.1 %. Re-run `s_parameters_tline.rlab` with `S_cfl = 0.95` so numerical dispersion reappears: the pulses broaden and change shape, the single-bin FFT estimate drifts off $\lvert\Gamma\rvert = 1/3$ by a few percent, and the extracted energy no longer sums to exactly 1. Then replace the abrupt $Z_{0,1} \to Z_{0,2}$ step by a linear taper over $\sim 10$ cells and confirm the taper suppresses the reflection artifact — the reason production solvers smooth impedance junctions rather than stepping them.
-3. **Lossy line.** Add a small series resistance $R'$ to the telegrapher leapfrog (modify the $V$ update by $-R'\Delta t \cdot I$). Compute the attenuation constant and verify the standing-wave envelope decays exponentially along $z$.
+3. **Lossy line.** Add a small series resistance $R'$ (Ω/m) to the telegrapher leapfrog. Series loss belongs in the *current* update — the lossy telegrapher pair is $\partial_z V = -L'\partial_t I - R'I$, so discretised: $I \leftarrow I\,(1 - R'\Delta t/L') - (\Delta t/(L'\Delta z))\,\Delta V$ (a shunt conductance $G'$ (S/m) would analogously damp the $V$ update). Compute the attenuation constant, $\alpha \approx R'/(2 Z_0)$ for small loss, and verify the standing-wave envelope decays exponentially along $z$.
 4. **Dipole standing-wave current from FDTD.** `dipole_standing_wave.rlab` plots the analytic $I(z)$. Reproduce the same profile from an FDTD run: apply the telegrapher leapfrog to an *open-ended* line ($Z_L = \infty$) of length $\lambda/2$, drive at one end, run to steady state, and compare the recorded $I(z)$ envelope to the analytic $\cos(kz)$.
 5. **Radiation resistance from FDTD dipole.** Plug the FDTD-extracted current from exercise 4 into the radiation-pattern integral in `radiation_resistance.rlab` and confirm it recovers $R_{\rm rad}\approx 73\,\Omega$ — the same value, this time built entirely from FDTD.
 

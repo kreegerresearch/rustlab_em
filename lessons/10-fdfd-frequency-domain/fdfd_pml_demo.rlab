@@ -37,7 +37,7 @@ eps_map = ones(ny, nx);
 # Source: single cell at the centre.
 J = zeros(ny, nx);
 J(round(ny / 2), round(nx / 2)) = 1.0 / (dx * dy);
-b = -j * omega * mu0 * J(:)';
+b = -j * omega * mu0 * J(:).';
 
 # === (a) No-PML reference ===
 # Build a constant-coefficient Helmholtz operator L + k0² I from

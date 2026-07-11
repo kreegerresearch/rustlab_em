@@ -90,6 +90,10 @@ function E = solve_1d(eps_x, N, dx, npml, sigma_max, omega, idx_src)
     else
       ap = 0;
     end
+    # At ii = 1 and ii = N the missing neighbour drops out of both the
+    # off-diagonal AND the diagonal (a± = 0), so the outer wall is
+    # effectively a zero-Neumann boundary, not the PEC a reader might
+    # assume behind the PML — invisible at the PML's ~ -100 dB level.
     diag_val = -ap - am + k0sq * eps_x(ii);
     cnt = cnt + 1;
     Ii(cnt) = ii; Ji(cnt) = ii; Vv(cnt) = diag_val;

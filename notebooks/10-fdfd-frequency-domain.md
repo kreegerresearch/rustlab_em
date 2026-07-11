@@ -31,7 +31,7 @@ $$\nabla^2 E_z + \omega^2\mu_0\varepsilon(x,y)\,E_z = -i\omega\mu_0\,J_z(x,y).$$
 
 (For TEz polarisation — only $H_z$ non-zero — the same scalar form applies to $H_z$ with $\varepsilon\leftrightarrow\mu$ in piecewise-uniform regions; a spatially varying $\varepsilon$ instead gives $\nabla\!\cdot\!(\varepsilon^{-1}\nabla H_z) + k_0^2\mu_r H_z = 0$.) Discretising the Laplacian on a uniform grid with the standard 5-point stencil produces a sparse complex-valued matrix $A(\omega)$ that is
 
-- real symmetric but *indefinite* in its bare form (Laplacian stencil plus a real $\omega^2\varepsilon$ mass term); adding the SC-PML stretching factors — and/or any lossy $\varepsilon$ — makes the entries complex, so the matrix becomes **complex symmetric** ($A^T = A$) but **not Hermitian** ($A^\dagger \ne A$);
+- real symmetric but *indefinite* in its bare form (Laplacian stencil plus a real $\omega^2\varepsilon$ mass term); a lossy $\varepsilon$ makes the entries complex while keeping the matrix **complex symmetric** ($A^T = A$, but not Hermitian). The SC-PML assembly used here goes one step further: the $1/s_E$ row scaling makes $A$ mildly *non*-symmetric as well (a diagonal rescaling by $s_E$ would restore symmetry), so what reaches the solver is a general complex sparse matrix;
 - routed by `spsolve` automatically through the **complex sparse LU** path (the SPD pre-check rejects the operator as soon as its entries go complex);
 - about $O(N^{3/2})$ in factorisation *flops* with $O(N\log N)$ fill on 2-D grids with good (nested-dissection-style) ordering, and $O(N\log N)$ work per back-substitution — cheap enough per right-hand side to make sweeps over frequency or source position practical.
 
@@ -49,17 +49,17 @@ Inside the PML, $\sigma_x > 0$ gives $s_x$ a positive imaginary part. An outgoin
 
 $$\sigma(d) = \sigma_{\max}\,(d/d_{\rm PML})^3, \qquad \sigma_{\max} = \frac{(m+1)\,\varepsilon_0\,c_0}{\Delta x}\;\text{(as implemented, with }m=3\Rightarrow 4\varepsilon_0 c_0/\Delta x)$$
 
-ramps gently from zero at the PML inner edge to $\sigma_{\max}$ at the outer edge, suppressing the discrete reflection at the inner edge to ~ 60–80 dB depending on PML thickness.
+ramps gently from zero at the PML inner edge to $\sigma_{\max}$ at the outer edge, suppressing the discrete reflection at the inner edge to somewhere between ~ 60 dB (thin layers) and beyond 100 dB (~ 18–20 cells).
 
 **Face-centred discretisation matters.** A naïve approach uses the same $s_x(x_i)$ for both the diagonal and off-diagonal stencil entries:
 
 $$A_{i,i\pm1}\;\stackrel{?}{=}\;\frac{1}{[s_x(x_i)\,\Delta x]^2}\quad\text{(wrong)}$$
 
-This leaves a measurable residual reflection at the PML inner edge — in practice one to two orders of magnitude worse than the face-centred form, enough to put a visible standing-wave ripple on the field even with a 20-cell PML. The textbook formulation instead places one $s_x$ at the **primal** cell centre (where $E_z$ lives) and the other at the **dual** cell face (where $H$ lives, between cells $i$ and $i+1$):
+This leaves a measurable residual reflection at the PML inner edge — measured at this lesson's own resolution (12 cells per wavelength, 18-cell PML) the co-located form reflects $|R| \approx 4.6\times10^{-3}$ (−47 dB) against the face-centred form's $7.2\times10^{-6}$ (−103 dB), a factor of ~ 630 — enough to put a visible standing-wave ripple on the field. The textbook formulation instead places one $s_x$ at the **primal** cell centre (where $E_z$ lives) and the other at the **dual** cell face (where $H$ lives, between cells $i$ and $i+1$):
 
 $$A_{i,i+1} = \frac{1}{s_E(x_i)\,s_H(x_i + \tfrac12\Delta x)\,\Delta x^2}, \qquad A_{i,i} = -A_{i,i+1} - A_{i,i-1} + k_0^2\,\varepsilon(x_i).$$
 
-With proper face-centring the same 20-cell PML drops residual reflection to ~ 80 dB. The fix is one extra σ profile evaluated at the half-cell offset and is what `lessons/_shared/em.rlab` gets right.
+With proper face-centring an 18–20-cell PML drops the residual reflection past 100 dB. The fix is one extra σ profile evaluated at the half-cell offset and is what `lessons/_shared/em.rlab` gets right.
 
 ### Example — Open vs closed boundaries on a 2-D point source
 
@@ -87,7 +87,7 @@ sigma_max_v = 4 * eps0_v * c0_v / dx_v;
 eps_map_v = ones(ny_v, nx_v);
 J_v = zeros(ny_v, nx_v);
 J_v(round(ny_v / 2), round(nx_v / 2)) = 1.0 / (dx_v * dy_v);
-b_v = -j * omega_v * mu0_v * J_v(:)';
+b_v = -j * omega_v * mu0_v * J_v(:).';
 
 % Hard walls — laplacian_2d + diagonal mass. A 1e-12 j loss promotes
 % the operator to complex so spsolve will accept the complex RHS.
@@ -354,7 +354,7 @@ $$E_z^{(m,n)}(x,y) = E_0\,\sin(m\pi x/a)\,\sin(n\pi y/b), \qquad \omega_{mn} = c
 
 Note the $m, n \ge 1$ restriction: the Dirichlet ($E_z = 0$) walls force $\sin$ factors in *both* directions, and $\sin(0\cdot\pi x/a) \equiv 0$ — so there are no TM$_{10}$, TM$_{01}$, or TM$_{20}$ modes. Driving the cavity with a current source at off-modal-node frequency $\omega$ and reading $E_z$ at a different off-node point produces a Lorentzian peak at each $\omega_{mn}$ — height $\propto Q$, width $\propto 1/Q$, where the quality factor $Q$ is determined by losses (here, a small bulk loss tangent $\tan\delta$ that we plug into $\varepsilon = \varepsilon_r(1 + i\tan\delta)$). Mind the sign: under this lesson's $e^{-i\omega t}$ convention loss is a **positive** imaginary part of $\varepsilon$ — consistent with the PML's $s = 1 + i\sigma/(\omega\varepsilon_0)$ — whereas $e^{+j\omega t}$ engineering texts write the same lossy medium as $\varepsilon_r(1 - j\tan\delta)$. FDFD does this in one sparse solve per frequency.
 
-Since every frequency is an independent sparse solve, the sweep is embarrassingly parallel — we dispatch it with `parmap(@trial, 1:Nf)` instead of a serial `for kf` loop. `parmap` requires the trial body to be a pure function (no figures, no shared mutable state) and the function does not capture the surrounding workspace, so the constants get rebuilt inside.
+Since every frequency is an independent sparse solve, the sweep is embarrassingly parallel — we dispatch it with `parmap(@trial, 1:Nf)` instead of a serial `for kf` loop. `parmap` requires the trial body to be a pure function (no figures, no shared mutable state); we use a *named* function, which does not capture the surrounding workspace, so the constants get rebuilt inside. (A lambda would capture a snapshot of the workspace and works too — the explicit rebuild just keeps the trial self-contained and readable.)
 
 ### Example — $0.10\,\text{m}\times 0.075\,\text{m}$ cavity, $\tan\delta = 0.005$
 
@@ -477,10 +477,10 @@ Run the lesson with `make lesson-10`, or one script at a time via `rustlab run l
 
 ## Exercises
 
-1. **Resolution sweep on the AR demo.** Re-run `fdfd_1d_layers` at $\Delta x = \lambda/20,\,\lambda/40,\,\lambda/80$. Verify the AR ripple drops as $\Delta x^2$ (centred-difference truncation), and that the frequency-sweep peak narrows toward an ideal Lorentzian.
+1. **Resolution sweep on the AR demo.** Re-run `fdfd_1d_layers` at $\Delta x = \lambda/20,\,\lambda/40,\,\lambda/80$ and record the AR ripple each time. It does **not** drop as $\Delta x^2$: the measured values are $0.162$, $0.0095$, $0.0107$ — non-monotonic, with $\lambda/80$ slightly *worse* than $\lambda/40$. Explain why: the layer is built as `round(t_AR/dx)` cells, and the exact requirement $t_{\rm AR}/\Delta x = R/(4\sqrt 2)$ ($R$ = cells per wavelength) is never an integer — $3.54\to4$, $7.07\to7$, $14.14\to14$ cells — so *thickness quantisation*, not the $\Delta x^2$ stencil truncation, dominates the residual. Confirm this quantitatively: the two-interface transfer matrix for the **snapped** thickness $t_q = \mathrm{round}(t_{\rm AR}/\Delta x)\,\Delta x$ predicts a ripple $\approx 2\lvert r(t_q)\rvert$ of $0.145$, $0.0112$, $0.0112$ — right on the measured floor. (Note $\lambda/40$ and $\lambda/80$ snap to the *same* physical thickness, $7/40 = 14/80$ of $\lambda_0$, which is why refining the grid doesn't help.) Only when the ideal thickness lands on the grid does the ripple reflect pure discretisation error.
 2. **Bragg reflector.** Replace the AR layer with $N$ pairs of alternating ε layers (high index $\varepsilon_H$ + low index $\varepsilon_L$, each $\lambda/(4n)$ thick). Sweep frequency and verify the **stop band** centred on $f_0$ where transmission is exponentially suppressed in $N$. This is the basis of every dielectric mirror, from cheap laser pointers to telescope coatings.
 3. **PEC cylinder.** In `fdfd_2d_tmz`, replace the dielectric cylinder with a perfect electric conductor — set $\varepsilon_r$ inside the disk to a large *positive* imaginary number (e.g., $\varepsilon_r = 1 + 10^4 i$; recall that under the $e^{-i\omega t}$ convention loss is $+\mathrm{Im}\,\varepsilon$, the opposite sign from $e^{+j\omega t}$ engineering texts) so the wave decays evanescently inside. Compare the scattered field to the dielectric case.
-4. **Cavity Q from the sweep.** Fit a Lorentzian to the TM$_{11}$ peak in `fdfd_resonator`. Extract $Q$ from the FWHM and verify $Q \approx 1/\tan\delta$ (here, $\sim 200$).
+4. **Cavity Q from the sweep.** Fit a Lorentzian to the TM$_{11}$ peak in `fdfd_resonator`. The shipped sweep's 25 MHz step puts only 1–2 samples on the ~ 12.5 MHz-wide peak, so first densify the sweep around the resonance — e.g. `fs = linspace(2.45e9, 2.55e9, 101)` for a 1 MHz step. Extract $Q$ from the FWHM and verify $Q \approx 1/\tan\delta$ (here, $\sim 200$).
 5. **Loaded cavity.** Place a small dielectric perturbation ($\varepsilon_r = 4$, radius $0.05a$) at one corner of the cavity and re-run the sweep. Identify the frequency shift on each mode and check it against first-order perturbation theory: $\Delta\omega/\omega = -\tfrac12\int_{\rm pert}(\varepsilon-1)|E|^2\,dV / \int|E|^2\,dV$.
 
 ## What's next

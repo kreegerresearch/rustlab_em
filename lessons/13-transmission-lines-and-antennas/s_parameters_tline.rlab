@@ -44,8 +44,8 @@ N      = 801;
 dz     = 1e-3;
 # Magic time step (S = 1) gives zero numerical dispersion in 1-D, so
 # the reflected pulse has the *same* shape as the incident and the
-# FFT magnitude ratio reproduces |Γ| at every in-band bin to machine
-# precision.
+# FFT magnitude ratio reproduces |Γ| across the in-band bins to ~0.1 %
+# (the residual comes from the extraction, not dispersion).
 S_cfl  = 1.0;
 dt     = S_cfl * dz / v_prop;
 n_step = 1500;
@@ -157,7 +157,7 @@ S11_mag = abs(F_refl  ./ (F_inc + 1e-30));
 S21_mag = abs(F_trans ./ (F_inc + 1e-30)) * sqrt(Z01 / Z02);
 
 k_pick  = argmin(abs(fs - f_c));
-print(fs(k_pick) / 1e9)             # ~ f_c in GHz (nearest bin ≈ 4.98)
+print(fs(k_pick) / 1e9)             # ~ f_c in GHz (nearest bin ≈ 5.00)
 print(real(S11_mag(k_pick)))        # 0.3337 — matches |Gamma| = 1/3 to ~0.1 %
 print(real(S21_mag(k_pick)))        # 0.9427 — matches 2√(Z1 Z2)/(Z1+Z2)
 

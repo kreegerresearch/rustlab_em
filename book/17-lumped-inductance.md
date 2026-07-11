@@ -78,7 +78,7 @@ legend("analytic", "numerical");
 
 <!-- rustlab:output-end -->
 
-The lone numerical point sits right on the analytic curve. The ratio $L_{\rm num}/L_{\rm analytic} = 0.988$, but that $1.2\%$ shortfall is **not** a resolution error: the flux integral is essentially exact — it reproduces the exact coplanar-loop mutual $M(R,\,R-a) = 247.66$ nH (complete elliptic integrals, $k^2 = 0.999898$) to five digits. The gap is the $O(a/R)$ truncation of the *asymptotic* thin-wire formula $\mu_0 R[\ln(8R/a) - 2] = 250.79$ nH, which drops the higher-order terms in $a/R$; at $a/R = 0.02$ those omitted terms are worth about a percent. Refining the grid converges $L_{\rm num}$ to the exact $247.66$ nH, not to the asymptotic $250.79$.
+The lone numerical point sits right on the analytic curve. The ratio $L_{\rm num}/L_{\rm analytic} = 0.988$, but that $1.2\%$ shortfall is **not** a resolution error: the flux integral is essentially exact — it reproduces the exact coplanar-loop mutual $M(R,\,R-a) = 247.67$ nH (complete elliptic integrals, $k^2 = 0.999898$) to five digits. The gap is the $O(a/R)$ truncation of the *asymptotic* thin-wire formula $\mu_0 R[\ln(8R/a) - 2] = 250.79$ nH, which drops the higher-order terms in $a/R$; at $a/R = 0.02$ those omitted terms are worth about a percent. Refining the grid converges $L_{\rm num}$ to the exact $247.67$ nH, not to the asymptotic $250.79$.
 
 ## Per-Unit-Length Inductance Matrix — Cached LU Done Right
 
@@ -138,7 +138,7 @@ Stepping from parallel lines to coaxial rings gives a problem with an exact clos
 
 Loop 1 carries $I_1$; the flux it pushes through coaxial loop 2 at axial separation $d$ is $\Phi_2 = \int_0^{R_2} B_z(r)\,2\pi r\,dr$, and $M = \Phi_2/I_1$. The exact result is a pair of complete elliptic integrals,
 $$M = \mu_0\sqrt{R_1 R_2}\left[\left(\tfrac{2}{k} - k\right)K(k) - \tfrac{2}{k}E(k)\right], \qquad k^2 = \frac{4 R_1 R_2}{(R_1+R_2)^2 + d^2},$$
-which the script evaluates from scratch via the arithmetic-geometric mean. At large $d$ it collapses to the magnetic-dipole asymptote $M_{\rm dip} = \mu_0\pi R^4/(2 d^3)$, but only slowly.
+which the script evaluates with rustlab's `ellipke` builtin (an arithmetic-geometric-mean iteration under the hood; note its argument is the *parameter* $m = k^2$, not the modulus $k$). At large $d$ it collapses to the magnetic-dipole asymptote $M_{\rm dip} = \mu_0\pi R^4/(2 d^3)$, but only slowly.
 
 ### Example — $M(d)$ and the coupling coefficient
 
@@ -327,7 +327,7 @@ Run all six with `make lesson-17`, or one at a time via `rustlab run lessons/17-
 | Loop $L$, $R = 5$ cm, $a = 1$ mm | $\approx 248$ nH ($L_{\rm num}/L_{\rm analytic} = 0.988$) |
 | Microstrip $L'_{11}$ at 3 mm spacing | $\approx 469$ nH/m |
 | Microstrip $L'_{12}$ at 3 mm spacing | $\approx 43$ nH/m |
-| Microstrip reciprocity error | $\lesssim 10^{-7}$ |
+| Microstrip reciprocity error | $\approx 1.4\times10^{-7}$ (direct-solve round-off) |
 | Coaxial $M$ at $d/R = 1$ | $\approx 24.7$ nH (numerical vs. exact, max rel. err. $\approx 5.4\times10^{-7}$) |
 | Coaxial dipole asymptote at $d/R = 4$ | $\approx 18\%$ high (1.54 vs. 1.30 nH) |
 | Coil-pair coupling $k_c$ at $d/R = 0.5$ | $\approx 0.22$ |
@@ -341,7 +341,7 @@ Run all six with `make lesson-17`, or one at a time via `rustlab run lessons/17-
 2. **Cached-LU profiling.** `ind_matrix_microstrip.rlab` factors once with `lu(A)` and back-solves per drive. Replace `solve(F, b)` with a fresh `spsolve(A, b)` in the loop, time both, and report the speedup — the factor-once-solve-many gain. The capacitance matrix admits exactly the same gain (its pinned operator is also identical across drives, with only right-hand-side values changing); L15 Exercise 2 retrofits it there.
 3. **Three-trace $L$ bus.** Extend the matrix script to three coplanar traces; build the $3\times3$ $L'$ matrix, verify $L'_{ij} = L'_{ji}$, and compare the magnetic crosstalk pattern to the capacitance matrix of L15's `cap_matrix_three_trace.rlab`.
 4. **Off-axis / tilted coils.** Generalise `mutual_inductance_coil_pair.rlab` to laterally offset or tilted loops by summing the filament Neumann double integral $M = \tfrac{\mu_0}{4\pi}\oint\oint d\vec\ell_1\cdot d\vec\ell_2/r_{12}$, and map $M$ as coupling degrades with misalignment.
-5. **Iron-cored solenoid.** Add a uniform high-$\mu_r$ core to `finite_solenoid.rlab` and show $L$ scales by roughly $\mu_r$ in the long-coil limit, while the *end-effect* coefficient $K$ shifts because the core changes the demagnetising geometry.
+5. **Iron-cored solenoid (beyond the toolkit).** `finite_solenoid.rlab` *cannot* simply take a high-$\mu_r$ core: its turn-pair elliptic kernel is a free-space Green's function, and a permeable core demands an axisymmetric $\nabla\!\cdot\!(\mu_r^{-1}\nabla)$ boundary-value solve that neither this lesson nor rustlab provides (`laplacian_eps_2d` is Cartesian, not cylindrical). Two honest routes instead: (a) predict the core's effect with the series-reluctance model from `tunable_L_force.rlab` — show that a full-length core multiplies $L$ by $\approx \mu_r$ *only* when the core path dominates the total reluctance, and identify which reluctance term caps the enhancement for a short coil; (b) as an open-ended challenge, hand-discretise the axisymmetric operator on an $(r, z)$ grid (Lesson 05's stencil plus a $1/r$ metric term), validate the air-core result against `finite_solenoid.rlab`, and only then add the core.
 
 ## What's next
 

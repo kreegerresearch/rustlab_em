@@ -137,12 +137,12 @@ print(E0_v / B0_v)               % → c ≈ 2.998e8
 N_frames_pw = 60;
 clf;
 for kf = 1:N_frames_pw
-  t  = (kf - 1) / N_frames_pw * T_v;
-  Ey = E0_v * cos(k_v * xs_v - omega_v * t);
-  Bz = c_v * B0_v * cos(k_v * xs_v - omega_v * t);
+  t   = (kf - 1) / N_frames_pw * T_v;
+  Ey  = E0_v * cos(k_v * xs_v - omega_v * t);
+  cBz = c_v * B0_v * cos(k_v * xs_v - omega_v * t);   % c·B_z, not B_z itself
   hold on;
-  plot(xs_v / lambda_v, Ey, "E_y / E0");
-  plot(xs_v / lambda_v, Bz, "c B_z / E0");
+  plot(xs_v / lambda_v, Ey,  "E_y / E0");
+  plot(xs_v / lambda_v, cBz, "c B_z / E0");
   hold off;
   xlim([0.0, 3.0]);
   ylim([-1.2, 1.2]);
@@ -212,31 +212,31 @@ Ez_ell = 0.5 * sin(phs_p);
 
 subplot(2, 2, 1);
 plot(Ly_p, Lz_p, "linear");
-xlim([-1.2, 1.2]); ylim([-1.2, 1.2]);
+xlim([-1.2, 1.2]); ylim([-1.2, 1.2]); axis("equal");
 xlabel("E_y"); ylabel("E_z");
 title("Linear (45 deg)");
 
 subplot(2, 2, 2);
 plot(Ry_p, Rz_p, "RCP");
-xlim([-1.2, 1.2]); ylim([-1.2, 1.2]);
+xlim([-1.2, 1.2]); ylim([-1.2, 1.2]); axis("equal");
 xlabel("E_y"); ylabel("E_z");
 title("Right circular");
 
 subplot(2, 2, 3);
 plot(Ly_circ, Lz_circ, "LCP");
-xlim([-1.2, 1.2]); ylim([-1.2, 1.2]);
+xlim([-1.2, 1.2]); ylim([-1.2, 1.2]); axis("equal");
 xlabel("E_y"); ylabel("E_z");
 title("Left circular");
 
 subplot(2, 2, 4);
 plot(Ey_ell, Ez_ell, "elliptical");
-xlim([-1.2, 1.2]); ylim([-1.2, 1.2]);
+xlim([-1.2, 1.2]); ylim([-1.2, 1.2]); axis("equal");
 xlabel("E_y"); ylabel("E_z");
 title("Elliptical (2:1)")
 ```
 
 <!-- rustlab:output-start -->
-![plot 4](plots/09-em-waves/plot-4-f43fc613.svg)
+![plot 4](plots/09-em-waves/plot-4-8c7e9811.svg)
 
 <!-- rustlab:output-end -->
 
@@ -258,6 +258,7 @@ for kf = 1:N_frames_pol
   hold off;
   xlim([-1.2, 1.2]);
   ylim([-1.2, 1.2]);
+  axis("equal");
   xlabel("E_y");
   ylabel("E_z");
   title(sprintf("RCP — tip of E, t/T = %.2f", (kf - 1) / N_frames_pol));
@@ -268,7 +269,7 @@ saveanim("polarization_rcp.gif", 24)
 ```
 
 <!-- rustlab:output-start -->
-![animation 5](plots/09-em-waves/anim-5-84e92858.gif)
+![animation 5](plots/09-em-waves/anim-5-a249f387.gif)
 
 <!-- rustlab:output-end -->
 
@@ -296,7 +297,7 @@ which is *maximum* at $x = 0$ (the antinode of $B$ coincides with the node of $E
 
 ### Example — Standing-wave field, envelope, animation
 
-A 1 GHz wave reflects off a PEC at $x = 0$. We sample two wavelengths into the half-space $x > 0$ and produce three artefacts: numerical proof that $E(0, t) = 0$ for all $t$, three time snapshots showing the field oscillating inside its $\pm 2E_0\lvert\sin kx\rvert$ envelope, and a GIF over one period. (The standalone `standing_wave.rlab` adds an envelope-only SVG so the node positions are unmistakable.)
+A 1 GHz wave reflects off a PEC at $x = 0$. We sample two wavelengths into the half-space $x > 0$ and produce three artefacts: a numerical check that the incident and reflected travelling waves really do sum to $E(0, t) = 0$ for all $t$, three time snapshots showing the field oscillating inside its $\pm 2E_0\lvert\sin kx\rvert$ envelope, and a GIF over one period. (The standalone `standing_wave.rlab` adds an envelope-only SVG so the node positions are unmistakable.)
 
 ```rustlab
 clf;
@@ -313,12 +314,16 @@ E0_s     = 1.0;
 Nx_s = 401;
 xs_s = linspace(0, 2 * lambda_s, Nx_s);
 
-% Verify E_y(x = 0, t) = 0 for a sweep of times.
-ts_test = linspace(0, T_s, 21);
-Ey_at_0 = -2 * E0_s * sin(0) * sin(omega_s * ts_test);
-print(max(abs(Ey_at_0)))            % → 0 (analytic, machine-precision)
+% Verify E_y(x = 0, t) = 0 for a sweep of times by summing the two
+% travelling waves there (the factored form's sin(k·0) is zero by
+% construction, so it would prove nothing).
+ts_test  = linspace(0, T_s, 21);
+E_inc_0  =  E0_s * cos(k_s * 0.0 + omega_s * ts_test);   % incident at x = 0
+E_refl_0 = -E0_s * cos(k_s * 0.0 - omega_s * ts_test);   % PEC-flipped reflection
+Ey_at_0  = E_inc_0 + E_refl_0;
+print(max(abs(Ey_at_0)))            % → 0 to machine precision
 
-% Three time snapshots within (0, T/4).
+% Three time snapshots within (0, T/4].
 phases = [pi / 8, pi / 4, pi / 2];
 Ey1 = -2 * E0_s * sin(k_s * xs_s) * sin(phases(1));
 Ey2 = -2 * E0_s * sin(k_s * xs_s) * sin(phases(2));
@@ -402,10 +407,10 @@ Run all three with `make lesson-09`, or one at a time via `rustlab run lessons/0
 
 ## Exercises
 
-1. **Phase velocity from a single grid sample.** From the propagation-animation snapshots, fit a straight line to the position of the leading zero crossing of $E_y$ vs $t$. Verify the slope equals $c$ to within the grid spacing $\Delta x$.
+1. **Phase velocity from a single grid sample.** From the propagation-animation snapshots, fit a straight line to the position of the leading zero crossing of $E_y$ vs $t$. Verify the slope equals $c$ to within the resolution set by the grid spacing $\Delta x$.
 2. **$\eta_0$ from the wave.** Compute $|E|/|H|$ at any point; you should get $\eta_0 = \mu_0 c \approx 376.73\,\Omega$. This is the **impedance of free space**, the value that every antenna, waveguide, and transmission line is matched against (Lesson 13).
 3. **Add an RCP plus LCP.** Combine equal-amplitude RCP and LCP plane waves in `polarization.rlab` and verify that the tip of $\vec E$ traces a *line* in the $(E_y, E_z)$ plane — linear polarisation is just the superposition of two equal-amplitude, opposite-chirality circular polarisations. This is the basis for quarter-wave-plate polarisation conversion in optics.
-4. **Phase mismatch standing wave.** In `standing_wave.rlab`, replace the perfect $-1$ reflection with $\Gamma = -0.7$ (a finite-impedance reflector). Measure the VSWR $= (1+|\Gamma|)/(1-|\Gamma|)$ from the ratio of $|E|_{\max}$ to $|E|_{\min}$ along the line and compare to the analytic value.
+4. **Partial-reflection standing wave.** In `standing_wave.rlab`, replace the perfect $-1$ reflection with $\Gamma = -0.7$ — a finite-impedance reflector that keeps the PEC's $180°$ reflection phase but has $|\Gamma| < 1$, so the interference minima no longer reach zero. Measure the VSWR $= (1+|\Gamma|)/(1-|\Gamma|)$ from the ratio of $|E|_{\max}$ to $|E|_{\min}$ along the line and compare to the analytic value.
 5. **Transverse standing wave.** Replace the PEC at $x = 0$ with two PECs at $x = 0$ and $x = L$, supporting only modes with $kL = n\pi$. Plot the first three transverse modes ($n = 1, 2, 3$) and verify their resonant frequencies $f_n = n c/(2L)$. This is the 1-D version of the rectangular cavity in Lesson 12.
 
 ## What's next

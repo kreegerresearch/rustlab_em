@@ -37,7 +37,6 @@ R = sqrt(Xg .^ 2 + Yg .^ 2);
 inner_mask = disk_mask(Xg, Yg, 0, 0, a_in);
 outer_mask = disk_mask(Xg, Yg, 0, 0, b_out);
 dielectric = outer_mask - inner_mask;
-not_dielectric = 1 - dielectric;        # 1 wherever we'll pin
 
 # === Sparse Poisson with pinned conductors ===
 L = laplacian_2d(nx, ny, dx, dy);
@@ -45,28 +44,12 @@ A = -1 * L;
 N = nx * ny;
 b = zeros(1, N);
 
-# Pin cells inside inner conductor (V = V0), outside outer (V = 0).
-for j = 1:nx
-  for i = 1:ny
-    if inner_mask(i, j) > 0.5
-      k = ij2k(i, j, ny);
-      A(k, k) = 1.0;
-      if i > 1;  A(k, ij2k(i-1, j, ny)) = 0.0; end
-      if i < ny; A(k, ij2k(i+1, j, ny)) = 0.0; end
-      if j > 1;  A(k, ij2k(i, j-1, ny)) = 0.0; end
-      if j < nx; A(k, ij2k(i, j+1, ny)) = 0.0; end
-      b(k) = V0;
-    elseif outer_mask(i, j) < 0.5
-      k = ij2k(i, j, ny);
-      A(k, k) = 1.0;
-      if i > 1;  A(k, ij2k(i-1, j, ny)) = 0.0; end
-      if i < ny; A(k, ij2k(i+1, j, ny)) = 0.0; end
-      if j > 1;  A(k, ij2k(i, j-1, ny)) = 0.0; end
-      if j < nx; A(k, ij2k(i, j+1, ny)) = 0.0; end
-      b(k) = 0.0;
-    end
-  end
-end
+# Pin cells inside the inner conductor to V0 and cells outside the
+# outer shield to 0. `pin_dirichlet` replaces each masked row of A
+# with an identity row and writes the pinned value into b — the same
+# operation Lesson 05 hand-rolled with the ij2k double loop.
+[A, b] = pin_dirichlet(A, b, inner_mask, V0);
+[A, b] = pin_dirichlet(A, b, 1 - outer_mask, 0.0);
 
 V_flat = spsolve(A, b);
 V = real(reshape(V_flat, ny, nx));
@@ -113,7 +96,7 @@ savefig("coax_Emag.svg");
 # === Z_0 vs b/a sweep ===
 ratios = [1.5, 2.0, 3.0, 4.0, 5.0, 7.0, 10.0];
 Nratios = length(ratios);
-Z0_swept = linspace(0, 0, Nratios);
+Z0_swept = zeros(Nratios);
 for kr = 1:Nratios
   Z0_swept(kr) = eta0 / (2 * pi) * log(ratios(kr));
 end

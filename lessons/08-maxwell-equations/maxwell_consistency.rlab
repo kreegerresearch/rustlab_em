@@ -7,7 +7,7 @@
 #           with ω = c k. All other field components vanish identically,
 #           so ∇·E = 0 and ∇·B = 0 hold trivially.
 # Check:    Faraday  (curl E)_z + ∂B_z/∂t  →  0
-#           Ampère  -(curl B)_y - μ0 ε0 ∂E_y/∂t = -∂B_z/∂x - μ0 ε0 ∂E_y/∂t
+#           Ampère  (curl B)_y - μ0 ε0 ∂E_y/∂t = -∂B_z/∂x - μ0 ε0 ∂E_y/∂t
 #                                              →  0  (no source current)
 # Method:   sample the analytic field on a 2-D (x, t) grid covering one
 #           wavelength × one period, take centred differences via
@@ -57,7 +57,8 @@ r_ampere = -Bz_x - mu0 * eps0 * Ey_t;
 
 # Normalise each residual by the analytic peak of either side of the
 # corresponding equation: |∂E_y/∂x|_peak = E0 k for Faraday and
-# |∂B_z/∂x|_peak = (E0/c) k for Ampère (their peaks are equal up to ω/c).
+# |∂B_z/∂x|_peak = (E0/c) k for Ampère (their peaks are equal up to a
+# factor c = ω/k).
 peak_F = E0 * k;
 peak_A = (E0 / c) * k;
 

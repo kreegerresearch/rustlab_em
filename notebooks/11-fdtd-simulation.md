@@ -224,7 +224,7 @@ The Ampère update gains a $-(\Delta t/\varepsilon_0)\,J_p^{n+1/2}$ term. **Expl
 
 ### Example — 3 GHz Drude film, 2 GHz source
 
-A 40-cell Drude film sits in vacuum. Source frequency 2 GHz is *below* $\omega_p = 3$ GHz, so the wave is evanescent inside the film and the transmitted-side probe sees a much-attenuated trace.
+A 40-cell Drude film sits in vacuum. Source frequency 2 GHz is *below* $f_p = \omega_p/2\pi = 3$ GHz, so the wave is evanescent inside the film and the transmitted-side probe sees a much-attenuated trace.
 
 ```rustlab
 clf;
@@ -356,7 +356,7 @@ Doubling the layer depth drops the residual reflection by roughly a factor of ~2
 
 | Script | What it computes |
 |---|---|
-| `fdtd_1d.rlab` | 1-D Yee FDTD pulse; vacuum + dielectric slab; animated; probes for $\lvert t_1 t_2\rvert$ verification |
+| `fdtd_1d.rlab` | 1-D Yee FDTD pulse; vacuum + dielectric slab; animated; probes for $\lvert R\rvert$ and $\lvert t_1 t_2\rvert$ verification |
 | `fdtd_2d_scattering.rlab` | 2-D TMz; CW line source + PEC cylinder; animated; bulk-loss absorbing strips |
 | `fdtd_dispersive.rlab` | 1-D ADE for Drude film; trapezoidal-stable $J_p$ update; FFT-based rough transmission spectrum |
 | `fdtd_tfsf_validation.rlab` | TF/SF plane-wave injection with auxiliary 1-D grid; $\lvert E_z\rvert$ outside TF box stays at machine zero ($\sim 10^{-15}$) |
@@ -380,9 +380,9 @@ Run all five with `make lesson-11`, or one script at a time via `rustlab run les
 
 ## Exercises
 
-1. **Per-cell Yee timing.** Rewrite the vectorised 2-D Yee step as nested `for i, for j` loops (one per field component), run the same number of steps, and time both versions. The per-cell form is more transparent to the textbook update equations; the vectorised form runs roughly an order of magnitude faster in interpreted rustlab.
+1. **Per-cell Yee timing.** Rewrite the vectorised 2-D Yee step as nested `for i, for j` loops (one per field component), run the same number of steps, and time both versions with the `tic` / `toc` wall-clock stopwatch (`tic` before the time-stepping loop, `elapsed = toc` after it). The per-cell form is more transparent to the textbook update equations; the vectorised form runs roughly an order of magnitude faster in interpreted rustlab.
 2. **TF/SF leak under broken corrections.** `fdtd_tfsf_validation.rlab` already passes the machine-zero leak test by driving the four TF/SF faces from an auxiliary 1-D Yee grid. Replace the auxiliary by an *analytic* incident-field accessor (`g_inc(t − x/c)`) and rerun: the leak should jump from $\sim 10^{-15}$ to a few $\times 10^{-3}$ — that's pure numerical-dispersion residual, the standard motivation for the auxiliary-grid trick.
-3. **PML reflection at oblique angles.** `fdtd_pml_depth.rlab` measures the residual reflection from a centred point source — equal weighting of all incidence angles. Modify it to use a directional plane-wave TF/SF source (re-using `fdtd_tfsf_validation.rlab`) and sweep the angle of incidence. Verify that the PML still suppresses reflections at grazing angles, just with a worse coefficient than at normal incidence.
+3. **PML reflection vs incidence direction.** `fdtd_pml_depth.rlab` measures the residual reflection from a centred point source — an average over all incidence angles at once. Re-measure with a directional plane wave by re-using `fdtd_tfsf_validation.rlab`'s injector. Note the auxiliary-1-D-grid trick only launches **axis-aligned** waves ($0°$ or, with the box rotated, $90°$) — a single axis-aligned wave already hits one PML pair at normal incidence and the other at grazing, the two extremes. For a true oblique-angle sweep the aux grid needs the speed-matched projection of Taflove & Hagness ch. 5, or you can inject the *analytic* plane wave and accept the $\sim10^{-3}$ dispersion leak from Exercise 2 as your measurement floor. Either way, verify the PML absorbs best at normal incidence and degrades toward grazing.
 4. **Above-$\omega_p$ Drude.** Change the source frequency in `fdtd_dispersive.rlab` to $f_{\rm src} = 5\,\text{GHz}$ ($> f_p$) and observe the transmission ratio jump from $\sim 0.2$ to $\approx 0.6$–$0.7$ — the metal turns from a mirror into a still-slightly-lossy window; the residual damping $\gamma$ and the index mismatch keep it below 1.
 5. **Slab Fabry-Perot.** In `fdtd_1d`, place a probe inside the slab ($k = 400$, halfway through). Plot its trace. Identify the etalon bounces as multiple regularly-spaced echoes, and fit their spacing to $2 n_2 d_{\rm slab}/c_0$.
 

@@ -7,7 +7,7 @@ Lesson 02 added charges one by one. Most real distributions have so many charges
 - State Gauss's law in both integral $\oint\vec E\cdot d\vec A = Q_{\rm enc}/\varepsilon_0$ and differential $\nabla\cdot\vec E = \rho/\varepsilon_0$ forms
 - Use spherical and planar symmetry to derive $\vec E$ from charge distributions in closed form (cylindrical symmetry appears in the exercises)
 - Compute the dipole potential on a grid and recover $\vec E = -\nabla V$ numerically (the general point-charge sum is Exercise 5)
-- Plot equipotential contours overlaid on the field, and recognize that field lines cross equipotentials at right angles
+- Plot equipotential contours of $V$ at explicit levels, and recognize that field lines cross equipotentials at right angles
 
 ## Background
 
@@ -124,9 +124,11 @@ $$E_x = k_e p\,\frac{2x^2 - y^2}{r^5},\qquad E_y = k_e p\,\frac{3xy}{r^5}.$$
 
 A scalar PDE, a vector field for free.
 
-### Example — Dipole $V$ heatmap with equipotential contours
+### Example — Dipole $|V|$ heatmap and equipotential contours
 
 Reuse Lesson 02's grid. Because this is the *ideal* point-dipole potential, its equipotentials are closed lobes on either side of the $V = 0$ perpendicular bisector, pinching together at the point dipole at the origin — the two-charge version, with separate loops around each charge, is Exercise 5.
+
+Two rendering choices keep the figures honest. First, rustlab's `imagesc` colors by *magnitude*, so we display $|V|$ — no information is lost, because the sign pattern is trivial: $V > 0$ for $x > 0$, $V < 0$ for $x < 0$. We clip $|V|$ at 8 kV so the $\approx 45$ kV cells beside the origin don't wash out the kV-scale lobes. Second, we pass *explicit* contour levels — auto-spaced levels would chase those same near-singular values and cluster within a few mm of the origin. By antisymmetry $V(-x, y) = -V(x, y)$, each $|V| = c$ contour traces the $V = +c$ lobe on the right and the $V = -c$ lobe on the left; the clip level matches the innermost (8 kV) contour, so the heatmap saturates exactly inside it.
 
 ```rustlab
 ke    = 8.9875e9;
@@ -143,13 +145,17 @@ r2  = X .^ 2 + Y .^ 2 + 1e-12;
 r3  = r2 .^ 1.5;
 V   = ke * p * X ./ r3;
 
-% Bounded by ~ k_e p / dx² ≈ 45 kV on this grid — no clip needed.
+absV = abs(V);
 clf;
-hold on;
-imagesc(V, "viridis");
-contour(X, Y, V, 12, "k");
-title("Dipole potential V(x, y)  with equipotentials");
-hold off;
+imagesc(min(absV, 8000), "viridis");
+title("Dipole |V|  (V, clipped at 8 kV; grid indices)");
+```
+
+```rustlab
+levels = [0.5, 1, 2, 4, 8] * 1000;   % equipotentials at ±{0.5, 1, 2, 4, 8} kV
+clf;
+contour(X, Y, absV, levels, "k");
+title("Equipotentials |V| = 0.5, 1, 2, 4, 8 kV  (x, y in m)");
 ```
 
 ### Example — $\vec E = -\nabla V$ recovers the far-field dipole formula
@@ -165,8 +171,8 @@ Ey_from_V = -Vy;
 
 % Pick a clean test cell on the perpendicular bisector at y = 0.04 m
 % (avoids the near-singular column).  Analytic far-field:  E_x = -k_e p / y³.
-print(real(Ex_from_V(46, 26)))    % ≈ -2798 V/m  (analytic = -2808.59;  ~0.4% stencil error)
-print(real(Ey_from_V(46, 26)))    % ≈ 0  by symmetry
+print(Ex_from_V(46, 26))          % ≈ -2798 V/m  (analytic = -2808.59;  ~0.4% stencil error)
+print(Ey_from_V(46, 26))          % ≈ 0  by symmetry
 ```
 
 ```rustlab
@@ -273,7 +279,7 @@ rho_p = sqrt((xt - d/2)^2 + yt^2);     % in-plane distance to +q
 rho_m = sqrt((xt + d/2)^2 + yt^2);     % in-plane distance to -q
 div2d_ana = -ke * (q / rho_p^3 - q / rho_m^3);
 
-print(real(divE(40, 30)))      % ≈ -1.75e5 V/m²  (numerical planar divergence)
+print(divE(40, 30))            % ≈ -1.75e5 V/m²  (numerical planar divergence)
 print(div2d_ana)               % ≈ -1.63e5 V/m²  (analytic -∂Ez/∂z at this cell)
 ```
 
@@ -284,7 +290,7 @@ The two values agree in sign and magnitude, to within ~8% truncation error — t
 | Script | What it computes |
 |---|---|
 | `gauss_sphere.rlab` | $E_r(r)$ and $V(r)$ for a uniformly charged ball; piecewise plot across the surface |
-| `potential_dipole.rlab` | Dipole $V$ heatmap with equipotential contours and the $-\nabla V$ quiver overlay |
+| `potential_dipole.rlab` | Dipole $\lvert V\rvert$ heatmap, explicit-level equipotential contours, and the recovered $-\nabla V$ quiver |
 | `capacitor_1d.rlab` | 1-D parallel-plate field and potential profile; capacitance $C = \varepsilon_0 A/d$ |
 
 Run all three with `make lesson-03`, or one at a time via `rustlab run lessons/03-gauss-law-and-potential/<name>.rlab`. Each writes SVGs next to itself; artefacts are gitignored.

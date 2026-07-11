@@ -6,7 +6,7 @@ The first numerical PDE in the curriculum. Lessons 01–03 evaluated closed-form
 
 - Derive the 5-point stencil for $\nabla^2$ from a Taylor expansion and read it as a matrix
 - Set up a Poisson BVP as a sparse linear system and solve it with `spsolve`
-- Encode Dirichlet boundary values and pinned-conductor cells via right-hand-side and row modifications
+- Encode Dirichlet boundary values and pinned-conductor cells via right-hand-side and row modifications, and use the `pin_dirichlet` builtin that packages the row-pinning
 - Recognize iterative relaxation (Jacobi, Gauss-Seidel, SOR) as the historical alternative to direct solve, and the convergence-rate gap that motivates SOR
 - Use `laplacian_eps_2d` to solve the variable-permittivity form on a Lesson-04 material map
 - Recover capacitance from a numerical field by flux integration, and verify the series-dielectric formula
@@ -65,7 +65,7 @@ b_bc = zeros(N, N);
 for j = 1:N
   b_bc(N, j) = sin(pi * xs(j)) / (h * h);
 end
-b = b_bc(:)';                    % column-major flatten → row vector
+b = b_bc(:).';                   % column-major flatten → row vector (.' = plain transpose)
 
 V_flat = spsolve(A, b);
 V      = reshape(V_flat, N, N);
@@ -222,6 +222,8 @@ V_flat = spsolve(A, b);
 V      = reshape(V_flat, ny, nx);
 ```
 
+That double loop is the mechanism laid bare — and it is common enough that rustlab ships it as a builtin: `[A, b] = pin_dirichlet(A, b, mask, value)` replaces every masked cell's matrix row with an identity row and writes the value into $b$, exactly what the loop above does. Having walked through the row surgery once by hand, the remaining examples in this lesson (and every later lesson) use the builtin.
+
 ```rustlab
 clf;
 hold on;
@@ -299,23 +301,15 @@ A_d   = -1 * L_eps;
 n_d   = nxd * nyd;
 b_d   = zeros(1, n_d);
 
-% Pin top row (i = nyd) to V = 1, bottom row (i = 1) to V = 0 — same
-% pinning idiom as the parallel-plate block above.
-for j = 1:nxd
-  k_top = ij2k(nyd, j, nyd);
-  A_d(k_top, k_top) = 1.0;
-  A_d(k_top, ij2k(nyd - 1, j, nyd)) = 0.0;
-  if j > 1;   A_d(k_top, ij2k(nyd, j - 1, nyd)) = 0.0; end
-  if j < nxd; A_d(k_top, ij2k(nyd, j + 1, nyd)) = 0.0; end
-  b_d(1, k_top) = 1.0;
-
-  k_bot = ij2k(1, j, nyd);
-  A_d(k_bot, k_bot) = 1.0;
-  A_d(k_bot, ij2k(2, j, nyd)) = 0.0;
-  if j > 1;   A_d(k_bot, ij2k(1, j - 1, nyd)) = 0.0; end
-  if j < nxd; A_d(k_bot, ij2k(1, j + 1, nyd)) = 0.0; end
-  b_d(1, k_bot) = 0.0;
-end
+% Pin top row (i = nyd) to V = 1, bottom row (i = 1) to V = 0 — the same
+% row-pinning the parallel-plate block spelled out by hand, now via the
+% pin_dirichlet builtin.
+top_row = zeros(nyd, nxd);
+top_row(nyd, :) = 1.0;
+bot_row = zeros(nyd, nxd);
+bot_row(1, :) = 1.0;
+[A_d, b_d] = pin_dirichlet(A_d, b_d, top_row, 1.0);
+[A_d, b_d] = pin_dirichlet(A_d, b_d, bot_row, 0.0);
 
 V_d_flat = spsolve(A_d, b_d);
 V_d      = real(reshape(V_d_flat, nyd, nxd));
@@ -407,20 +401,8 @@ A2 = -1 * L2;
 b2 = zeros(1, nx2 * ny2);
 V_cond = 1.0;
 
-% Pin the conductor cells — same pinning idiom as the parallel-plate block.
-for i = 1:ny2
-  for j = 1:nx2
-    if conductor(i, j) > 0.5
-      k = ij2k(i, j, ny2);
-      A2(k, k) = 1.0;
-      if i > 1;   A2(k, ij2k(i-1, j, ny2)) = 0.0; end
-      if i < ny2; A2(k, ij2k(i+1, j, ny2)) = 0.0; end
-      if j > 1;   A2(k, ij2k(i, j-1, ny2)) = 0.0; end
-      if j < nx2; A2(k, ij2k(i, j+1, ny2)) = 0.0; end
-      b2(1, k) = V_cond;
-    end
-  end
-end
+% Pin the conductor cells to V_cond — the mask itself is the pin list.
+[A2, b2] = pin_dirichlet(A2, b2, conductor, V_cond);
 
 V2_flat = spsolve(A2, b2);
 V2      = real(reshape(V2_flat, ny2, nx2));
@@ -453,10 +435,8 @@ The brightest pixel sits on the inner $(0.06, 0.06)$ corner — that's the singu
 % step in (-1, -1) cells from there.
 j0  = 60; i0 = 60;
 M_r = 30;
-% Build as true 1-D vectors so loglog accepts them — `zeros(1, N)`
-% produces a 1×N matrix that the v0.3 loglog rejects.
 rs = (1:M_r) * dx2 * sqrt(2.0);
-Es = linspace(0, 0, M_r);
+Es = zeros(M_r);
 for k = 1:M_r
   ic = i0 - k;
   jc = j0 - k;
@@ -525,7 +505,7 @@ Run all five with `make lesson-05`, or one at a time via `rustlab run lessons/05
 2. **SOR with optimal $\omega$.** Implement SOR on the 20-cell unit-square problem. Sweep $\omega$ from 1.0 to 1.95 in steps of 0.05 and plot iterations-to-$10^{-4}$ residual versus $\omega$. Verify the optimum sits near $2/(1 + \sin(\pi/(N+1)))$, where $N$ is the number of interior cells per side ($N = 20$ here, so $\omega_{\rm opt} \approx 1.741$).
 3. **Capacitance of finite plates.** Take the parallel-plate result from this lesson and compute $C$ via the surface integral $C = (\varepsilon_0/V_0)\oint\!\vec E\!\cdot\!\hat n\,dA$ on a rectangle just outside the top plate. Compare to the 1-D estimate $\varepsilon_0 w/d$ and quantify the correction — expect $\approx 50$–$60\%$ above the 1-D value for this geometry, roughly $40\%$ genuine fringing (compare Palmer's formula, which gives $\approx 1.42\times$ at $w/d = 3$) plus $\approx 10\%$ from capacitive coupling to the nearby grounded box.
 4. **Coaxial cable on a Cartesian grid.** Pin two concentric conductor rings at $V = 1$ and $V = 0$; verify $V(r) = \ln(b/r)/\ln(b/a)$ along a radial slice and compute the capacitance per unit length, comparing to $C' = 2\pi\varepsilon_0/\ln(b/a)$.
-5. **Re-entrant angle sweep.** Modify the corner example to have an interior angle $\beta \in \{3\pi/2, 5\pi/4, 7\pi/4\}$ (the second gives slope $-1/5$ — near-flat, only weakly singular; the third gives $-3/7$ — the sharpest of the three, approaching a knife-edge). Verify the fitted slope of $|\vec E|$ vs $r$ is $\pi/\beta - 1$, and that an interior $\pi/2$ corner has $|E|$ regular (no singularity).
+5. **Re-entrant angle sweep.** Modify the corner example to have an interior angle $\beta \in \{3\pi/2, 5\pi/4, 7\pi/4\}$ (the second gives slope $-1/5$ — near-flat, only weakly singular; the third gives $-3/7$ — the sharpest of the three, approaching a knife-edge). Verify the fitted slope of $|\vec E|$ vs $r$ is $\pi/\beta - 1$, and that an interior $\pi/2$ corner has $|E|$ regular (no singularity). *Hint:* the $5\pi/4$ and $7\pi/4$ wedges need 45° conductor edges, which exist on this axis-aligned grid only as a staircase — and each staircase step is locally its own 270° singular micro-corner. Build the wedge with `polygon_mask` on a finer grid, and expect noticeably noisier fits (especially the weak $-1/5$ exponent) than for the axis-aligned $3\pi/2$ case.
 
 ## What's next
 

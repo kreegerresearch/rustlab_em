@@ -50,27 +50,11 @@ A = -1 * L;
 N = nx * ny;
 b = zeros(1, N);
 
-for j = 1:nx
-  for i = 1:ny
-    if disk_pos(i, j) > 0.5
-      k = ij2k(i, j, ny);
-      A(k, k) = 1.0;
-      if i > 1;  A(k, ij2k(i-1, j, ny)) = 0.0; end
-      if i < ny; A(k, ij2k(i+1, j, ny)) = 0.0; end
-      if j > 1;  A(k, ij2k(i, j-1, ny)) = 0.0; end
-      if j < nx; A(k, ij2k(i, j+1, ny)) = 0.0; end
-      b(k) = +V0 / 2;
-    elseif disk_neg(i, j) > 0.5
-      k = ij2k(i, j, ny);
-      A(k, k) = 1.0;
-      if i > 1;  A(k, ij2k(i-1, j, ny)) = 0.0; end
-      if i < ny; A(k, ij2k(i+1, j, ny)) = 0.0; end
-      if j > 1;  A(k, ij2k(i, j-1, ny)) = 0.0; end
-      if j < nx; A(k, ij2k(i, j+1, ny)) = 0.0; end
-      b(k) = -V0 / 2;
-    end
-  end
-end
+# Pin the two conductor disks to ±V0/2 — `pin_dirichlet` replaces each
+# masked row of A with an identity row and writes the pinned value
+# into b (the operation Lesson 05 hand-rolled with an ij2k loop).
+[A, b] = pin_dirichlet(A, b, disk_pos, +V0 / 2);
+[A, b] = pin_dirichlet(A, b, disk_neg, -V0 / 2);
 
 V_flat = spsolve(A, b);
 V = real(reshape(V_flat, ny, nx));

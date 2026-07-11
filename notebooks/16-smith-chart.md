@@ -123,7 +123,7 @@ print(real(Z_quarter))                          %  100   Ω  (= Z_0²/Z_L)
 
 ## L-Section Matching
 
-Two reactive elements (one series, one shunt) match any complex load to a real $Z_0$. The ordering is set by chart geometry. A series reactance walks the load along its constant-$r$ circle onto the unit-conductance ($g = 1$) circle (**series-then-shunt**); a shunt susceptance walks it along its constant-$g$ circle onto the unit-resistance ($r = 1$) circle (**shunt-then-series**). Series-first is *forced* only when $g_L > 1$ (the constant-$g$ circle then never reaches $r = 1$); shunt-first only when $r_L > 1$. The load $Z_L = 30 + j50$ has $r_L = 0.6$ and $g_L = 0.44$ — outside *both* unit circles — so **both** orderings match: the series-first pair computed below, plus two more shunt-first networks that Exercise 1 explores.
+Two reactive elements (one series, one shunt) match any complex load to a real $Z_0$. The ordering is set by chart geometry. A series reactance walks the load along its constant-$r$ circle onto the unit-conductance ($g = 1$) circle (**series-then-shunt**); a shunt susceptance walks it along its constant-$g$ circle onto the unit-resistance ($r = 1$) circle (**shunt-then-series**). Series-first is *forced* only when $g_L > 1$ (the constant-$g$ circle then never reaches $r = 1$); shunt-first only when $r_L > 1$. The load $Z_L = 30 + j50$ has $r_L = 0.6$ and $g_L = 0.44$ — outside *both* unit circles — so **both** orderings match: the series-first pair is computed below, and deriving this load's two shunt-first networks makes a good extension (Exercise 1 practices shunt-first synthesis on a load with $r_L > 1$, where that ordering is the only option).
 
 ### Theory
 

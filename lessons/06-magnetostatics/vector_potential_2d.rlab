@@ -3,9 +3,11 @@
 # Geometry:   two infinite wires along ẑ at x = ±d/2 with currents ±I.
 #             0.30 × 0.30 m grounded outer box on a 150 × 150 grid.
 # Method:     ∇²Az = -μ₀ Jz, solved as A V = b with A = -laplacian_2d
-#             and b = μ₀ Jz(:)'. Recover B = (∂Az/∂y, -∂Az/∂x).
-# Verifies:   By(0, y) at y ≈ 0.05 m matches the analytic two-wire formula
-#             By = -μ₀ I d / (2π((d/2)² + y²)) within ~12 %.
+#             and b = μ₀ Jz(:).'. Recover B = (∂Az/∂y, -∂Az/∂x).
+# Verifies:   By(0, y) at y ≈ 0.05 m sits ~14.5 % below the analytic
+#             two-wire formula By = -μ₀ I d / (2π((d/2)² + y²)) evaluated
+#             at the snapped wire separation d_act = 0.0417 m (single-cell
+#             sources + grounded box; the residual shrinks under refinement).
 #
 # Reference: ../../notebooks/06-magnetostatics.md.
 
@@ -31,7 +33,7 @@ J(i_mid, j_neg) = -I_wire / (dx * dy);
 # === Sparse Poisson solve ===
 L = laplacian_2d(nx, ny, dx, dy);
 A_mat = -1 * L;
-b = mu0 * J(:)';
+b = mu0 * J(:).';              # .' = plain transpose (no conjugation)
 Az = real(reshape(spsolve(A_mat, b), ny, nx));
 
 # === Plots ===
@@ -47,17 +49,24 @@ savefig("two_wires_Az.svg");
 Bx_w = Az_y;
 By_w = -Az_x;
 
+# Subsample every 5th cell — 30×30 arrows instead of the full 150×150
+# grid's 22,500, which would render as unreadable noise.
 figure();
-quiver(Xw, Yw, Bx_w, By_w, "B field from curl A");
+quiver(Xw(1:5:end, 1:5:end), Yw(1:5:end, 1:5:end), ...
+       Bx_w(1:5:end, 1:5:end), By_w(1:5:end, 1:5:end), "B field from curl A");
 xlabel("x (m)");
 ylabel("y (m)");
 savefig("two_wires_B.svg");
 
 # === Validation ===
+# Compare against the analytic two-wire formula evaluated at the wires'
+# actual grid positions — snapped separation d_act = 0.0417 m rather than
+# the nominal 0.04 m: read the geometry off the grid.
 j_mid  = nx / 2;
 i_test = round((0.05 + Ly/2) / dy);
 y_test = ys(i_test);
-r2     = (d_wires/2)^2 + y_test^2;
-By_an  = -mu0 * I_wire * d_wires / (2 * pi * r2);
-print(real(By_w(i_test, j_mid)))      # numerical
-print(By_an)                          # analytic
+d_act  = xs(j_pos) - xs(j_neg);       # actual snapped wire separation
+r2     = (d_act/2)^2 + y_test^2;
+By_an  = -mu0 * I_wire * d_act / (2 * pi * r2);
+print(real(By_w(i_test, j_mid)))      # numerical ≈ -2.38e-6 T
+print(By_an)                          # analytic  ≈ -2.78e-6 T (snapped geometry)

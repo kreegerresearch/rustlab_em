@@ -35,9 +35,11 @@ nx = 60;
 ny = 60;
 dx = 5e-3;
 dy = dx;
-# Magic time step (S = 1) along the propagation direction: zero
-# numerical dispersion for the +x wave, so TF/SF cancellation is exact
-# to round-off. Use S = 1/√2 for full 2-D stability margin.
+# Courant number S = 1/√2 gives the full 2-D stability margin. The
+# round-off-level TF/SF cancellation does NOT rely on a magic time
+# step: the incident wave comes from an auxiliary 1-D Yee grid sharing
+# this dx and dt (see below), so its numerical dispersion matches the
+# 2-D grid's on-axis (+x) dispersion exactly at any stable S.
 S_cfl = 1 / sqrt(2);
 dt    = S_cfl * dx / c0;
 n_step = 600;
@@ -82,6 +84,13 @@ end
 # TF/SF corrections cancel to machine precision. The 1-D grid is
 # co-indexed with the 2-D grid in j, with a hard E_z source at
 # j = j_src_aux = j_lo − 3 (a few cells of buffer before the box).
+# NOTE: the aux grid has no ABC — the hard source plus the never-
+# updated end cells (implicit PEC) make it a closed cavity, so after
+# ~ step 130 of this 600-step run the "incident" is the pulse bouncing
+# back and forth inside it. The measurements below all complete before
+# that matters, but longer runs (e.g. Exercise 3 extensions) would
+# periodically re-illuminate the TF box unless the aux grid gets its
+# own Mur ABC.
 j_src_aux = j_lo - 3;
 Ez_aux = zeros(nx);                 # 1-D E_z, indexed by j like 2-D
 Hy_aux = zeros(nx);                 # Hy_aux(j) is at half-cell j + 1/2
@@ -165,11 +174,11 @@ savefig("tfsf_final_Ez.svg");
 
 figure();
 hold on;
-plot((1:n_step) * dt * 1e9, real(E_tf_trace), "TF-box centre  (numerical)");
-plot((1:n_step) * dt * 1e9, real(E_tf_inc),   "TF-box centre  (analytic inc)");
+plot((1:n_step) * dt * 1e9, real(E_tf_trace), "TF-box centre  (2-D numerical)");
+plot((1:n_step) * dt * 1e9, real(E_tf_inc),   "TF-box centre  (aux-grid incident)");
 hold off;
 xlabel("t  (ns)");
 ylabel("E_z");
-title("Inside the TF box: numerical wave matches analytic incident");
-legend("numerical", "analytic incident");
+title("Inside the TF box: 2-D wave matches the aux-grid incident");
+legend("2-D numerical", "aux-grid incident");
 savefig("tfsf_centre_trace.svg");

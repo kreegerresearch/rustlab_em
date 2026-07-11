@@ -64,36 +64,22 @@ L_lap = laplacian_eps_2d(eps_map, dx, dy);
 A_base = -1 * L_lap;                          # ∇·(ε∇V) = 0
 N = nx * ny;
 
-# Pin function (2-D version of L05's idiom).
-function [A_out, b_out] = pin(A, b, i, j, ny, nx, V_val)
-  k = ij2k(i, j, ny);
-  A(k, k) = 1.0;
-  if i > 1;   A(k, ij2k(i-1, j, ny)) = 0.0; end
-  if i < ny;  A(k, ij2k(i+1, j, ny)) = 0.0; end
-  if j > 1;   A(k, ij2k(i, j-1, ny)) = 0.0; end
-  if j < nx;  A(k, ij2k(i, j+1, ny)) = 0.0; end
-  b(k) = V_val;
-  A_out = A;
-  b_out = b;
-end
-
 # Apply the ground-plane pin (same in every solve) once into A_g.
-A_g = A_base;
-b_g = zeros(1, N);
-for jj = 1:nx
-  [A_g, b_g] = pin(A_g, b_g, i_ground, jj, ny, nx, 0.0);
-end
+# pin_dirichlet turns each pinned row of A into an identity row and
+# writes the pin value into b (L05 teaches the mechanism by hand); the
+# mask is a ny×nx grid matching the laplacian's column-major ordering.
+mask_gnd = zeros(ny, nx);
+mask_gnd(i_ground, :) = 1;
+[A_g, b_g] = pin_dirichlet(A_base, zeros(1, N), mask_gnd, 0.0);
 
 # === Solver wrapper: pin the two traces at (V1, V2), return V grid ===
 function V_grid = solve_for(A_g, b_g, ny, nx, i_top, j_t1_lo, j_t1_hi, j_t2_lo, j_t2_hi, V1, V2)
-  A = A_g;
-  b = b_g;
-  for jj = j_t1_lo:j_t1_hi
-    [A, b] = pin(A, b, i_top, jj, ny, nx, V1);
-  end
-  for jj = j_t2_lo:j_t2_hi
-    [A, b] = pin(A, b, i_top, jj, ny, nx, V2);
-  end
+  mask1 = zeros(ny, nx);
+  mask1(i_top, j_t1_lo:j_t1_hi) = 1;
+  mask2 = zeros(ny, nx);
+  mask2(i_top, j_t2_lo:j_t2_hi) = 1;
+  [A, b] = pin_dirichlet(A_g, b_g, mask1, V1);
+  [A, b] = pin_dirichlet(A, b, mask2, V2);
   V_flat = spsolve(A, b);
   V_grid = reshape(V_flat, ny, nx);
 end

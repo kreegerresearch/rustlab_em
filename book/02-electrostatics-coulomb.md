@@ -33,7 +33,7 @@ This is *the* defining computation of electrostatics. Every analytic result (Gau
 
 ### Theory
 
-A 51×51 grid spanning $[-5\,\text{cm},\,5\,\text{cm}]^2$ at spacing $\Delta = 2$ mm comfortably resolves the field around a $\pm q$ pair separated by $d = 2$ cm. Charges sitting on grid lines produce a singular cell each — we add a tiny floor ($10^{-12}\ \text{m}^2$) to $r^2$ before raising it to the $3/2$ power so divisions stay finite, and the singular cell ends up with a huge but finite value that quiver and `imagesc` simply clip visually.
+A 51×51 grid spanning $[-5\,\text{cm},\,5\,\text{cm}]^2$ at spacing $\Delta = 2$ mm comfortably resolves the field around a $\pm q$ pair separated by $d = 2$ cm. Charges sitting on grid lines produce a singular cell each — we add a tiny floor ($10^{-12}\ \text{m}^2$) to $r^2$ before raising it to the $3/2$ power so the division at the charge's own cell returns $0$ rather than the $0/0 = \text{NaN}$ it would otherwise be: the numerator $\vec r - \vec r_0$ vanishes exactly there, so that cell holds $\vec E = 0$. The largest finite values land on its nearest neighbours, $k_e q/\Delta^2 \approx 2.25\times10^{6}$ V/m, and those set the visual scale of quiver and `imagesc`.
 
 ### Example — A 51×51 grid spanning ±5 cm
 
@@ -69,7 +69,7 @@ Place $q$ at the origin and evaluate $\vec E = k_e q\,\vec r/|\vec r|^3$ on ever
 
 ### Example — Numerical $\vec E$ at sample points
 
-The `1e-12` m² floor added to $r^2$ keeps the origin cell finite. Outside that one pixel it perturbs the field by a relative $\sim 1.5\times10^{-12}/r^2$ — about $1.5\times10^{-8}$ at $r = 1$ cm — nothing to do with stencil error since this is an explicit closed-form evaluation, not finite differences.
+The `1e-12` m² floor added to $r^2$ keeps the origin cell well-defined ($\vec E = 0$ there, as discussed above). Outside that one pixel it perturbs the field by a relative $\sim 1.5\times10^{-12}/r^2$ — about $1.5\times10^{-8}$ at $r = 1$ cm — nothing to do with stencil error since this is an explicit closed-form evaluation, not finite differences.
 
 ```rustlab
 Rx = X;
@@ -79,13 +79,10 @@ r3 = (Rx .^ 2 + Ry .^ 2 + 1e-12) .^ 1.5;
 Ex_pt = ke * q * Rx ./ r3;
 Ey_pt = ke * q * Ry ./ r3;
 
-% Matrix `./` in rustlab keeps a complex storage type with imag part at
-% float-precision noise level (~1e-11 relative). Wrap scalar prints with
-% real() to suppress that noise; plotting calls handle complex matrices natively.
-print(real(Ex_pt(26, 31)))    % at (x=0.01, y=0):    ≈ 89875 V/m
-print(real(Ey_pt(26, 31)))    % ≈ 0  by symmetry
-print(real(Ex_pt(31, 26)))    % at (x=0, y=0.01):    ≈ 0
-print(real(Ey_pt(31, 26)))    % ≈ 89875 V/m
+print(Ex_pt(26, 31))          % at (x=0.01, y=0):    ≈ 89875 V/m
+print(Ey_pt(26, 31))          % ≈ 0  by symmetry
+print(Ex_pt(31, 26))          % at (x=0, y=0.01):    ≈ 0
+print(Ey_pt(31, 26))          % ≈ 89875 V/m
 ```
 
 <!-- rustlab:output-start -->
@@ -100,7 +97,7 @@ print(real(Ey_pt(31, 26)))    % ≈ 89875 V/m
 
 ### Example — Quiver of the radial field
 
-Arrows point outward from the singular center; lengths fall off like $1/r^2$. The auto-scale is dominated by the large near-origin values, so far-out arrows look short — that is correct, not a bug.
+Arrows point outward from the charge; the magnitude falls off like $1/r^2$. `quiver` scales arrow lengths to the 95th percentile of the field magnitudes and clamps the few stronger near-charge arrows at about one grid cell, so the radial pattern stays legible despite the field's three-decade dynamic range across the grid.
 
 ```rustlab
 clf;
@@ -108,13 +105,13 @@ quiver(X, Y, Ex_pt, Ey_pt, "Point charge:  E radiates from the origin")
 ```
 
 <!-- rustlab:output-start -->
-![plot 1](plots/02-electrostatics-coulomb/plot-1-1227af1f.svg)
+![plot 1](plots/02-electrostatics-coulomb/plot-1-5d108ed6.svg)
 
 <!-- rustlab:output-end -->
 
 ### Example — log$_{10}|\vec E|$ heatmap
 
-A linear heatmap is dominated by the singular pixel; in log space the falloff is visible as concentric rings.
+A linear heatmap is dominated by the handful of $\sim 2.25\times10^{6}$ V/m cells next to the charge; in log space the $1/r^2$ falloff is visible as concentric rings. (The charge's own pixel holds exactly $0$, so `log10` returns $-\infty$ there; `imagesc` colors by magnitude, so that one pixel saturates at the *top* of the color scale and blends into the bright core.)
 
 ```rustlab
 clf;
@@ -160,9 +157,9 @@ for k = 1:2
   Ey += ke * qk * ry ./ r3;
 end
 
-print(real(Ex(26, 26)))       % midpoint:  ≈ -179750 V/m
-print(real(Ey(26, 26)))       % ≈ 0
-print(real(Ey(36, 26)))       % on y-axis at y=0.02: ≈ 0
+print(Ex(26, 26))             % midpoint:  ≈ -179750 V/m
+print(Ey(26, 26))             % ≈ 0
+print(Ey(36, 26))             % on y-axis at y=0.02: ≈ 0
 ```
 
 <!-- rustlab:output-start -->
@@ -184,26 +181,34 @@ quiver(X, Y, Ex, Ey, "Dipole:  +q at (+d/2, 0),  -q at (-d/2, 0)")
 ```
 
 <!-- rustlab:output-start -->
-![plot 3](plots/02-electrostatics-coulomb/plot-3-0b0be963.svg)
+![plot 3](plots/02-electrostatics-coulomb/plot-3-5b3fe16e.svg)
 
 <!-- rustlab:output-end -->
 
-### Example — log$_{10}|\vec E|$ heatmap with contours
+### Example — log$_{10}|\vec E|$ heatmap and contours
 
-Two bright cores at the charges, a dark ring along the perpendicular bisector where the components partially cancel, and a smooth $1/r^3$ falloff everywhere else.
+Two bright cores at the charges, a dark band along the perpendicular bisector where the two contributions partially cancel, and a smooth $1/r^3$ falloff everywhere else. We show the same log-magnitude twice: as a heatmap (indexed by grid cell — rustlab's `imagesc` takes no coordinate arguments) and as contour lines in physical coordinates.
 
 ```rustlab
 clf;
-hold on;
 Emag_dip = sqrt(Ex .* Ex + Ey .* Ey);
 imagesc(log10(Emag_dip), "viridis");
-contour(X, Y, log10(Emag_dip), 8, "k");
-title("log_{10} |E|  for the dipole");
-hold off;
+title("log_{10} |E|  for the dipole  (heatmap, grid indices)");
 ```
 
 <!-- rustlab:output-start -->
-![plot 4](plots/02-electrostatics-coulomb/plot-4-eb513fd3.svg)
+![plot 4](plots/02-electrostatics-coulomb/plot-4-e3536a53.svg)
+
+<!-- rustlab:output-end -->
+
+```rustlab
+clf;
+contour(X, Y, log10(Emag_dip), 8, "k");
+title("log_{10} |E|  contours  (x, y in m)");
+```
+
+<!-- rustlab:output-start -->
+![plot 5](plots/02-electrostatics-coulomb/plot-5-8bb805db.svg)
 
 <!-- rustlab:output-end -->
 
@@ -234,8 +239,8 @@ r5  = r2 .^ 2.5;
 Exd = ke * p * (2 * X .^ 2 - Y .^ 2) ./ r5;
 Eyd = ke * p * (3 * X .* Y)            ./ r5;
 
-print(real(Exd(26, 36)))      % at (0.02, 0):  ≈ 44937 V/m  (= 2 k_e p / x³)
-print(real(Eyd(26, 36)))      % ≈ 0  on the dipole axis
+print(Exd(26, 36))            % at (0.02, 0):  ≈ 44937 V/m  (= 2 k_e p / x³)
+print(Eyd(26, 36))            % ≈ 0  on the dipole axis
 ```
 
 <!-- rustlab:output-start -->
@@ -262,7 +267,7 @@ ylabel("|E_far - E_exact| / |E_exact|")
 ```
 
 <!-- rustlab:output-start -->
-![plot 5](plots/02-electrostatics-coulomb/plot-5-aa69475e.svg)
+![plot 6](plots/02-electrostatics-coulomb/plot-6-aa69475e.svg)
 
 <!-- rustlab:output-end -->
 
@@ -282,7 +287,7 @@ streamplot(X, Y, Ex, Ey, "Dipole field lines  —  start on +q, end on -q")
 ```
 
 <!-- rustlab:output-start -->
-![plot 6](plots/02-electrostatics-coulomb/plot-6-145c0342.svg)
+![plot 7](plots/02-electrostatics-coulomb/plot-7-145c0342.svg)
 
 <!-- rustlab:output-end -->
 
@@ -346,7 +351,7 @@ legend("numerical (360 seg.)", "analytic")
 ```
 
 <!-- rustlab:output-start -->
-![plot 7](plots/02-electrostatics-coulomb/plot-7-5d0ec853.svg)
+![plot 8](plots/02-electrostatics-coulomb/plot-8-5d0ec853.svg)
 
 <!-- rustlab:output-end -->
 
@@ -382,7 +387,7 @@ Run all three with `make lesson-02` from the repo root, or one at a time via `ru
 2. **Far-field along the dipole axis.** Repeat the relative-error plot along the dipole axis ($y = 0$, $x > d/2$) instead of the perpendicular bisector. The leading correction has the same $(d/r)^2$ scaling but a different prefactor — recover it from the truncated multipole expansion.
 3. **Line of charge.** Replace the ring with a finite line $-L/2 \le x' \le L/2$ at $y = 0$, $z = 0$, total charge $Q$. Compute $E_z$ on the perpendicular axis $(0, 0, z)$ by 1-D quadrature. Check the limits: $L \to 0$ should reproduce a point charge; $L \to \infty$ should give the infinite-line result $E_\rho = \lambda/(2\pi\varepsilon_0\rho)$ from Gauss's law (Lesson 03).
 4. **Ring with off-axis test point.** Compute $\vec E$ at a point in the ring's plane but outside the ring, e.g. $(2R, 0, 0)$. The transverse components no longer cancel — get them right by numerical integration and compare to a perturbative expansion in $R/r$.
-5. **Energy in the dipole.** Compute the electrostatic energy $U = \tfrac12\varepsilon_0\int|\vec E|^2\,dV$ on the grid (use `trapz` twice). Then refine the grid at fixed $d$ and confirm $U$ grows without bound — the cells nearest each charge carry an unphysical *self-energy* that diverges with resolution, a Lesson 03 reminder that point charges have infinite field energy. For a sharper exercise, isolate the *interaction* energy — the cross term $\varepsilon_0\iint\vec E_1\cdot\vec E_2\,dA$ of the two single-charge fields, with the cells within a few $\Delta$ of each charge masked out to suppress the divergent self-energy — and confirm it converges to $-k_e q^2/d^2$ (in J/m: the in-plane slice of the 3-D $-k_e q^2/d$ interaction law), negative and growing in magnitude as $d$ shrinks.
+5. **Energy in the dipole.** Compute the electrostatic energy $U = \tfrac12\varepsilon_0\int|\vec E|^2\,dV$ on the grid with nested `trapz` calls — the matrix form integrates per column (the $y$-direction), so `trapz(xs, trapz(ys, Emag2))` does the double integral in one line. Then refine the grid at fixed $d$ and confirm $U$ grows without bound — the cells nearest each charge carry an unphysical *self-energy* that diverges with resolution, a Lesson 03 reminder that point charges have infinite field energy. For a sharper exercise, isolate the *interaction* energy — the cross term $\varepsilon_0\iint\vec E_1\cdot\vec E_2\,dA$ of the two single-charge fields, with the cells within a few $\Delta$ of each charge masked out to suppress the divergent self-energy — and confirm it converges to $-k_e q^2/d^2$ (in J/m: the in-plane slice of the 3-D $-k_e q^2/d$ interaction law), negative and growing in magnitude as $d$ shrinks.
 
 ## What's next
 

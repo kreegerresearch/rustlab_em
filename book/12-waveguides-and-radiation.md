@@ -7,7 +7,7 @@ Two pillars of applied EM live in this lesson. **Guided modes** of waveguides an
 ## Learning Objectives
 
 - Derive the scalar eigenvalue problem $-\nabla^2_\perp\phi = k_c^2\phi$ for TM modes of a hollow waveguide and TM standing modes of a closed cavity
-- Solve the discrete problem with `eigs(L, n, "sm")` (sparse Lanczos); recognise the "request more modes than needed" pattern that Lanczos demands when the lowest eigenvalues sit near a cluster
+- Solve the discrete problem with `eigs(L, n, "sm")` (sparse Lanczos); know the clustered-eigenvalue failure mode Lanczos folklore warns about — and how to check whether it is actually biting
 - Compare numerical cutoff / resonant frequencies to the analytic $\omega_{mn} = c\pi\sqrt{(m/a)^2 + (n/b)^2}$ formula
 - Compute the far-field radiation pattern of a Hertzian dipole analytically and verify the $\sin^2\theta$ doughnut and the radiation-resistance integral
 - Extend to a half-wave dipole via numerical integration over the sinusoidal current distribution; recover the textbook $R_{\rm rad} \approx 73.13\,\Omega$ to 0.1 %
@@ -27,7 +27,7 @@ $$-\nabla^2_\perp\,\phi = k_c^2\,\phi, \qquad \phi = 0\ \text{on metal}.$$
 
 For TM modes, $\phi = E_z$; for the eigenmodes of a 2-D cavity, $\phi$ is the same scalar TM field $E_z$ in the standing-wave decomposition. The discrete Laplacian `laplacian_2d` already encodes the Dirichlet boundary condition. Sign convention: `laplacian_2d` returns $+\nabla^2$, so $-L$ is SPD and its eigenvalues are exactly $k_c^2$. The first $n$ smallest-magnitude eigenvalues correspond to the lowest-cutoff modes, and `eigs(-L, n, "sm")` (sparse Lanczos) finds them in $O(\text{nnz}(L)\cdot n^2)$ time — far cheaper than dense `eig` on a $\sim 10^3 \times 10^3$ system.
 
-**Lanczos convergence caveat.** When two analytic eigenvalues sit within a few percent of each other (a "cluster"), basic Lanczos without implicit restart may converge to one of them twice and skip the other, or return them in the wrong order. The robust workaround is to request more modes than you need — `eigs(L, 4*n_wanted, "sm")` — and slice the first $n$ from the (now well-resolved) returned values. The rustlab docs flag implicit-restart and shift-invert as deferred enhancements; the over-request pattern is the curriculum-grade workaround.
+**Lanczos convergence caveat — folklore, not a live demonstration.** When two analytic eigenvalues sit within a few percent of each other (a "cluster"), basic Lanczos without implicit restart can converge to one of them twice and skip the other, or return them out of order. The standard defensive habit is to request more modes than you need — `eigs(L, 4*n_wanted, "sm")` — and slice the first $n$ from the returned values. This lesson's problems do *not* trigger the failure: rustlab's `eigs` builds a Krylov subspace large enough that both eigenproblems below return identical eigenvalues (to machine precision) whether you request 4 modes or 60 — we checked. Treat the over-request pattern as cheap insurance to reach for *when the symptom appears* — a clustered mode arriving shifted, duplicated, or out of order — which is most likely on coarser grids and tighter clusters than these.
 
 ### Example — TM cutoff modes of a $40\times 25$ mm waveguide
 
@@ -45,7 +45,7 @@ The analytic cutoffs (in GHz) for the lowest few TM modes:
 | $(2, 2)$ | 14.141 |
 | $(4, 1)$ | 16.144 |
 
-The third and fourth modes sit within 1.4 % of each other — exactly the cluster pattern Lanczos struggles with. Requesting 30 modes from `eigs` and reading the first 6 nails every cutoff to within 0.5 % at this grid resolution.
+The third and fourth modes sit within 1.4 % of each other — a cluster of the kind the caveat above describes. Here it causes no trouble: `eigs(L_w, 6, "sm")` and `eigs(L_w, 30, "sm")` return identical cutoffs to machine precision. The example requests 30 anyway (the insurance costs little) and reads the first 6; every cutoff lands within 0.5 % of the analytic value at this grid resolution.
 
 ```rustlab
 clf;
@@ -171,7 +171,7 @@ ylabel("y cell")
 
 <!-- rustlab:output-end -->
 
-The lowest three resonances match analytic predictions to within $0.07\,\%$, all biased slightly *low* — the signature of `laplacian_2d`'s second-order discretisation. Mode 4 is different: it prints $4.949\,\text{GHz}$, $0.56\,\%$ *above* TM$_{31}$'s analytic $4.921\,\text{GHz}$ — a deviation FD discretisation cannot produce. The giveaway is that $4.949$ sits between TM$_{31}$ ($4.921$) and TM$_{22}$ ($4.997$), a pair only $1.5\,\%$ apart: this is exactly the unresolved-cluster Lanczos artifact warned about above, and we requested only 20 modes. Over-requesting (e.g. `eigs(L_c, 60, "sm")`) resolves the cluster — mode 4 then lands at $4.915\,\text{GHz}$, back to the expected slightly-low discretisation error.
+All four resonances match analytic predictions to within $0.12\,\%$ — the lowest three to within $0.1\,\%$ — and all are biased slightly *low*, the signature of `laplacian_2d`'s second-order discretisation (the bias grows with mode order, from $0.02\,\%$ for TM$_{11}$ to $0.12\,\%$ for TM$_{31}$). Mode 4 is also the natural place to test the Lanczos caveat: TM$_{31}$'s analytic $4.921\,\text{GHz}$ sits only $1.5\,\%$ below TM$_{22}$'s $4.997\,\text{GHz}$ — precisely the cluster configuration the folklore warns about. It does not bite here: the printed $4.9152\,\text{GHz}$ is deterministic and identical whether 4, 6, 8, 20 or 60 modes are requested. If on some other problem a clustered mode ever lands *between* the two analytic values — a deviation the slightly-low FD bias cannot produce — that is the unresolved-cluster signature, and over-requesting modes is the first remedy to try.
 
 ## Hertzian Dipole — Analytic Far Field
 
@@ -268,10 +268,9 @@ ths_d = linspace(0.001, pi - 0.001, 361);
 F_anal = cos(pi / 2 * cos(ths_d)) ./ sin(ths_d);
 F_anal_n = F_anal / max(F_anal);
 
-% Numerical integration over the antenna axis — linspace builds a
-% true vector so the polar plot below accepts F_num.
+% Numerical integration over the antenna axis.
 zs = linspace(-L_d / 2, L_d / 2, 201);
-F_num = linspace(0, 0, length(ths_d));
+F_num = zeros(length(ths_d));
 for t = 1:length(ths_d)
   Re_int = trapz(zs, cos(k0_d * zs) .* cos(k0_d * zs * cos(ths_d(t))));
   Im_int = trapz(zs, cos(k0_d * zs) .* sin(k0_d * zs * cos(ths_d(t))));
@@ -379,7 +378,7 @@ Run all five with `make lesson-12`, or one script at a time via `rustlab run les
 | TM$_{11}$ cutoff, 40×25 mm guide | $\approx 7.071\,\text{GHz}$ |
 | TM$_{21}$ cutoff | $\approx 9.598\,\text{GHz}$ |
 | Cavity TM$_{11}$, 100×75 mm cavity | $\approx 2.498\,\text{GHz}$ |
-| Cavity mode 4 with 20 requested modes | $\approx 4.949\,\text{GHz}$ printed (Lanczos cluster artifact; TM$_{31}$ analytic is $4.921\,\text{GHz}$) |
+| Cavity mode 4 (TM$_{31}$) | $4.9152\,\text{GHz}$ printed — $0.12\,\%$ below the analytic $4.921\,\text{GHz}$; identical for 4–60 requested modes |
 | $\int_0^\pi \sin^3\theta\,d\theta$ | $4/3$ |
 | Hertzian $P_{\rm rad}$ ($I_0=1\,\text{A}$, $d\ell=1\,\text{cm}$, $f=1\,\text{GHz}$) | $\approx 0.439\,\text{W}$ |
 | Half-wave pattern numerical-vs-analytic max error | $\sim 10^{-5}$ |
@@ -392,7 +391,7 @@ Run all five with `make lesson-12`, or one script at a time via `rustlab run les
 1. **L-shape waveguide.** Modify `waveguide_modes` to solve a guide whose cross-section is an L (two overlapping rectangles). Pin the cells outside the L-shape with a large diagonal value so their eigenvalues are far above the modal range, then read the first few modes from `eigs`. Compare to the rectangular case — by domain monotonicity of Dirichlet eigenvalues (a larger domain has lower eigenvalues), the L-shape's lowest mode sits *below* that of either constituent rectangle alone (the L contains each) and *above* that of its bounding rectangle (which contains the L).
 2. **Perturbed cavity.** Place a small dielectric inclusion ($\varepsilon_r = 4$, radius $0.05\,a$) at one corner of the cavity in `cavity_resonances`. Use the *generalised* form `eigs(A, B, n)` where $B$ is the diagonal mass matrix from the $\varepsilon$ map. Verify the frequency shifts against first-order perturbation theory.
 3. **3-D Hertzian doughnut.** In `hertzian_dipole`, build a $(\theta, \varphi)$ meshgrid and `surf` the 3-D radiation pattern $r(\theta, \varphi) = \sin\theta$. Save it as an HTML to rotate interactively.
-4. **Off-resonance dipole.** Sweep dipole length from $L = 0.1\lambda$ to $L = 2\lambda$ in 11 steps; compute $R_{\rm rad}$ for each. Plot the curve and identify the resonance peak near $L = 0.48\lambda$ (slightly shorter than $\lambda/2$ for thin wires).
+4. **Off-resonance dipole.** Generalise the half-wave pattern factor to arbitrary length, $F(\theta) = [\cos(\tfrac{kL}{2}\cos\theta) - \cos\tfrac{kL}{2}]/\sin\theta$, and refer the radiated power to the feed current $I_{\rm in} = I_0\sin(kL/2)$, i.e. $R_{\rm rad} = \frac{\eta_0}{2\pi\sin^2(kL/2)}\int_0^\pi|F|^2\sin\theta\,d\theta$ (Lesson 13's `radiation_resistance.rlab` implements exactly this). Sweep $L = 0.1\lambda$ to $0.9\lambda$ in 17 steps, plot the curve, and verify three things: it tracks the short-dipole law $20\pi^2(L/\lambda)^2$ at the low end, passes through $73.1\,\Omega$ at $L = \lambda/2$, and rises *monotonically* through the half-wave point ($64.9$, $73.1$, $82.2\,\Omega$ at $0.48$, $0.50$, $0.52\,\lambda$). In particular there is no peak at the classic thin-wire "resonant length" $L \approx 0.48\lambda$: resonance is where the input *reactance* crosses zero, and this real-power integral never sees the reactance. Finally, explain why the curve diverges as $L \to \lambda$ (the feed sits at a current node, $\sin(kL/2) \to 0$) — the reason the sweep stops at $0.9\lambda$.
 5. **NF→FF transform from FDTD.** The shipped `nf2ff_transform.rlab` validates the integral against an analytically populated near field. Rerun it with the near field generated by a 3-D FDTD instead — adapt `fdtd_2d_scattering` to add a $z$-axis with $\hat z$-symmetry, sample $\vec E$ and $\vec H$ on the cubic Huygens surface at steady state, and feed those into the same surface integral. The recovered $\sin\theta$ should still hold to $\sim 1\,\%$. This is the gain-pattern chain a 3-D production capstone would run end-to-end — the shipped 2-D capstone (Lesson 14) stops at the resonance spectrum.
 
 ## What's next

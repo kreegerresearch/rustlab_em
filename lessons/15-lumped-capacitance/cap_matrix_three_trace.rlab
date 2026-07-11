@@ -45,23 +45,11 @@ L_lap = laplacian_eps_2d(eps_map, dx, dy);
 A_base = -1 * L_lap;
 N = nx * ny;
 
-function [A_out, b_out] = pin(A, b, i, j, ny, nx, V_val)
-  k = ij2k(i, j, ny);
-  A(k, k) = 1.0;
-  if i > 1;   A(k, ij2k(i-1, j, ny)) = 0.0; end
-  if i < ny;  A(k, ij2k(i+1, j, ny)) = 0.0; end
-  if j > 1;   A(k, ij2k(i, j-1, ny)) = 0.0; end
-  if j < nx;  A(k, ij2k(i, j+1, ny)) = 0.0; end
-  b(k) = V_val;
-  A_out = A;
-  b_out = b;
-end
-
-A_g = A_base;
-b_g = zeros(1, N);
-for jj = 1:nx
-  [A_g, b_g] = pin(A_g, b_g, i_ground, jj, ny, nx, 0.0);
-end
+# Ground-plane pin (same in every solve), via the pin_dirichlet builtin
+# (L05 teaches the row-pin mechanism by hand).
+mask_gnd = zeros(ny, nx);
+mask_gnd(i_ground, :) = 1;
+[A_g, b_g] = pin_dirichlet(A_base, zeros(1, N), mask_gnd, 0.0);
 
 # === Helper: solve with V applied to trace k_drive ===
 function V_grid = solve_drive(A_g, b_g, ny, nx, i_top, jlo, jhi, k_drive)
@@ -73,9 +61,9 @@ function V_grid = solve_drive(A_g, b_g, ny, nx, i_top, jlo, jhi, k_drive)
     else
       Vk = 0.0;
     end
-    for jj = jlo(k):jhi(k)
-      [A, b] = pin(A, b, i_top, jj, ny, nx, Vk);
-    end
+    mask = zeros(ny, nx);
+    mask(i_top, jlo(k):jhi(k)) = 1;
+    [A, b] = pin_dirichlet(A, b, mask, Vk);
   end
   V_flat = spsolve(A, b);
   V_grid = reshape(V_flat, ny, nx);

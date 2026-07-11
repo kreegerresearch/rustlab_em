@@ -50,12 +50,30 @@ Bxg = Bxg * mu0 * Iloop / (4 * pi);
 Bzg = Bzg * mu0 * Iloop / (4 * pi);
 
 # === On-axis check at (x = 0, z = 0) ===
+# On the axis every segment sits at the same distance from the field point
+# and contributes the same dBz, so the segment sum is exact for ANY N_seg —
+# the two prints agree to machine precision.
 print(real(Bzg(21, 21)))                        # ≈ 1.257e-5 T
 print(real(mu0 * Iloop / (2 * R)))              # closed form
 
 # === Plots ===
+# The 41-point grid places two nodes exactly on the conductor at (±R, 0),
+# where the discrete Biot-Savart sample is unphysical (|B| ~ 1e24 T).
+# NaN-mask everything within ~1.5 cells of the wire before plotting —
+# quiver skips NaN cells, so the arrows scale to the physical field.
+dxm  = xs(2) - xs(1);
+Bx_q = real(Bxg);
+Bz_q = real(Bzg);
+for i = 1:Nm
+  for j = 1:Nm
+    if sqrt((abs(Xg(i, j)) - R)^2 + Zg(i, j)^2) < 1.5 * dxm
+      Bx_q(i, j) = NaN;
+      Bz_q(i, j) = NaN;
+    end
+  end
+end
 figure();
-quiver(xs, zs, real(Bxg), real(Bzg), "B in the meridional (x, z) plane");
+quiver(xs, zs, Bx_q, Bz_q, "B in the meridional (x, z) plane");
 xlabel("x (m)");
 ylabel("z (m)");
 savefig("loop_quiver.svg");

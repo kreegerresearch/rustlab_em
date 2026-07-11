@@ -4,7 +4,9 @@
 #             Bottom plate (y = 0) at V = 0; top plate (y = 10 mm) at V = 1.
 #             Lower half is dielectric (εr = 4); upper half is vacuum.
 # PDE:        ∇·(ε ∇V) = 0  with harmonic-mean half-cell coefficients.
-# Method:     laplacian_eps_2d + spsolve, with top/bottom rows pinned.
+# Method:     laplacian_eps_2d + spsolve, with the top/bottom plate rows
+#             pinned via the pin_dirichlet builtin (see parallel_plate.rlab
+#             for the hand-rolled version of the same row-pinning).
 #
 # Verifies:   field jump E_air / E_diel = εr exactly,
 #             D = ε ε₀ E continuous across the interface,
@@ -41,20 +43,15 @@ A_d = -1 * L_eps;
 n_d = nxd * nyd;
 b_d = zeros(1, n_d);
 
-for j = 1:nxd
-  k_top = ij2k(nyd, j, nyd);
-  A_d(k_top, k_top) = 1.0;
-  A_d(k_top, ij2k(nyd - 1, j, nyd)) = 0.0;
-  if j > 1;   A_d(k_top, ij2k(nyd, j - 1, nyd)) = 0.0; end
-  if j < nxd; A_d(k_top, ij2k(nyd, j + 1, nyd)) = 0.0; end
-  b_d(1, k_top) = 1.0;
-  k_bot = ij2k(1, j, nyd);
-  A_d(k_bot, k_bot) = 1.0;
-  A_d(k_bot, ij2k(2, j, nyd)) = 0.0;
-  if j > 1;   A_d(k_bot, ij2k(1, j - 1, nyd)) = 0.0; end
-  if j < nxd; A_d(k_bot, ij2k(1, j + 1, nyd)) = 0.0; end
-  b_d(1, k_bot) = 0.0;
-end
+# Pin the plate rows: top row (i = nyd) to V = 1, bottom row (i = 1) to
+# V = 0. pin_dirichlet replaces each masked cell's matrix row with an
+# identity row and writes the value into b.
+top_row = zeros(nyd, nxd);
+top_row(nyd, :) = 1.0;
+bot_row = zeros(nyd, nxd);
+bot_row(1, :) = 1.0;
+[A_d, b_d] = pin_dirichlet(A_d, b_d, top_row, 1.0);
+[A_d, b_d] = pin_dirichlet(A_d, b_d, bot_row, 0.0);
 
 V_flat = spsolve(A_d, b_d);
 V_d = real(reshape(V_flat, nyd, nxd));

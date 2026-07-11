@@ -12,7 +12,7 @@ Lesson 13 extracted per-unit-length $C'$ from an infinite 2-D transmission-line 
 
 ## Background
 
-Lesson 05 (sparse Poisson + cell-pinning idiom for Dirichlet conditions), Lesson 13 (per-unit-length $C'$ on a coax cross-section, transmission-line $C'/L'$ identity). Algebra: the harmonic-mean coefficient at material interfaces in $\nabla\!\cdot\!(\varepsilon\nabla V) = 0$, the virtual-work principle for forces at fixed voltage.
+Lesson 05 (sparse Poisson + the row-pinning mechanism behind Dirichlet conditions — packaged in rustlab as the `pin_dirichlet` builtin, which this lesson uses throughout), Lesson 13 (per-unit-length $C'$ on a coax cross-section, transmission-line $C'/L'$ identity). Algebra: the harmonic-mean coefficient at material interfaces in $\nabla\!\cdot\!(\varepsilon\nabla V) = 0$, the virtual-work principle for forces at fixed voltage.
 
 ## Single-Conductor Capacitance — Energy vs. Gauss
 
@@ -32,13 +32,13 @@ $$Q = \oint_S \varepsilon\,\vec E\cdot\hat n\,dA, \qquad C = \frac{Q}{V_0}.$$
 
 A tight "pillbox" hugging the conductor faces (one cell of standoff) captures the strongest fields and converges fastest at coarse grids.
 
-At infinite resolution the two methods give identical answers. At finite grid spacing they bracket the true $C$. The energy sum tends **low**: the field samples sit at cell centres, so half a cell of the pin-to-pin gap volume goes uncounted at each conductor face — for a tight $N$-cell gap that is an $(N-1)/N$ deficit (the MIM cap below, a 4-cell gap, lands at exactly $3/4$). The Gauss pillbox tends **high**: it cuts through cells where the one-sided stencils are noisy. Refining $\Delta z$ shrinks the half-cell defect and tightens both onto the true value.
+At infinite resolution the two methods give identical answers. At finite grid spacing they bracket the true $C$. The energy sum tends **low**: the field samples sit at cell centres, so half a cell of the pin-to-pin gap volume goes uncounted at each conductor face — for a tight $N$-cell gap that is an $(N-1)/N$ deficit on the plate term (the MIM cap below, a 4-cell gap, prints $0.760$: exactly $3/4$ plus a $\sim 1\%$ fringing excess). The Gauss pillbox tends **high**: it cuts through cells where the one-sided stencils are noisy. Refining $\Delta z$ shrinks the half-cell defect and tightens both onto the true value.
 
 ### Example — Finite parallel plate at $L/d = 5$
 
 A square plate of side $L$ at $V = +V_0/2$ over a parallel plate at $-V_0/2$, separated by air in a 3-D box. Reads out $C$ both ways at $L/d = 5$ and overlays the analytic strip-fringing estimate. That estimate applies the 2-D (infinite-strip) edge correction once; a true square plate has two fringing edge-pairs, so its real fringing is larger (published square-plate numerics put $C/C_0 \approx 1.56$ at $L/d = 5$ versus the strip value $1.28$) — read the strip curve as a **lower bound**. The two numerical points straddle it: energy below, Gauss above.
 
-The setup: `n = 25` cubic grid, plates 10×10 cells centred in $x$/$y$, separated by 2 cells in $z$. The full script (`lumped_C_parallel_plate.rlab`) handles the operator build, plate pinning via the L05 row-pin idiom, energy / Gauss extraction, and the analytic overlay.
+The setup: `n = 25` cubic grid, plates 10×10 cells centred in $x$/$y$, separated by 2 cells in $z$. The full script (`lumped_C_parallel_plate.rlab`) handles the operator build, plate pinning via `pin_dirichlet` (mask in, identity rows out — the mechanism Lesson 05 builds by hand), energy / Gauss extraction, and the analytic overlay.
 
 ```rustlab
 clf;
@@ -174,7 +174,7 @@ print(C_gauss_MIM  / C_ideal_MIM)         % ≈ 1.007
 print(C_energy_MIM / C_ideal_MIM)         % ≈ 0.76 — energy under-shoots
 ```
 
-The Gauss method, computing flux right at the plate face, captures essentially the exact analytic value. The energy method under-shoots to $\approx 0.76$ for a concrete discretisation reason. The plates are pinned at cell centres four cells apart ($4\,\Delta z = 100\,\text{nm}$), but the $\varepsilon_r$-weighted energy sum only tags the **three interior** gap cells (`z_lo+1 .. z_hi-1`) as dielectric — half a cell of gap volume goes unweighted at each plate face. Three $\varepsilon_r$-weighted layers over a four-layer pin-to-pin gap is exactly the printed $3/4 = 0.760$. Refining $\Delta z$ shrinks that half-cell defect away.
+The Gauss method, computing flux right at the plate face, captures essentially the exact analytic value. The energy method under-shoots to $\approx 0.76$ for a concrete discretisation reason. The plates are pinned at cell centres four cells apart ($4\,\Delta z = 100\,\text{nm}$), but the $\varepsilon_r$-weighted energy sum only tags the **three interior** gap cells (`z_lo+1 .. z_hi-1`) as dielectric — half a cell of gap volume goes unweighted at each plate face. Three $\varepsilon_r$-weighted layers over a four-layer pin-to-pin gap gives exactly $3/4 = 0.75$ for the plate term; the printed $0.760$ sits about $1\%$ above that because fringing adds a little energy outside the gap. Refining $\Delta z$ shrinks that half-cell defect away.
 
 ### Example — IC bond pad over thick oxide
 
@@ -247,7 +247,7 @@ The match is roughly 5–15 % at moderate gaps (8.5 % at $d = 0.8$ mm, 10.3 % at
 
 | Script | What it computes |
 |---|---|
-| `lumped_C_parallel_plate.rlab` | 3-D Laplace on finite plates; energy + Gauss extraction; Kirchhoff overlay |
+| `lumped_C_parallel_plate.rlab` | 3-D Laplace on finite plates; energy + Gauss extraction; strip 2-D (lower-bound) overlay |
 | `cap_matrix_microstrip.rlab` | Two coplanar microstrip traces, 2×2 Maxwell C-matrix; spacing sweep |
 | `cap_matrix_three_trace.rlab` | Three-trace bus; 3×3 Maxwell matrix; reciprocity check; Maxwell ↔ mutual conversion |
 | `MIM_capacitor_3d.rlab` | Thin-film MIM ($\varepsilon_r = 25$, 100 nm gap); anisotropic 3-D grid |
@@ -261,18 +261,18 @@ Run all six with `make lesson-15`, or one at a time via `rustlab run lessons/15-
 | Quantity | Expected Value |
 |---|---|
 | Parallel plate $L/d = 5$, $C_{\rm energy} / C_0$ | $\approx 1.03$ (below the strip 2-D estimate) |
-| Parallel plate $L/d = 5$, $C_{\rm Gauss} / C_0$ | $\approx 1.41$ (above the strip estimate; near the true square-plate $\approx 1.56$) |
+| Parallel plate $L/d = 5$, $C_{\rm Gauss} / C_0$ | $\approx 1.41$ (above the strip estimate) |
 | Microstrip $C_{11}'$ at 3 mm spacing | $\approx 89.6\,\text{pF/m}$ |
 | Microstrip $-C_{12}'$ at 3 mm spacing | $\approx 3.1\,\text{pF/m}$ |
 | Three-trace reciprocity error | $\sim 10^{-3}\,\text{pF/m}$ (~0.04 % of the mutual terms) |
 | Three-trace middle trace-to-ground vs. outer | middle $\approx 82.4$, outer $\approx 85.7\,\text{pF/m}$ |
 | MIM $C_{\rm Gauss}$ for 10 µm × 10 µm / 100 nm / $\varepsilon_r = 25$ | $\approx 223\,\text{fF}$ (analytic 221) |
-| Bond pad 8 µm × 8 µm / 500 nm oxide | $\approx 3.8\,\text{fF}$ |
+| Bond pad 8 µm × 8 µm / 500 nm oxide | $\approx 4.94\,\text{fF}$ |
 | Tunable-cap $F'$ vs. analytic at $d = 1\,\text{mm}$ | $\approx 10\,\%$ apart (5–15 % across moderate gaps) |
 
 ## Exercises
 
-1. **Refine the parallel-plate grid.** `lumped_C_parallel_plate.rlab` runs at $n = 25$. Increase to $n = 30$ (≈ 17 s/solve) and confirm both extraction methods tighten onto the Kirchhoff curve. At $n = 40$ (≈ 2.5 min/solve) the energy and Gauss methods should agree to within 2 %.
+1. **Refine the parallel-plate grid.** `lumped_C_parallel_plate.rlab` runs at $n = 25$. Increase to $n = 30$ (≈ 17 s/solve) and confirm the energy–Gauss bracket narrows onto the true square-plate value ($C/C_0 \approx 1.56$ at $L/d = 5$) — *above* the strip 2-D estimate ($\approx 1.28$), which is a lower bound, not the convergence target. At $n = 40$ (≈ 2.5 min/solve) the energy and Gauss methods should agree to within 2 %.
 2. **Cached LU.** The capacitance-matrix scripts call `spsolve(A, b_k)` once per right-hand side, re-factoring the operator each time. Replace that with a single `F = lu(A)` factorisation plus one `solve(F, b_k)` per drive (both shipped in rustlab 0.3.6), profile `cap_matrix_three_trace.rlab` before and after, and report the speedup — the factor-once-solve-many gain. Lesson 17's `ind_matrix_microstrip.rlab` already uses this path.
 3. **5×5 differential pair bus.** Extend `cap_matrix_three_trace.rlab` to 5 traces arranged as two differential pairs plus a guard trace. Build the 5×5 Maxwell matrix; convert to mutual; identify the pair-coupling vs. far-coupling entries.
 4. **MIM dielectric stack.** Replace the single-material MIM gap with a two-layer stack ($\varepsilon_{r,1} = 25$, $\varepsilon_{r,2} = 4$) by switching the operator to a hand-rolled variable-$\varepsilon$ 3-D Laplacian (or wait for the upstream `laplacian_eps_3d` — requested in `dev/rustlab/requests/laplacian-eps-3d.md`). Verify the series-capacitor identity $1/C = 1/C_1 + 1/C_2$.

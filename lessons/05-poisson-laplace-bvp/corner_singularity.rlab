@@ -5,7 +5,9 @@
 #             domain wraps around the conductor; the inner corner of
 #             the L is the re-entrant 270° corner.
 # Theory:     V ~ r^{2/3}   |E| ~ r^{-1/3}  as r → 0  (β = 3π/2 wedge)
-# Method:     laplacian_2d + spsolve with conductor cells pinned;
+# Method:     laplacian_2d + spsolve with conductor cells pinned via the
+#             pin_dirichlet builtin (see parallel_plate.rlab for the
+#             hand-rolled version of the same row-pinning);
 #             |E| sampled along the diagonal pointing into the dielectric;
 #             least-squares slope fit on the small-r window.
 #
@@ -34,19 +36,8 @@ A = -1 * L;
 b = zeros(1, nx * ny);
 V_cond = 1.0;
 
-for i = 1:ny
-  for j = 1:nx
-    if conductor(i, j) > 0.5
-      k = ij2k(i, j, ny);
-      A(k, k) = 1.0;
-      if i > 1;  A(k, ij2k(i-1, j, ny)) = 0.0; end
-      if i < ny; A(k, ij2k(i+1, j, ny)) = 0.0; end
-      if j > 1;  A(k, ij2k(i, j-1, ny)) = 0.0; end
-      if j < nx; A(k, ij2k(i, j+1, ny)) = 0.0; end
-      b(1, k) = V_cond;
-    end
-  end
-end
+# Pin the conductor cells to V_cond — the mask itself is the pin list.
+[A, b] = pin_dirichlet(A, b, conductor, V_cond);
 
 V_flat = spsolve(A, b);
 V = real(reshape(V_flat, ny, nx));

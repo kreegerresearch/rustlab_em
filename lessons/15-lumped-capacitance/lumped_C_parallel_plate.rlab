@@ -7,8 +7,8 @@
 #   Gauss:    C = Q  / V_0,         Q  = ε_0 ∮ E·n̂ dA on a surface
 #                                         enclosing the +V plate.
 #
-# Compared against the textbook C₀ = ε_0 L² / d plus Kirchhoff's
-# fringing correction
+# Compared against the textbook C₀ = ε_0 L² / d plus the 2-D strip
+# fringing estimate (Kirchhoff's infinite-strip edge correction)
 #       C ≈ C₀ · [1 + (d/πL) · (1 + ln(2 π L / d))].
 #
 # Grid budget: laplacian_3d at n³ = 25³ ≈ 16k unknowns solves in ~5 s
@@ -22,13 +22,14 @@
 # numerics give C/C₀ ≈ 1.56 at L/d = 5, versus the strip value 1.28).
 # At this resolution (d = 2 cells, L = 10 cells, box margin ~ 6 cells)
 # the energy method sits just above the ideal C₀ but below the strip
-# estimate (the Dirichlet box wall clips the fringing field the volume
-# integral would see). The Gauss method, integrating right at the plate
-# face, lands above the strip estimate near the true square-plate value.
-# The two straddle the strip curve from below and above; refining the
-# grid (Exercise 1) tightens both onto the true square-plate C.
+# estimate: its cell-centred field samples miss half a cell of the
+# pin-to-pin gap volume at each plate face — the half-cell gap deficit
+# the notebook walks through. The Gauss method, integrating right at
+# the plate face, lands above the strip estimate. The two straddle the
+# strip curve from below and above; refining the grid (Exercise 1)
+# tightens both onto the true square-plate C.
 #
-# Units: SI throughout. C in F (printed in pF for readability).
+# Units: SI throughout. C in F (printed in fF for readability).
 #
 # Reference: ../../notebooks/15-lumped-capacitance.md.
 
@@ -61,41 +62,22 @@ print(xy_lo)
 print(xy_hi)
 
 # === Pin Dirichlet conditions ===
-# Reuse L05's "row pin" idiom: zero out the row of the unknowns at the
-# pinned cell, set diagonal to 1, RHS = pin value. Outer box wall stays
-# at V = 0 by the laplacian_3d Dirichlet default (no row pin needed).
+# pin_dirichlet turns each pinned row of A into an identity row and
+# writes the pin value into b (L05 teaches the row-pin mechanism by
+# hand). Masks are Tensor3s in the same column-major (i, j, kk) layout
+# as laplacian_3d. Outer box wall stays at V = 0 by the laplacian_3d
+# Dirichlet default (no pin needed).
 V0 = 1.0;
 L_lap = laplacian_3d(n, n, n, h, h, h);
 A = -1 * L_lap;                               # Poisson sign: ∇²V = 0 inside dielectric
 b = zeros(1, N);
 
-# Build the set of pinned cells (top plate at +V0/2, bottom at −V0/2).
-function k = idx3(i, j, kk, n)
-  k = ijk2k(i, j, kk, n, n);
-end
-
-# Pin a single cell to V_val: identity row at k, zero its 6 neighbours
-# in the column-major (i, j, kk) layout used by laplacian_3d.
-function [A_out, b_out] = pin_cell(A, b, ii, jj, kk, n, V_val)
-  k = ijk2k(ii, jj, kk, n, n);
-  A(k, k) = 1.0;
-  if ii > 1;  A(k, ijk2k(ii-1, jj, kk, n, n)) = 0.0; end
-  if ii < n;  A(k, ijk2k(ii+1, jj, kk, n, n)) = 0.0; end
-  if jj > 1;  A(k, ijk2k(ii, jj-1, kk, n, n)) = 0.0; end
-  if jj < n;  A(k, ijk2k(ii, jj+1, kk, n, n)) = 0.0; end
-  if kk > 1;  A(k, ijk2k(ii, jj, kk-1, n, n)) = 0.0; end
-  if kk < n;  A(k, ijk2k(ii, jj, kk+1, n, n)) = 0.0; end
-  b(k) = V_val;
-  A_out = A;
-  b_out = b;
-end
-
-for jj = xy_lo:xy_hi
-  for ii = xy_lo:xy_hi
-    [A, b] = pin_cell(A, b, ii, jj, z_hi, n, +V0 / 2);
-    [A, b] = pin_cell(A, b, ii, jj, z_lo, n, -V0 / 2);
-  end
-end
+mask_top = zeros3(n, n, n);
+mask_top(xy_lo:xy_hi, xy_lo:xy_hi, z_hi) = 1;  # top plate at +V0/2
+mask_bot = zeros3(n, n, n);
+mask_bot(xy_lo:xy_hi, xy_lo:xy_hi, z_lo) = 1;  # bottom plate at −V0/2
+[A, b] = pin_dirichlet(A, b, mask_top, +V0 / 2);
+[A, b] = pin_dirichlet(A, b, mask_bot, -V0 / 2);
 
 # === Solve ===
 print(N)                                      # 15 625
@@ -118,9 +100,7 @@ Ex = -Ex; Ey = -Ey; Ez = -Ez;
 # V is real (real Laplace), so E is real. (real(...) doesn't apply to
 # Tensor3, but the result is already real — drop the wrapper.)
 E_sq = Ex .* Ex + Ey .* Ey + Ez .* Ez;
-# Tensor3(:) flatten currently panics; reshape to a vector instead.
-E_sq_flat = reshape(E_sq, 1, N);
-U_energy = 0.5 * eps0 * sum(E_sq_flat) * (h * h * h);
+U_energy = 0.5 * eps0 * sum(E_sq(:)) * (h * h * h);
 C_energy = 2 * U_energy / (V0 * V0);
 print(C_energy * 1e15)                        # fF (for whatever h-unit we picked)
 
@@ -154,14 +134,14 @@ A_plate = (L_plate_cells * h) ^ 2;            # plate area
 d_gap   = d_gap_cells * h;
 L_side  = L_plate_cells * h;
 C0      = eps0 * A_plate / d_gap;             # ideal parallel-plate
-# Kirchhoff fringing correction
+# 2-D strip fringing estimate (a lower bound for the square plate)
 C_kirch = C0 * (1 + (d_gap / (pi * L_side)) * (1 + log(2 * pi * L_side / d_gap)));
 print(C0 * 1e15)
 print(C_kirch * 1e15)
 print(C_energy / C0)                          # numerical / ideal — should be > 1 (fringing)
-print(C_energy / C_kirch)                     # numerical / Kirchhoff — should be ≈ 1
+print(C_energy / C_kirch)                     # energy / strip estimate — below 1 (≈ 0.80): half-cell gap deficit
 
-# === Sweep the analytic Kirchhoff curve + overlay our single point ===
+# === Sweep the analytic strip-estimate curve + overlay our single point ===
 L_over_d_sweep = linspace(5, 50, 41);
 C_ideal_sweep  = ones(1, length(L_over_d_sweep));   # C / C₀ = 1 by definition
 C_kirch_sweep  = 1 + (1 ./ (pi * L_over_d_sweep)) .* (1 + log(2 * pi * L_over_d_sweep));
@@ -169,14 +149,14 @@ C_kirch_sweep  = 1 + (1 ./ (pi * L_over_d_sweep)) .* (1 + log(2 * pi * L_over_d_
 figure();
 hold on;
 plot(L_over_d_sweep, C_ideal_sweep, "C / C₀ = 1 (ideal)");
-plot(L_over_d_sweep, C_kirch_sweep, "Kirchhoff (analytic)");
+plot(L_over_d_sweep, C_kirch_sweep, "strip 2-D estimate (lower bound)");
 scatter(L_over_d, C_energy / C0,    "numerical (energy)");
 scatter(L_over_d, C_gauss  / C0,    "numerical (Gauss)");
 hold off;
 xlabel("L / d");
 ylabel("C / C_0");
-title("Finite parallel-plate fringing — numerical vs. Kirchhoff");
-legend("ideal", "Kirchhoff", "numerical (energy)", "numerical (Gauss)");
+title("Finite parallel-plate fringing — strip 2-D estimate vs. numerical");
+legend("ideal", "strip 2-D estimate", "numerical (energy)", "numerical (Gauss)");
 savefig("parallel_plate_fringing.svg");
 
 # === Field snapshot (mid-y slice) ===

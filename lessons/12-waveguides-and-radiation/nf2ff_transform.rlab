@@ -18,8 +18,10 @@
 #      and project onto the plane ⊥ r̂. The amplitude |F⊥| ∝ |E_ff|.
 #   5. Compare to the textbook Hertzian-dipole pattern |F(θ)| ∝ sin θ.
 #
-# This is the unit test for the transform that Lesson 14's capstone
-# applies to a microstrip patch antenna's near field.
+# This is the unit test for the transform that a 3-D production
+# version of Lesson 14's capstone would apply to a patch antenna's
+# near field (the shipped 2-D capstone stops at the probe-trace
+# spectrum; its 2-D→3-D table maps this NF→FF step as the extension).
 #
 # Reference: ../../notebooks/12-waveguides-and-radiation.md.
 
@@ -80,10 +82,11 @@ function [Ex, Ey, Ez, Hx, Hy, Hz] = hertzian_xyz(X, Y, Z, k, eta0, I0_dl)
   sin_p = Y ./ rxy_s;
   kr    = k * r;
   ph    = exp(-j * kr);    # e^{+jωt} convention: outgoing wave ∝ e^{-jkr}
-  # Spherical components (Balanis Eqs. 4-26): full near+far form.
-  Er  = (eta0 * k * I0_dl / (2 * pi))    * cos_t .* (1 ./ (kr .* kr) - j ./ (kr .^ 3)) .* ph;
-  Eth = (j * eta0 * k * I0_dl / (4 * pi)) * sin_t .* (1 ./ kr - j ./ (kr .* kr) - 1 ./ (kr .^ 3)) .* ph;
-  Hph = (j * k * I0_dl / (4 * pi))        * sin_t .* (1 ./ kr - j ./ (kr .* kr)) .* ph;
+  # Spherical components (Balanis Eqs. 4-26): full near+far form,
+  # rewritten in powers of 1/(kr), so each prefactor carries k².
+  Er  = (eta0 * k^2 * I0_dl / (2 * pi))    * cos_t .* (1 ./ (kr .* kr) - j ./ (kr .^ 3)) .* ph;
+  Eth = (j * eta0 * k^2 * I0_dl / (4 * pi)) * sin_t .* (1 ./ kr - j ./ (kr .* kr) - 1 ./ (kr .^ 3)) .* ph;
+  Hph = (j * k^2 * I0_dl / (4 * pi))        * sin_t .* (1 ./ kr - j ./ (kr .* kr)) .* ph;
   # Spherical → Cartesian (E_φ = H_r = H_θ = 0 for a ẑ dipole).
   Ex = Er .* sin_t .* cos_p + Eth .* cos_t .* cos_p;
   Ey = Er .* sin_t .* sin_p + Eth .* cos_t .* sin_p;

@@ -28,7 +28,7 @@ Ex_far = -ke * p ./ (ys .^ 3);
 rel_err = abs(Ex_far - Ex_exact) ./ abs(Ex_exact);
 
 # Spot-check a few rows.
-print(Ex_exact(40))                 # ≈ exact value at y ≈ 0.01345 m
+print(Ex_exact(40))                 # exact value at ys(40) ≈ 0.02406 m
 print(Ex_far(40))                   # far-field at the same y
 print(rel_err(40))                  # ≈ moderate error in the near zone
 print(rel_err(end))                 # at y = 0.20 m (10 d), well below 1 %
