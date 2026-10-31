@@ -77,7 +77,7 @@ legend("ideal", "strip 2-D estimate", "numerical (energy)", "numerical (Gauss)")
 ```
 
 <!-- rustlab:output-start -->
-![plot 1](plots/15-lumped-capacitance/plot-1-8d7a5f93.svg)
+![plot 1](plots/15-lumped-capacitance/plot-1-786ad91d.svg)
 
 <!-- rustlab:output-end -->
 
@@ -126,7 +126,7 @@ legend("C_{11}", "−C_{12}");
 ```
 
 <!-- rustlab:output-start -->
-![plot 2](plots/15-lumped-capacitance/plot-2-1524ccc7.svg)
+![plot 2](plots/15-lumped-capacitance/plot-2-d5d72ce8.svg)
 
 <!-- rustlab:output-end -->
 
@@ -167,7 +167,7 @@ xlabel("driven trace j"); ylabel("sensed trace i");
 true
 ```
 
-![plot 3](plots/15-lumped-capacitance/plot-3-2770079d.svg)
+![plot 3](plots/15-lumped-capacitance/plot-3-bb1d8b13.svg)
 
 <!-- rustlab:output-end -->
 
@@ -233,7 +233,7 @@ legend("500 nm (num.)", "1500 nm (num.)", "500 nm (ideal)", "1500 nm (ideal)");
 ```
 
 <!-- rustlab:output-start -->
-![plot 4](plots/15-lumped-capacitance/plot-4-40133f31.svg)
+![plot 4](plots/15-lumped-capacitance/plot-4-38e1c669.svg)
 
 <!-- rustlab:output-end -->
 
@@ -278,7 +278,7 @@ legend("numerical", "analytic");
 ```
 
 <!-- rustlab:output-start -->
-![plot 5](plots/15-lumped-capacitance/plot-5-0831792e.svg)
+![plot 5](plots/15-lumped-capacitance/plot-5-9dbce20c.svg)
 
 <!-- rustlab:output-end -->
 

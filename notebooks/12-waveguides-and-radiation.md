@@ -210,7 +210,7 @@ F_anal_n = F_anal / max(F_anal);
 
 % Numerical integration over the antenna axis.
 zs = linspace(-L_d / 2, L_d / 2, 201);
-F_num = zeros(length(ths_d));
+F_num = zeros(1, length(ths_d));
 for t = 1:length(ths_d)
   Re_int = trapz(zs, cos(k0_d * zs) .* cos(k0_d * zs * cos(ths_d(t))));
   Im_int = trapz(zs, cos(k0_d * zs) .* sin(k0_d * zs * cos(ths_d(t))));

@@ -62,7 +62,7 @@ inside_pec = 1 - pec_mask;            # 1 outside, 0 inside
 sigma_b   = 8 * eps0 * c0 / dx;
 absorb_w  = 14;
 ramp      = (absorb_w:-1:1) / absorb_w;
-sig_x     = zeros(nx);
+sig_x     = zeros(1, nx);
 sig_x(1:absorb_w)              = sigma_b * ramp.^3;
 sig_x(nx-absorb_w+1:nx)        = sigma_b * (ramp(absorb_w:-1:1)).^3;
 
@@ -92,8 +92,8 @@ damp_int = repmat(damp_row(2:nx-1), ny-2, 1);
 i_axis = round(yc / dy);
 j_lee  = round((xc + R_pec) / dx) + 2;
 j_lit  = round((xc - R_pec) / dx) - 2;
-E_lee_hist = zeros(n_step);
-E_lit_hist = zeros(n_step);
+E_lee_hist = zeros(1, n_step);
+E_lit_hist = zeros(1, n_step);
 
 figure();
 for step = 1:n_step

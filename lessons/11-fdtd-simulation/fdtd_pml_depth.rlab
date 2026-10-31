@@ -64,7 +64,7 @@ j_pr  = nx - 20;                    # ≥ 4 cells inside the d = 16 inner edge
 # σ* = σ · μ_0/ε_0 = σ · η_0² · ε_0 is folded into the H update
 # coefficients via the same dt factor.
 function s = build_sigma_x(nx, d, sigma_max)
-  s = zeros(nx);
+  s = zeros(1, nx);
   if d <= 0; return; end
   for k = 1:d
     rmp           = (k - 0.5) / d;
@@ -118,7 +118,7 @@ function E_pr_trace = run_pml(d, nx, ny, dx, dy, dt, n_step, c0, mu0, eps0, ...
   Hx  = zeros(ny, nx);
   Hy  = zeros(ny, nx);
 
-  E_pr_trace = zeros(n_step);
+  E_pr_trace = zeros(1, n_step);
 
   for step = 1:n_step
     t = step * dt;
@@ -163,7 +163,7 @@ E_ref = run_pml(8, nx_big, ny_big, dx, dy, dt, n_step, c0, mu0, eps0, ...
 # === PML sweep ===
 depths = [4, 8, 16];
 N_d    = length(depths);
-res    = zeros(N_d);
+res    = zeros(1, N_d);
 inc_pk = max(abs(E_ref));
 for kd = 1:N_d
   d = depths(kd);

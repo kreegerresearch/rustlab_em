@@ -92,8 +92,8 @@ end
 # periodically re-illuminate the TF box unless the aux grid gets its
 # own Mur ABC.
 j_src_aux = j_lo - 3;
-Ez_aux = zeros(nx);                 # 1-D E_z, indexed by j like 2-D
-Hy_aux = zeros(nx);                 # Hy_aux(j) is at half-cell j + 1/2
+Ez_aux = zeros(1, nx);                 # 1-D E_z, indexed by j like 2-D
+Hy_aux = zeros(1, nx);                 # Hy_aux(j) is at half-cell j + 1/2
 
 # === Probes outside the TF box (should remain at machine zero) ===
 i_p_top    = i_hi + 6; j_p_top = round(0.5 * nx);
@@ -110,8 +110,8 @@ E_left_max  = 0;
 # analytic incident wave.
 i_tf = round((i_lo + i_hi) / 2);
 j_tf = round((j_lo + j_hi) / 2);
-E_tf_trace  = zeros(n_step);
-E_tf_inc    = zeros(n_step);
+E_tf_trace  = zeros(1, n_step);
+E_tf_inc    = zeros(1, n_step);
 
 for step = 1:n_step
   # ---- Phase 1: H update (main + aux), then H corrections ----

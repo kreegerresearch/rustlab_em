@@ -139,7 +139,7 @@ title("|∇f|  —  peaks at r = σ/√2")
 ```
 
 <!-- rustlab:output-start -->
-![plot 2](plots/01-vector-calculus-and-fields/plot-2-008a2a9f.svg)
+![plot 2](plots/01-vector-calculus-and-fields/plot-2-6363c552.svg)
 
 <!-- rustlab:output-end -->
 
@@ -185,7 +185,7 @@ title("∇·F for F = (x, y)  —  uniformly = 2")
 ```
 
 <!-- rustlab:output-start -->
-![plot 4](plots/01-vector-calculus-and-fields/plot-4-85a7a619.svg)
+![plot 4](plots/01-vector-calculus-and-fields/plot-4-d49c9229.svg)
 
 <!-- rustlab:output-end -->
 
@@ -234,7 +234,7 @@ title("(∇×F)_z for F = (-y, x)  —  uniformly = 2")
 ```
 
 <!-- rustlab:output-start -->
-![plot 6](plots/01-vector-calculus-and-fields/plot-6-20a09c39.svg)
+![plot 6](plots/01-vector-calculus-and-fields/plot-6-3d245c9d.svg)
 
 <!-- rustlab:output-end -->
 
@@ -293,7 +293,7 @@ Compute the circulation edge by edge with `trapz`, counterclockwise.
 a = 1.0;
 N = 201;
 xs_edge = linspace(-a, a, N);
-unit    = ones(N);
+unit    = ones(1, N);
 
 % Bottom (y = -a):  F·dℓ = F_x dx = +a dx
 I_bot = trapz(xs_edge, a * unit);

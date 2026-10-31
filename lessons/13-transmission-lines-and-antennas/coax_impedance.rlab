@@ -96,7 +96,7 @@ savefig("coax_Emag.svg");
 # === Z_0 vs b/a sweep ===
 ratios = [1.5, 2.0, 3.0, 4.0, 5.0, 7.0, 10.0];
 Nratios = length(ratios);
-Z0_swept = zeros(Nratios);
+Z0_swept = zeros(1, Nratios);
 for kr = 1:Nratios
   Z0_swept(kr) = eta0 / (2 * pi) * log(ratios(kr));
 end

@@ -82,7 +82,7 @@ print(Er(argmin(abs(rs - R))))          % at r ≈ R:  ≈ 3586 V/m  (closed for
 
 <!-- rustlab:output-start -->
 ```text
-71.9
+71.89999999999999
 3586.1701754385963
 ```
 
@@ -96,7 +96,7 @@ ylabel("E_r (V/m)")
 ```
 
 <!-- rustlab:output-start -->
-![plot 1](plots/03-gauss-law-and-potential/plot-1-2b9cd44a.svg)
+![plot 1](plots/03-gauss-law-and-potential/plot-1-bca0ca09.svg)
 
 <!-- rustlab:output-end -->
 
@@ -128,7 +128,7 @@ ylabel("V (V)")
 ```
 
 <!-- rustlab:output-start -->
-![plot 2](plots/03-gauss-law-and-potential/plot-2-ef208894.svg)
+![plot 2](plots/03-gauss-law-and-potential/plot-2-5a6946e2.svg)
 
 <!-- rustlab:output-end -->
 
@@ -180,7 +180,7 @@ title("Dipole |V|  (V, clipped at 8 kV; grid indices)");
 ```
 
 <!-- rustlab:output-start -->
-![plot 3](plots/03-gauss-law-and-potential/plot-3-6e16ba6c.svg)
+![plot 3](plots/03-gauss-law-and-potential/plot-3-05e36a36.svg)
 
 <!-- rustlab:output-end -->
 
@@ -192,7 +192,7 @@ title("Equipotentials |V| = 0.5, 1, 2, 4, 8 kV  (x, y in m)");
 ```
 
 <!-- rustlab:output-start -->
-![plot 4](plots/03-gauss-law-and-potential/plot-4-7eb83ac8.svg)
+![plot 4](plots/03-gauss-law-and-potential/plot-4-432cd587.svg)
 
 <!-- rustlab:output-end -->
 
@@ -227,7 +227,7 @@ quiver(X, Y, Ex_from_V, Ey_from_V, "Dipole field recovered as -∇V")
 ```
 
 <!-- rustlab:output-start -->
-![plot 5](plots/03-gauss-law-and-potential/plot-5-db2930ad.svg)
+![plot 5](plots/03-gauss-law-and-potential/plot-5-85793f8b.svg)
 
 <!-- rustlab:output-end -->
 
@@ -304,7 +304,7 @@ legend("E_z (V/m)", "V (V)")
 ```
 
 <!-- rustlab:output-start -->
-![plot 6](plots/03-gauss-law-and-potential/plot-6-d1766d62.svg)
+![plot 6](plots/03-gauss-law-and-potential/plot-6-752a94be.svg)
 
 <!-- rustlab:output-end -->
 
@@ -352,7 +352,7 @@ print(div2d_ana)               % ≈ -1.63e5 V/m²  (analytic -∂Ez/∂z at thi
 
 <!-- rustlab:output-start -->
 ```text
--175173.44361589185
+-175173.44361589255
 -162617.31593468232
 ```
 

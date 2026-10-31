@@ -87,10 +87,10 @@ print(Ey_pt(31, 26))          % ≈ 89875 V/m
 
 <!-- rustlab:output-start -->
 ```text
-89874.99865187514
+89874.99865187512
 0
 0
-89874.99865187514
+89874.99865187512
 ```
 
 <!-- rustlab:output-end -->
@@ -105,7 +105,7 @@ quiver(X, Y, Ex_pt, Ey_pt, "Point charge:  E radiates from the origin")
 ```
 
 <!-- rustlab:output-start -->
-![plot 1](plots/02-electrostatics-coulomb/plot-1-5d108ed6.svg)
+![plot 1](plots/02-electrostatics-coulomb/plot-1-9e68e6fe.svg)
 
 <!-- rustlab:output-end -->
 
@@ -121,7 +121,7 @@ title("log_{10} |E|  for a single +q at the origin")
 ```
 
 <!-- rustlab:output-start -->
-![plot 2](plots/02-electrostatics-coulomb/plot-2-896da676.svg)
+![plot 2](plots/02-electrostatics-coulomb/plot-2-be9bd8d0.svg)
 
 <!-- rustlab:output-end -->
 
@@ -181,7 +181,7 @@ quiver(X, Y, Ex, Ey, "Dipole:  +q at (+d/2, 0),  -q at (-d/2, 0)")
 ```
 
 <!-- rustlab:output-start -->
-![plot 3](plots/02-electrostatics-coulomb/plot-3-5b3fe16e.svg)
+![plot 3](plots/02-electrostatics-coulomb/plot-3-10097db4.svg)
 
 <!-- rustlab:output-end -->
 
@@ -197,7 +197,7 @@ title("log_{10} |E|  for the dipole  (heatmap, grid indices)");
 ```
 
 <!-- rustlab:output-start -->
-![plot 4](plots/02-electrostatics-coulomb/plot-4-e3536a53.svg)
+![plot 4](plots/02-electrostatics-coulomb/plot-4-6ac2468d.svg)
 
 <!-- rustlab:output-end -->
 
@@ -208,7 +208,7 @@ title("log_{10} |E|  contours  (x, y in m)");
 ```
 
 <!-- rustlab:output-start -->
-![plot 5](plots/02-electrostatics-coulomb/plot-5-8bb805db.svg)
+![plot 5](plots/02-electrostatics-coulomb/plot-5-89174d2b.svg)
 
 <!-- rustlab:output-end -->
 
@@ -245,7 +245,7 @@ print(Eyd(26, 36))            % ≈ 0  on the dipole axis
 
 <!-- rustlab:output-start -->
 ```text
-44937.49971914061
+44937.4997191406
 0
 ```
 
@@ -267,7 +267,7 @@ ylabel("|E_far - E_exact| / |E_exact|")
 ```
 
 <!-- rustlab:output-start -->
-![plot 6](plots/02-electrostatics-coulomb/plot-6-aa69475e.svg)
+![plot 6](plots/02-electrostatics-coulomb/plot-6-fe5e46ba.svg)
 
 <!-- rustlab:output-end -->
 
@@ -287,7 +287,7 @@ streamplot(X, Y, Ex, Ey, "Dipole field lines  —  start on +q, end on -q")
 ```
 
 <!-- rustlab:output-start -->
-![plot 7](plots/02-electrostatics-coulomb/plot-7-145c0342.svg)
+![plot 7](plots/02-electrostatics-coulomb/plot-7-1b545a01.svg)
 
 <!-- rustlab:output-end -->
 
@@ -313,7 +313,7 @@ phi   = linspace(0, 2 * pi, Nseg + 1);
 phi   = phi(1 : Nseg);
 zs    = linspace(-0.05, 0.05, 201);
 
-Ez_num     = zeros(length(zs));
+Ez_num     = zeros(1, length(zs));
 seg_charge = Q / Nseg;
 for k = 1:Nseg
   xk = R * cos(phi(k));
@@ -330,7 +330,7 @@ print(err)                    % ≈ 1e-10 V/m (machine precision — exact for a
 
 <!-- rustlab:output-start -->
 ```text
-0.0000000000836735125631094
+0.00000000008185452315956354
 ```
 
 <!-- rustlab:output-end -->
@@ -351,7 +351,7 @@ legend("numerical (360 seg.)", "analytic")
 ```
 
 <!-- rustlab:output-start -->
-![plot 8](plots/02-electrostatics-coulomb/plot-8-5d0ec853.svg)
+![plot 8](plots/02-electrostatics-coulomb/plot-8-091c1474.svg)
 
 <!-- rustlab:output-end -->
 

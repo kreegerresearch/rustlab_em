@@ -176,10 +176,10 @@ idx_AR_start_1  = idx_src_1 + n_air_R_1 + 1;
 idx_AR_end_1    = idx_AR_start_1 + n_AR_c_1 - 1;
 idx_sub_start_1 = idx_AR_end_1 + 1;
 
-% Vector form (single-arg `ones`) so the range slice-assigns below take
-% a scalar RHS directly.
-eps_with = ones(N_1) * eps_air;
-eps_no   = ones(N_1) * eps_air;
+% 1×N row (`ones(1, N)`). Since rustlab 0.3.26 `ones(N)` is N×N;
+% linear slice-assign still writes the row in element order.
+eps_with = ones(1, N_1) * eps_air;
+eps_no   = ones(1, N_1) * eps_air;
 eps_with(idx_AR_start_1:idx_AR_end_1) = eps_AR;
 eps_with(idx_sub_start_1:N_1)         = eps_sub;
 eps_no(idx_AR_start_1:N_1)            = eps_sub;
@@ -402,7 +402,7 @@ function a = resonator_trial(kf)
   fs_3 = linspace(1.0e9, 4.0e9, 121);
   omega_k = 2 * pi * fs_3(kf);
   A_3 = L_3 + ((omega_k / c0_3)^2 * eps_c) * speye(N_3);
-  b_3 = zeros(N_3); b_3(k_src) = -j * omega_k * mu0_3;
+  b_3 = zeros(1, N_3); b_3(k_src) = -j * omega_k * mu0_3;
   E_3 = spsolve(A_3, b_3);
   a = abs(E_3(k_meas));
 end

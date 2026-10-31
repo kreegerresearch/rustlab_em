@@ -18,11 +18,11 @@ phi   = linspace(0, 2*pi, N_seg + 1);
 phi   = phi(1:N_seg);
 rxs   = R * cos(phi);
 rys   = R * sin(phi);
-rzs   = zeros(N_seg);
+rzs   = zeros(1, N_seg);
 dphi  = 2 * pi / N_seg;
 dlx   = -R * sin(phi) * dphi;
 dly   =  R * cos(phi) * dphi;
-dlz   = zeros(N_seg);
+dlz   = zeros(1, N_seg);
 
 # === Meridional grid (y = 0 slice) ===
 Nm = 41;

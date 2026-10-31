@@ -77,7 +77,7 @@ E_t   = Q_t / (A_cap * eps0);
 % Numerical ∂E/∂t via centred differences.
 dt    = ts(2) - ts(1);
 Nt    = length(ts);
-dEdt  = zeros(Nt);
+dEdt  = zeros(1, Nt);
 for i = 2:(Nt - 1)
   dEdt(i) = (E_t(i + 1) - E_t(i - 1)) / (2 * dt);
 end
@@ -115,8 +115,8 @@ J_d_gap = I_now / A_cap;
 Nz = 161;
 Lz = 5 * d_cap;
 zs = linspace(-Lz, Lz, Nz);
-I_cond = zeros(Nz);
-I_disp = zeros(Nz);
+I_cond = zeros(1, Nz);
+I_disp = zeros(1, Nz);
 for iz = 1:Nz
   z = zs(iz);
   if z < -d_cap / 2 || z > d_cap / 2

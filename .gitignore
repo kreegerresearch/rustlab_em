@@ -9,6 +9,7 @@ lessons/*/*.gif
 # Interactive HTML notebook build — auto-generated `make html` output
 # living alongside the committed *.md (large Plotly bundles, regenerable).
 book/*.html
+book/assets/
 
 # Un-hashed plot artefacts referenced only by the gitignored *.html
 # build (`make html`). The committed *.md uses content-hashed filenames

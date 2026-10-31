@@ -77,17 +77,17 @@ end
 <!-- rustlab:output-start -->
 ```text
 --- Cutoff frequency comparison (GHz) ---
-7.067035608827084
+7.067035608827078
 7.0705909810098895
-9.590307835580893
+9.590307835580871
 9.598041770433102
-12.535504051167374
+12.535504051167356
 12.563593366418436
-12.718666234324942
+12.718666234324909
 12.741179465446374
-14.112755716074977
+14.11275571607498
 14.141181962019779
-16.091118509772567
+16.09111850977253
 16.144317943225087
 ```
 
@@ -104,7 +104,7 @@ ylabel("y cell")
 ```
 
 <!-- rustlab:output-start -->
-![plot 1](plots/12-waveguides-and-radiation/plot-1-21ed820e.svg)
+![plot 1](plots/12-waveguides-and-radiation/plot-1-c89ad1b2.svg)
 
 <!-- rustlab:output-end -->
 
@@ -144,13 +144,13 @@ end
 <!-- rustlab:output-start -->
 ```text
 --- Cavity resonance comparison (GHz) ---
-2.4977609943717174
+2.497760994371722
 2.4982704834208573
-3.601281387544634
+3.6012813875446423
 3.603056931180843
-4.265477448879092
+4.2654774488790945
 4.269046473432809
-4.915211059689112
+4.915211059689119
 4.921022148327287
 ```
 
@@ -167,7 +167,7 @@ ylabel("y cell")
 ```
 
 <!-- rustlab:output-start -->
-![plot 2](plots/12-waveguides-and-radiation/plot-2-7dc22cbe.svg)
+![plot 2](plots/12-waveguides-and-radiation/plot-2-09484c5d.svg)
 
 <!-- rustlab:output-end -->
 
@@ -209,7 +209,7 @@ title("Hertzian dipole far-field pattern  —  |F| ∝ sin θ")
 ```
 
 <!-- rustlab:output-start -->
-![plot 3](plots/12-waveguides-and-radiation/plot-3-86495fe9.svg)
+![plot 3](plots/12-waveguides-and-radiation/plot-3-c88d7ac0.svg)
 
 <!-- rustlab:output-end -->
 
@@ -270,7 +270,7 @@ F_anal_n = F_anal / max(F_anal);
 
 % Numerical integration over the antenna axis.
 zs = linspace(-L_d / 2, L_d / 2, 201);
-F_num = zeros(length(ths_d));
+F_num = zeros(1, length(ths_d));
 for t = 1:length(ths_d)
   Re_int = trapz(zs, cos(k0_d * zs) .* cos(k0_d * zs * cos(ths_d(t))));
   Im_int = trapz(zs, cos(k0_d * zs) .* sin(k0_d * zs * cos(ths_d(t))));
@@ -299,7 +299,7 @@ legend("half-wave  cos(π/2 cosθ)/sinθ", "Hertzian  sinθ")
 ```
 
 <!-- rustlab:output-start -->
-![plot 4](plots/12-waveguides-and-radiation/plot-4-5ec4a40c.svg)
+![plot 4](plots/12-waveguides-and-radiation/plot-4-eeea4f33.svg)
 
 <!-- rustlab:output-end -->
 
@@ -313,7 +313,7 @@ print(R_rad)                  % ~ 73.08 Ω
 
 <!-- rustlab:output-start -->
 ```text
-73.07901024816655
+73.07901024816654
 ```
 
 <!-- rustlab:output-end -->
@@ -353,7 +353,7 @@ legend("NF->FF integral", "sin(theta)");
 ```
 
 <!-- rustlab:output-start -->
-![plot 5](plots/12-waveguides-and-radiation/plot-5-623eab31.svg)
+![plot 5](plots/12-waveguides-and-radiation/plot-5-e79d7be2.svg)
 
 <!-- rustlab:output-end -->
 

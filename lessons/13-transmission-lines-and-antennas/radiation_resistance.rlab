@@ -42,8 +42,8 @@ print(real(R_half))             # ≈ 73.08 Ω (exact η₀; textbook 73.13 assu
 # (sin(kL/2) = sin π = 0) so the input-referred R_rad diverges.
 ratios = linspace(0.02, 0.8, 60);
 N_r    = length(ratios);
-R_in   = zeros(N_r);
-R_short_approx = zeros(N_r);
+R_in   = zeros(1, N_r);
+R_short_approx = zeros(1, N_r);
 for kr = 1:N_r
   L_r   = ratios(kr);
   kL    = 2 * pi * L_r;

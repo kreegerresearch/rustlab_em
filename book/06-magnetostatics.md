@@ -46,11 +46,11 @@ phi   = linspace(0, 2*pi, N_seg + 1);
 phi   = phi(1:N_seg);
 rxs   = R * cos(phi);
 rys   = R * sin(phi);
-rzs   = zeros(N_seg);
+rzs   = zeros(1, N_seg);
 dphi  = 2 * pi / N_seg;
 dlx   = -R * sin(phi) * dphi;
 dly   =  R * cos(phi) * dphi;
-dlz   = zeros(N_seg);
+dlz   = zeros(1, N_seg);
 
 % Meridional grid (y = 0 slice)
 Nm = 41;
@@ -80,7 +80,7 @@ print(real(mu0 * Iloop / (2 * R)))             % closed-form  μ₀I/(2R)
 
 <!-- rustlab:output-start -->
 ```text
-0.000012566370614359204
+0.000012566370614359207
 0.000012566370614359172
 ```
 
@@ -109,7 +109,7 @@ ylabel("z (m)")
 ```
 
 <!-- rustlab:output-start -->
-![plot 1](plots/06-magnetostatics/plot-1-28ec03fd.svg)
+![plot 1](plots/06-magnetostatics/plot-1-276e0223.svg)
 
 <!-- rustlab:output-end -->
 
@@ -131,7 +131,7 @@ legend("Numerical", "μ₀IR²/[2(R²+z²)^{3/2}]")
 ```
 
 <!-- rustlab:output-start -->
-![plot 2](plots/06-magnetostatics/plot-2-70d94573.svg)
+![plot 2](plots/06-magnetostatics/plot-2-e7ba0e65.svg)
 
 <!-- rustlab:output-end -->
 
@@ -173,7 +173,7 @@ dl_y =  Rs * cos(phi) * dphi;
 % over its N_seg segments — the inner cross product becomes one
 % element-wise expression on length-N_seg vectors.
 zline   = linspace(-0.10, 0.10, 121);
-Bz_axis = zeros(length(zline));
+Bz_axis = zeros(1, length(zline));
 for iz = 1:length(zline)
   fz_p = zline(iz);
   bz   = 0.0;
@@ -197,7 +197,7 @@ print(B_fin)                                % ≈ 5.83e-4 T, ~1.7% above numeric
 
 <!-- rustlab:output-start -->
 ```text
-0.0005732925467861276
+0.0005732925467861278
 0.0006283185307179586
 0.0005833791102228984
 ```
@@ -216,7 +216,7 @@ legend("Biot-Savart sum", "μ₀nI (∞ limit)")
 ```
 
 <!-- rustlab:output-start -->
-![plot 3](plots/06-magnetostatics/plot-3-33c315b4.svg)
+![plot 3](plots/06-magnetostatics/plot-3-fbb2d496.svg)
 
 <!-- rustlab:output-end -->
 
@@ -261,7 +261,7 @@ legend("d/R = 0.5", "d/R = 1.0", "d/R = 1.5")
 ```
 
 <!-- rustlab:output-start -->
-![plot 4](plots/06-magnetostatics/plot-4-2ed3a090.svg)
+![plot 4](plots/06-magnetostatics/plot-4-18f0737f.svg)
 
 <!-- rustlab:output-end -->
 
@@ -351,7 +351,7 @@ hold off;
 ```
 
 <!-- rustlab:output-start -->
-![plot 5](plots/06-magnetostatics/plot-5-18d3d3b6.svg)
+![plot 5](plots/06-magnetostatics/plot-5-ad2191f7.svg)
 
 <!-- rustlab:output-end -->
 
@@ -469,7 +469,7 @@ hold off;
 ```
 
 <!-- rustlab:output-start -->
-![plot 8](plots/06-magnetostatics/plot-8-9a9b20a9.svg)
+![plot 8](plots/06-magnetostatics/plot-8-1efedeb3.svg)
 
 <!-- rustlab:output-end -->
 

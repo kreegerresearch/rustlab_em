@@ -436,7 +436,7 @@ The brightest pixel sits on the inner $(0.06, 0.06)$ corner — that's the singu
 j0  = 60; i0 = 60;
 M_r = 30;
 rs = (1:M_r) * dx2 * sqrt(2.0);
-Es = zeros(M_r);
+Es = zeros(1, M_r);
 for k = 1:M_r
   ic = i0 - k;
   jc = j0 - k;

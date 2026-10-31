@@ -47,7 +47,7 @@ function M = mutual_exact(R1, R2, d, mu0)
 end
 
 function M = mutual_M(rs, cosf, dphi, Nr, R, d, mu0, I1)
-  Bz = zeros(Nr);
+  Bz = zeros(1, Nr);
   for ir = 1:Nr
     r = rs(ir);
     D = r^2 + R^2 - 2 * R * r * cosf + d^2;

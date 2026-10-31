@@ -74,7 +74,7 @@ legend("analytic", "numerical");
 0.9875593125722717
 ```
 
-![plot 1](plots/17-lumped-inductance/plot-1-e8e82240.svg)
+![plot 1](plots/17-lumped-inductance/plot-1-8ca92816.svg)
 
 <!-- rustlab:output-end -->
 
@@ -124,7 +124,7 @@ legend("L_{11}", "L_{12}");
 43.44
 ```
 
-![plot 2](plots/17-lumped-inductance/plot-2-366e452d.svg)
+![plot 2](plots/17-lumped-inductance/plot-2-0b42a995.svg)
 
 <!-- rustlab:output-end -->
 
@@ -169,7 +169,7 @@ legend("numerical", "exact", "dipole");
 1.1846153846153846
 ```
 
-![plot 3](plots/17-lumped-inductance/plot-3-946b38e1.svg)
+![plot 3](plots/17-lumped-inductance/plot-3-07b59368.svg)
 
 <!-- rustlab:output-end -->
 
@@ -213,7 +213,7 @@ legend("V2/V1", "N2/N1 = 2", "k");
 1.885
 ```
 
-![plot 4](plots/17-lumped-inductance/plot-4-dbac0945.svg)
+![plot 4](plots/17-lumped-inductance/plot-4-aca63d61.svg)
 
 <!-- rustlab:output-end -->
 
@@ -256,7 +256,7 @@ legend("numerical", "Wheeler");
 0.963
 ```
 
-![plot 5](plots/17-lumped-inductance/plot-5-19a4ac89.svg)
+![plot 5](plots/17-lumped-inductance/plot-5-0cf3936f.svg)
 
 <!-- rustlab:output-end -->
 
@@ -298,10 +298,10 @@ legend("numerical", "analytic");
 
 <!-- rustlab:output-start -->
 ```text
-0.0003620088198512922
+0.00036200881985129214
 ```
 
-![plot 6](plots/17-lumped-inductance/plot-6-6035e1d4.svg)
+![plot 6](plots/17-lumped-inductance/plot-6-9fab9743.svg)
 
 <!-- rustlab:output-end -->
 
