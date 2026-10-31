@@ -31,14 +31,14 @@ $$E_y^{n+1}(i) = E_y^n(i) - \frac{\Delta t}{\varepsilon_0\varepsilon_r(i)\Delta 
 
 **CFL stability**: $c_0\Delta t \le \Delta x/\sqrt d$ in $d$ dimensions, with $c_0 = 1/\sqrt{\mu_0\varepsilon_0}$. We typically choose a Courant number $S = c_0\Delta t/\Delta x$ at $0.7$–$0.99$ to balance dispersion error against extra time steps.
 
-A rustlab-specific note: allocate the length-N field arrays with the **single-arg** `zeros(N)` / `ones(N)` form. That returns a 1-D Vector, which since rustlab 0.3.4 supports vector slice-assignment — letting the leapfrog read exactly like the textbook formula:
+A rustlab-specific note: allocate the length-N field arrays as 1×N rows, `zeros(1, N)` / `ones(1, N)`. Since rustlab 0.3.26 the single-argument form `zeros(N)` / `ones(N)` is an N×N matrix, not a line of N samples. A 1×N row still accepts the linear slice-assign that makes the leapfrog read like the textbook formula:
 
 ```
 Hz(1:N-1) = Hz(1:N-1) - cH * (Ey(2:N) - Ey(1:N-1));
 Ey(2:N-1) = Ey(2:N-1) - cEr(2:N-1) .* (Hz(2:N-1) - Hz(1:N-2));
 ```
 
-The two-arg form `zeros(1, N)` returns a 1×N row-Matrix that looks identical under `size()` but only accepts scalar RHS in a slice-assign (`A(2:4, :) = 0`), so the textbook update above would fail. Each per-step slice update touches $O(N)$ elements in place — no allocations, many times faster than a hand-rolled `for k = 1:N` loop in interpreted rustlab.
+One index on a 1×N row is column-major, which for a single row is just element order, and the right-hand side may be a vector or another row of the same length. Each per-step slice update touches $O(N)$ elements in place — no allocations, many times faster than a hand-rolled `for k = 1:N` loop in interpreted rustlab.
 
 ## 1-D Yee FDTD — Gaussian Pulse Through a Dielectric Slab
 
@@ -70,12 +70,12 @@ t0_v   = 40 * dt_v;
 tau_v  = 12 * dt_v;
 k_src_v= 150;
 
-eps_r_v = ones(N_v);
+eps_r_v = ones(1, N_v);
 slab_lo = 350; slab_hi = 450;
 eps_r_v(slab_lo:slab_hi) = 4.0;
 
-Ey_v = zeros(N_v);
-Hz_v = zeros(N_v);
+Ey_v = zeros(1, N_v);
+Hz_v = zeros(1, N_v);
 cH_v  = dt_v / (mu0_v * dx_v);
 cEr_v = dt_v / (eps0_v * dx_v) ./ eps_r_v;
 
@@ -111,7 +111,7 @@ saveanim("fdtd_1d_pulse.gif", 24)
 ```
 
 <!-- rustlab:output-start -->
-![animation 1](plots/11-fdtd-simulation/anim-1-2a19fff5.gif)
+![animation 1](plots/11-fdtd-simulation/anim-1-353193f0.gif)
 
 <!-- rustlab:output-end -->
 
@@ -165,7 +165,7 @@ inside_pec = 1 - pec_mask;
 sigma_b = 8 * eps0_s * c0_s / dx_s;
 absorb_w = 14;
 ramp_s   = (absorb_w:-1:1) / absorb_w;
-sig_x_s  = zeros(nx_s);
+sig_x_s  = zeros(1, nx_s);
 sig_x_s(1:absorb_w)             = sigma_b * ramp_s.^3;
 sig_x_s(nx_s-absorb_w+1:nx_s)   = sigma_b * (ramp_s(absorb_w:-1:1)).^3;
 
@@ -208,7 +208,7 @@ saveanim("fdtd_2d_scattering.gif", 24)
 ```
 
 <!-- rustlab:output-start -->
-![animation 2](plots/11-fdtd-simulation/anim-2-899bd2d8.gif)
+![animation 2](plots/11-fdtd-simulation/anim-2-744ff3c7.gif)
 
 <!-- rustlab:output-end -->
 
@@ -253,12 +253,12 @@ dx_d     = 1.5e-3;
 dt_d     = 0.99 * dx_d / c0_d;
 n_step_d = 2000;
 
-in_film = zeros(N_d);
+in_film = zeros(1, N_d);
 in_film(380:420) = 1.0;
 
-Ey_d = zeros(N_d);
-Hz_d = zeros(N_d);
-Jp_d = zeros(N_d);
+Ey_d = zeros(1, N_d);
+Hz_d = zeros(1, N_d);
+Jp_d = zeros(1, N_d);
 cH_d  = dt_d / (mu0_d * dx_d);
 cE_d  = dt_d / (eps0_d * dx_d);
 alpha_d = (1 - gamma_d * dt_d / 2) / (1 + gamma_d * dt_d / 2);
@@ -268,8 +268,8 @@ t0_d  = 80 * dt_d;
 tau_d = 25 * dt_d;
 f_mod_d = 2.0e9;
 k_src_d = 100;
-E_back_d = zeros(n_step_d);
-E_fwd_d  = zeros(n_step_d);
+E_back_d = zeros(1, n_step_d);
+E_fwd_d  = zeros(1, n_step_d);
 
 for step = 1:n_step_d
   t = step * dt_d;
@@ -319,7 +319,7 @@ legend("before film", "after film")
 ```
 
 <!-- rustlab:output-start -->
-![plot 3](plots/11-fdtd-simulation/plot-3-5b8147f7.svg)
+![plot 3](plots/11-fdtd-simulation/plot-3-bd5d2656.svg)
 
 <!-- rustlab:output-end -->
 
@@ -344,7 +344,7 @@ leak     = [1.52e-15, 1.52e-15, 1.42e-15, 1.63e-15];
 inc_peak = 0.999;
 hold on;
 semilogy(probes, leak, "scattered-zone |E_z| max");
-semilogy(probes, inc_peak * ones(4), "incident peak inside box");
+semilogy(probes, inc_peak * ones(1, 4), "incident peak inside box");
 hold off;
 xlabel("probe   (1=top  2=bottom  3=right  4=left)");
 ylabel("|E_z|");
@@ -353,7 +353,7 @@ legend("leakage ~1e-15", "incident ~1");
 ```
 
 <!-- rustlab:output-start -->
-![plot 4](plots/11-fdtd-simulation/plot-4-17cd4cec.svg)
+![plot 4](plots/11-fdtd-simulation/plot-4-e3147a79.svg)
 
 <!-- rustlab:output-end -->
 
@@ -382,7 +382,7 @@ legend("|R(d)|");
 ```
 
 <!-- rustlab:output-start -->
-![plot 5](plots/11-fdtd-simulation/plot-5-21a94983.svg)
+![plot 5](plots/11-fdtd-simulation/plot-5-3dcff8ab.svg)
 
 <!-- rustlab:output-end -->
 

@@ -35,5 +35,6 @@ stay flat. See [`01-vector-calculus-and-fields.md`](01-vector-calculus-and-field
 for the worked pattern, and [`../AGENTS.md`](../AGENTS.md) §"Lesson
 Notebook Format" for the full template.
 
-This file (named `README.md`) is skipped by the renderer, so it never
-shows up under `book/`.
+rustlab 0.3.43 renders `README.md` with the other notebooks. `make notebooks`
+restores the hand-written curriculum index at `book/README.md` afterwards,
+so this authoring note does not replace it.

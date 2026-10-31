@@ -104,8 +104,8 @@ savefig("twin_wire_Emag.svg");
 # the numerical run has just confirmed at d/a = 4.
 ratios   = [2.0, 3.0, 4.0, 6.0, 10.0, 20.0, 50.0];
 Nratios  = length(ratios);
-Z0_swept = zeros(Nratios);
-Z0_appr  = zeros(Nratios);
+Z0_swept = zeros(1, Nratios);
+Z0_appr  = zeros(1, Nratios);
 for kr = 1:Nratios
   Z0_swept(kr) = eta0 / pi * acosh_(ratios(kr) / 2);
   Z0_appr(kr)  = 120 * log(ratios(kr));

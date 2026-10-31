@@ -65,8 +65,9 @@ field_mask         = 1 - pec_mask;
 sigma_b  = 8 * eps0 * c0 / dx;
 absorb_w = 12;
 ramp     = (absorb_w:-1:1) / absorb_w;
-# Vector form (single-arg zeros) so the slice-assign accepts a vector RHS.
-sig_x    = zeros(nx);
+# 1×N row so the slice-assign accepts a vector RHS (`zeros(nx)` is nx×nx
+# since rustlab 0.3.26).
+sig_x    = zeros(1, nx);
 sig_x(1:absorb_w)       = sigma_b * ramp.^3;
 sig_x(nx-absorb_w+1:nx) = sigma_b * (ramp(absorb_w:-1:1)).^3;
 # Implicit-loss damping factor per column (length nx)
@@ -94,7 +95,7 @@ j_probe = j_feed + 5;    # probe 5 cells off the driven feed column, still
                          # rather than the cell the source injects into.
 
 # === Records ===
-Ez_probe = zeros(n_step);
+Ez_probe = zeros(1, n_step);
 
 figure();
 for step = 1:n_step

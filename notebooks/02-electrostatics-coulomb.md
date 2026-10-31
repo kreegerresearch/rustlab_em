@@ -241,7 +241,7 @@ phi   = linspace(0, 2 * pi, Nseg + 1);
 phi   = phi(1 : Nseg);
 zs    = linspace(-0.05, 0.05, 201);
 
-Ez_num     = zeros(length(zs));
+Ez_num     = zeros(1, length(zs));
 seg_charge = Q / Nseg;
 for k = 1:Nseg
   xk = R * cos(phi(k));

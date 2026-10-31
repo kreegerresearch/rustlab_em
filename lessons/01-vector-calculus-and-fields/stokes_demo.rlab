@@ -12,7 +12,7 @@
 a = 1.0;
 N = 201;                                    # samples per edge (line integral)
 xs_edge = linspace(-a, a, N);
-unit    = ones(N);
+unit    = ones(1, N);
 
 # === Line integral — each edge in CCW order ===
 # Bottom (y = -a):   dℓ = (dx, 0),  F_x = -y = +a.

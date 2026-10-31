@@ -62,11 +62,11 @@ t0     = 80 * dt;
 tau    = 18 * dt;
 
 # Per-cell L'/C' arrays for uniform and stepped lines.
-# Use a Vector (single-arg zeros/ones) so slice-assign with vector RHS
-# works on the cat-rebuild leapfrog.
+# 1×N rows (`zeros(1, N)` / `ones(1, N)`). Since rustlab 0.3.26 a single
+# size is a square matrix. Linear slice-assign writes the row.
 function [L_arr, C_arr] = build_line(N, Z01, Z02, v, k_mid, kind)
-  L_arr = ones(N) * (Z01 / v);
-  C_arr = ones(N) * (1 / (Z01 * v));
+  L_arr = ones(1, N) * (Z01 / v);
+  C_arr = ones(1, N) * (1 / (Z01 * v));
   if kind > 1
     L_arr(k_mid:N) = Z02 / v;
     C_arr(k_mid:N) = 1 / (Z02 * v);
@@ -76,10 +76,10 @@ end
 function [V_p1, V_p2] = run_line(L_arr, C_arr, Z_load, n_step, dz, dt, ...
                                   k_src, k_p1, k_p2, t0, tau, f_c)
   N = length(L_arr);
-  V   = zeros(N);
-  Iv  = zeros(N);                # I(k) at half-cell between V(k-1) and V(k); I(1) unused
-  V_p1 = zeros(n_step);
-  V_p2 = zeros(n_step);
+  V   = zeros(1, N);
+  Iv  = zeros(1, N);                # I(k) at half-cell between V(k-1) and V(k); I(1) unused
+  V_p1 = zeros(1, n_step);
+  V_p2 = zeros(1, n_step);
   for step = 1:n_step
     V2_prev = V(2);            # pre-update neighbour for the delayed-copy Mur ABC
     # I update (vectorised slice-assign).

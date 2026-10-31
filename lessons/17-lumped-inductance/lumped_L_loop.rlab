@@ -34,7 +34,7 @@ cosf  = cos(phi);
 Nr = 1500;
 rs = linspace(0, R - a, Nr);
 
-Bz = zeros(Nr);
+Bz = zeros(1, Nr);
 for ir = 1:Nr
   r = rs(ir);
   D = r^2 + R^2 - 2 * R * r * cosf;

@@ -105,7 +105,7 @@ ylabel("y cell index")
 ```
 
 <!-- rustlab:output-start -->
-![plot 1](plots/10-fdfd-frequency-domain/plot-1-c9e8fae6.svg)
+![plot 1](plots/10-fdfd-frequency-domain/plot-1-954f82bc.svg)
 
 <!-- rustlab:output-end -->
 
@@ -123,7 +123,7 @@ ylabel("y cell index")
 ```
 
 <!-- rustlab:output-start -->
-![plot 2](plots/10-fdfd-frequency-domain/plot-2-33942220.svg)
+![plot 2](plots/10-fdfd-frequency-domain/plot-2-7f4e8bb1.svg)
 
 <!-- rustlab:output-end -->
 
@@ -144,7 +144,7 @@ print((max([sN_v, sS_v, sE_v, sW_v]) - min([sN_v, sS_v, sE_v, sW_v])) / mean([sN
 
 <!-- rustlab:output-start -->
 ```text
-0.000000000000010346476937037666
+0.00000000000001601240478351069
 ```
 
 <!-- rustlab:output-end -->
@@ -195,10 +195,10 @@ idx_AR_start_1  = idx_src_1 + n_air_R_1 + 1;
 idx_AR_end_1    = idx_AR_start_1 + n_AR_c_1 - 1;
 idx_sub_start_1 = idx_AR_end_1 + 1;
 
-% Vector form (single-arg `ones`) so the range slice-assigns below take
-% a scalar RHS directly.
-eps_with = ones(N_1) * eps_air;
-eps_no   = ones(N_1) * eps_air;
+% 1×N row (`ones(1, N)`). Since rustlab 0.3.26 `ones(N)` is N×N;
+% linear slice-assign still writes the row in element order.
+eps_with = ones(1, N_1) * eps_air;
+eps_no   = ones(1, N_1) * eps_air;
 eps_with(idx_AR_start_1:idx_AR_end_1) = eps_AR;
 eps_with(idx_sub_start_1:N_1)         = eps_sub;
 eps_no(idx_AR_start_1:N_1)            = eps_sub;
@@ -211,7 +211,7 @@ title("Stratification — air | AR layer | substrate (extending into PML)")
 ```
 
 <!-- rustlab:output-start -->
-![plot 3](plots/10-fdfd-frequency-domain/plot-3-cbcfe6a6.svg)
+![plot 3](plots/10-fdfd-frequency-domain/plot-3-c87012a6.svg)
 
 <!-- rustlab:output-end -->
 
@@ -262,8 +262,8 @@ print(ripple_noAR)       % ~ 0.64 (Fresnel R = 1/3 → VSWR = 2)
 
 <!-- rustlab:output-start -->
 ```text
-0.009464189943465207
-0.6415815498947357
+0.009464189943466261
+0.6415815498947347
 ```
 
 <!-- rustlab:output-end -->
@@ -281,7 +281,7 @@ legend("with AR", "no AR")
 ```
 
 <!-- rustlab:output-start -->
-![plot 4](plots/10-fdfd-frequency-domain/plot-4-06db1a7a.svg)
+![plot 4](plots/10-fdfd-frequency-domain/plot-4-b8163b99.svg)
 
 <!-- rustlab:output-end -->
 
@@ -329,7 +329,7 @@ ylabel("y")
 ```
 
 <!-- rustlab:output-start -->
-![plot 5](plots/10-fdfd-frequency-domain/plot-5-2be0f010.svg)
+![plot 5](plots/10-fdfd-frequency-domain/plot-5-9b51f808.svg)
 
 <!-- rustlab:output-end -->
 
@@ -351,7 +351,7 @@ ylabel("y")
 ```
 
 <!-- rustlab:output-start -->
-![plot 6](plots/10-fdfd-frequency-domain/plot-6-76c0877e.svg)
+![plot 6](plots/10-fdfd-frequency-domain/plot-6-07f0f205.svg)
 
 <!-- rustlab:output-end -->
 
@@ -364,7 +364,7 @@ ylabel("y")
 ```
 
 <!-- rustlab:output-start -->
-![plot 7](plots/10-fdfd-frequency-domain/plot-7-6faa3b89.svg)
+![plot 7](plots/10-fdfd-frequency-domain/plot-7-8c965f82.svg)
 
 <!-- rustlab:output-end -->
 
@@ -377,7 +377,7 @@ ylabel("y")
 ```
 
 <!-- rustlab:output-start -->
-![plot 8](plots/10-fdfd-frequency-domain/plot-8-4f7533b9.svg)
+![plot 8](plots/10-fdfd-frequency-domain/plot-8-00a1c65c.svg)
 
 <!-- rustlab:output-end -->
 
@@ -401,10 +401,10 @@ print(mean(lee_blk(:)))                % shadow    (mean |E_total| behind)
 
 <!-- rustlab:output-start -->
 ```text
-1.20877512034374
-0.3180352280309315
-1.0282578754380305
-0.6406975975469447
+1.2087751203437402
+0.3180352280309325
+1.0282578754380312
+0.6406975975469438
 ```
 
 <!-- rustlab:output-end -->
@@ -469,7 +469,7 @@ function a = resonator_trial(kf)
   fs_3 = linspace(1.0e9, 4.0e9, 121);
   omega_k = 2 * pi * fs_3(kf);
   A_3 = L_3 + ((omega_k / c0_3)^2 * eps_c) * speye(N_3);
-  b_3 = zeros(N_3); b_3(k_src) = -j * omega_k * mu0_3;
+  b_3 = zeros(1, N_3); b_3(k_src) = -j * omega_k * mu0_3;
   E_3 = spsolve(A_3, b_3);
   a = abs(E_3(k_meas));
 end
@@ -501,7 +501,7 @@ title("Closed-cavity FDFD response — Lorentzian peaks at TM_{m n}")
 4.269046473432809
 ```
 
-![plot 9](plots/10-fdfd-frequency-domain/plot-9-0a97296b.svg)
+![plot 9](plots/10-fdfd-frequency-domain/plot-9-f9849c4e.svg)
 
 <!-- rustlab:output-end -->
 
@@ -526,7 +526,7 @@ ylabel("y cell index")
 0.7116026757939578
 ```
 
-![plot 10](plots/10-fdfd-frequency-domain/plot-10-239e54b0.svg)
+![plot 10](plots/10-fdfd-frequency-domain/plot-10-3e8c5b5b.svg)
 
 <!-- rustlab:output-end -->
 

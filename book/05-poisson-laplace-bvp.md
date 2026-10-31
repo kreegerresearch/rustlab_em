@@ -88,7 +88,7 @@ print(real(max(err(:))))             % ≈ 1.6e-4 — well below the (1/42)² �
 ```text
 0.18317394238233684
 0.18304604079678616
-0.00016149246740576606
+0.00016149246740582157
 ```
 
 <!-- rustlab:output-end -->
@@ -105,7 +105,7 @@ hold off;
 ```
 
 <!-- rustlab:output-start -->
-![plot 1](plots/05-poisson-laplace-bvp/plot-1-0b0ae6dc.svg)
+![plot 1](plots/05-poisson-laplace-bvp/plot-1-6c89f55f.svg)
 
 <!-- rustlab:output-end -->
 
@@ -170,9 +170,9 @@ end
 
 <!-- rustlab:output-start -->
 ```text
-0.11803579929357888
-0.003492182470557742
-0.0006430625831445047
+0.11803579929357882
+0.0034921824705577142
+0.0006430625831446157
 ```
 
 <!-- rustlab:output-end -->
@@ -210,7 +210,7 @@ title("Plate masks: 1 = +V plate (top), 2 = -V plate (bottom)")
 ```
 
 <!-- rustlab:output-start -->
-![plot 2](plots/05-poisson-laplace-bvp/plot-2-d238f8a4.svg)
+![plot 2](plots/05-poisson-laplace-bvp/plot-2-a7194173.svg)
 
 <!-- rustlab:output-end -->
 
@@ -264,7 +264,7 @@ hold off;
 ```
 
 <!-- rustlab:output-start -->
-![plot 3](plots/05-poisson-laplace-bvp/plot-3-2842ef45.svg)
+![plot 3](plots/05-poisson-laplace-bvp/plot-3-e968b67a.svg)
 
 <!-- rustlab:output-end -->
 
@@ -338,7 +338,7 @@ title("ε_r(x, y): 4 below the interface, 1 above")
 ```
 
 <!-- rustlab:output-start -->
-![plot 4](plots/05-poisson-laplace-bvp/plot-4-3d2cf4bb.svg)
+![plot 4](plots/05-poisson-laplace-bvp/plot-4-d060ae5e.svg)
 
 <!-- rustlab:output-end -->
 
@@ -371,7 +371,7 @@ ylabel("V (V)")
 ```
 
 <!-- rustlab:output-start -->
-![plot 5](plots/05-poisson-laplace-bvp/plot-5-792f8637.svg)
+![plot 5](plots/05-poisson-laplace-bvp/plot-5-1910d24d.svg)
 
 <!-- rustlab:output-end -->
 
@@ -468,7 +468,7 @@ title("Conductor mask: V = 1 inside; grounded box on the outer boundary")
 ```
 
 <!-- rustlab:output-start -->
-![plot 6](plots/05-poisson-laplace-bvp/plot-6-1d6c4d20.svg)
+![plot 6](plots/05-poisson-laplace-bvp/plot-6-2b577ce5.svg)
 
 <!-- rustlab:output-end -->
 
@@ -495,7 +495,7 @@ hold off;
 ```
 
 <!-- rustlab:output-start -->
-![plot 7](plots/05-poisson-laplace-bvp/plot-7-72b1cc39.svg)
+![plot 7](plots/05-poisson-laplace-bvp/plot-7-f3e32c4b.svg)
 
 <!-- rustlab:output-end -->
 
@@ -510,7 +510,7 @@ title("log₁₀ |E|: bright spot at the re-entrant corner")
 ```
 
 <!-- rustlab:output-start -->
-![plot 8](plots/05-poisson-laplace-bvp/plot-8-880e3505.svg)
+![plot 8](plots/05-poisson-laplace-bvp/plot-8-3ff32485.svg)
 
 <!-- rustlab:output-end -->
 
@@ -523,7 +523,7 @@ The brightest pixel sits on the inner $(0.06, 0.06)$ corner — that's the singu
 j0  = 60; i0 = 60;
 M_r = 30;
 rs = (1:M_r) * dx2 * sqrt(2.0);
-Es = zeros(M_r);
+Es = zeros(1, M_r);
 for k = 1:M_r
   ic = i0 - k;
   jc = j0 - k;
@@ -547,7 +547,7 @@ print(real(slope))                          % ≈ -0.38 (theory: -1/3 ≈ -0.333
 
 <!-- rustlab:output-start -->
 ```text
--0.37760395168279587
+-0.3776039516827847
 ```
 
 <!-- rustlab:output-end -->
@@ -560,7 +560,7 @@ ylabel("|E| (V/m)")
 ```
 
 <!-- rustlab:output-start -->
-![plot 9](plots/05-poisson-laplace-bvp/plot-9-0eecec00.svg)
+![plot 9](plots/05-poisson-laplace-bvp/plot-9-23698a98.svg)
 
 <!-- rustlab:output-end -->
 

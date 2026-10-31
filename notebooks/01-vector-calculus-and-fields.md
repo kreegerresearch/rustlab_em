@@ -222,7 +222,7 @@ Compute the circulation edge by edge with `trapz`, counterclockwise.
 a = 1.0;
 N = 201;
 xs_edge = linspace(-a, a, N);
-unit    = ones(N);
+unit    = ones(1, N);
 
 % Bottom (y = -a):  F·dℓ = F_x dx = +a dx
 I_bot = trapz(xs_edge, a * unit);

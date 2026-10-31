@@ -88,7 +88,7 @@ function a = fdfd_trial(kf)
   fs = linspace(1.0e9, 4.0e9, 121);
   omega = 2 * pi * fs(kf);
   A = L + ((omega / c0)^2 * eps_c) * speye(N);
-  b = zeros(N); b(k_src) = -j * omega * mu0;
+  b = zeros(1, N); b(k_src) = -j * omega * mu0;
   E_flat = spsolve(A, b);
   a = abs(E_flat(k_meas));
 end

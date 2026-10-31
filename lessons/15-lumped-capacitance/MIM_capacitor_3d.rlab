@@ -49,7 +49,12 @@ print(A_plate * 1e12)                         # 100  µm²
 # limit (Exercise 1).
 
 L_lap = laplacian_3d(n, n, n, dx, dy, dz);
-A = -1 * L_lap;
+# Scale by dz^2 before the Dirichlet pins. dz is tens of nanometres, so
+# the unscaled 1/dz^2 entries dwarf the identity rows pin_dirichlet writes.
+# spsolve (rustlab ≥ 0.3.23) tests pivots relative to the largest entry
+# and then treats those unit pins as singular. The interior RHS is zero,
+# so it scales the same way; the pins below overwrite the boundary values.
+A = -(dz^2) * L_lap;
 b = zeros(1, N);
 V0 = 1.0;
 

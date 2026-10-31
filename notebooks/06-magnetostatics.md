@@ -44,11 +44,11 @@ phi   = linspace(0, 2*pi, N_seg + 1);
 phi   = phi(1:N_seg);
 rxs   = R * cos(phi);
 rys   = R * sin(phi);
-rzs   = zeros(N_seg);
+rzs   = zeros(1, N_seg);
 dphi  = 2 * pi / N_seg;
 dlx   = -R * sin(phi) * dphi;
 dly   =  R * cos(phi) * dphi;
-dlz   = zeros(N_seg);
+dlz   = zeros(1, N_seg);
 
 % Meridional grid (y = 0 slice)
 Nm = 41;
@@ -153,7 +153,7 @@ dl_y =  Rs * cos(phi) * dphi;
 % over its N_seg segments — the inner cross product becomes one
 % element-wise expression on length-N_seg vectors.
 zline   = linspace(-0.10, 0.10, 121);
-Bz_axis = zeros(length(zline));
+Bz_axis = zeros(1, length(zline));
 for iz = 1:length(zline)
   fz_p = zline(iz);
   bz   = 0.0;

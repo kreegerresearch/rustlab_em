@@ -63,7 +63,7 @@ title("Smith chart — canonical loads");
 ```
 
 <!-- rustlab:output-start -->
-![plot 1](plots/16-smith-chart/plot-1-0d172476.svg)
+![plot 1](plots/16-smith-chart/plot-1-c46f4a2b.svg)
 
 <!-- rustlab:output-end -->
 
@@ -82,7 +82,7 @@ title("Constant-|Γ| circles → constant-VSWR contours");
 ```
 
 <!-- rustlab:output-start -->
-![plot 2](plots/16-smith-chart/plot-2-bc5206e3.svg)
+![plot 2](plots/16-smith-chart/plot-2-7d12160d.svg)
 
 <!-- rustlab:output-end -->
 
@@ -122,7 +122,7 @@ title("Γ(d) loci for four loads — constant-|Γ| rotation");
 ```
 
 <!-- rustlab:output-start -->
-![plot 3](plots/16-smith-chart/plot-3-ee6e6b17.svg)
+![plot 3](plots/16-smith-chart/plot-3-961d44e1.svg)
 
 <!-- rustlab:output-end -->
 
@@ -211,7 +211,7 @@ title("L-match: series C (6.24 pF) → shunt C (2.60 pF)");
 0
 ```
 
-![plot 4](plots/16-smith-chart/plot-4-61bbcfcd.svg)
+![plot 4](plots/16-smith-chart/plot-4-4e40e955.svg)
 
 <!-- rustlab:output-end -->
 
@@ -332,7 +332,7 @@ title("Double-stub match — load inside the forbidden region");
 ```
 
 <!-- rustlab:output-start -->
-![plot 5](plots/16-smith-chart/plot-5-68155f36.svg)
+![plot 5](plots/16-smith-chart/plot-5-e8b9c945.svg)
 
 <!-- rustlab:output-end -->
 
@@ -386,7 +386,7 @@ title("λ/4 transformer Γ locus");
 1.782
 ```
 
-![plot 6](plots/16-smith-chart/plot-6-5e9c377f.svg)
+![plot 6](plots/16-smith-chart/plot-6-7ced75f0.svg)
 
 <!-- rustlab:output-end -->
 
@@ -450,7 +450,7 @@ title("Patch antenna S_{11}(f) on the Smith chart");
 1.8738333801847769
 ```
 
-![plot 7](plots/16-smith-chart/plot-7-e4104410.svg)
+![plot 7](plots/16-smith-chart/plot-7-34bf8335.svg)
 
 <!-- rustlab:output-end -->
 
@@ -466,7 +466,7 @@ title("S_{11} step response via s2td — ring-down at the patch resonance");
 ```
 
 <!-- rustlab:output-start -->
-![plot 8](plots/16-smith-chart/plot-8-22bd08d1.svg)
+![plot 8](plots/16-smith-chart/plot-8-cfed51c9.svg)
 
 <!-- rustlab:output-end -->
 

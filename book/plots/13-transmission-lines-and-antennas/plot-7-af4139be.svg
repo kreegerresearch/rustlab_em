@@ -1,0 +1,84 @@
+<svg width="900" height="500" viewBox="0 0 900 500" xmlns="http://www.w3.org/2000/svg">
+<rect x="0" y="0" width="900" height="500" opacity="1" fill="#1E1E2E" stroke="none"/>
+<text x="450" y="25" dy="0.76em" text-anchor="middle" font-family="sans-serif" font-size="17.741935483870968" opacity="1" fill="#CDD6F4">
+Dipole radiation resistance vs length
+</text>
+<text x="20" y="238" dy="0.76em" text-anchor="middle" font-family="sans-serif" font-size="11.290322580645162" opacity="1" fill="#CDD6F4" transform="rotate(270, 20, 238)">
+R_rad  (Ohm)
+</text>
+<text x="490" y="480" dy="-0.5ex" text-anchor="middle" font-family="sans-serif" font-size="11.290322580645162" opacity="1" fill="#CDD6F4">
+L / lambda
+</text>
+<polyline fill="none" opacity="1" stroke="#CDD6F4" stroke-width="1" points="99,47 99,429 "/>
+<text x="90" y="398" dy="0.5ex" text-anchor="end" font-family="sans-serif" font-size="9.67741935483871" opacity="1" fill="#CDD6F4">
+0.0
+</text>
+<polyline fill="none" opacity="1" stroke="#CDD6F4" stroke-width="1" points="94,398 99,398 "/>
+<text x="90" y="288" dy="0.5ex" text-anchor="end" font-family="sans-serif" font-size="9.67741935483871" opacity="1" fill="#CDD6F4">
+200.0
+</text>
+<polyline fill="none" opacity="1" stroke="#CDD6F4" stroke-width="1" points="94,288 99,288 "/>
+<text x="90" y="178" dy="0.5ex" text-anchor="end" font-family="sans-serif" font-size="9.67741935483871" opacity="1" fill="#CDD6F4">
+400.0
+</text>
+<polyline fill="none" opacity="1" stroke="#CDD6F4" stroke-width="1" points="94,178 99,178 "/>
+<text x="90" y="69" dy="0.5ex" text-anchor="end" font-family="sans-serif" font-size="9.67741935483871" opacity="1" fill="#CDD6F4">
+600.0
+</text>
+<polyline fill="none" opacity="1" stroke="#CDD6F4" stroke-width="1" points="94,69 99,69 "/>
+<polyline fill="none" opacity="1" stroke="#CDD6F4" stroke-width="1" points="100,430 879,430 "/>
+<text x="179" y="440" dy="0.76em" text-anchor="middle" font-family="sans-serif" font-size="9.67741935483871" opacity="1" fill="#CDD6F4">
+0.1
+</text>
+<polyline fill="none" opacity="1" stroke="#CDD6F4" stroke-width="1" points="179,430 179,435 "/>
+<text x="279" y="440" dy="0.76em" text-anchor="middle" font-family="sans-serif" font-size="9.67741935483871" opacity="1" fill="#CDD6F4">
+0.2
+</text>
+<polyline fill="none" opacity="1" stroke="#CDD6F4" stroke-width="1" points="279,430 279,435 "/>
+<text x="379" y="440" dy="0.76em" text-anchor="middle" font-family="sans-serif" font-size="9.67741935483871" opacity="1" fill="#CDD6F4">
+0.3
+</text>
+<polyline fill="none" opacity="1" stroke="#CDD6F4" stroke-width="1" points="379,430 379,435 "/>
+<text x="479" y="440" dy="0.76em" text-anchor="middle" font-family="sans-serif" font-size="9.67741935483871" opacity="1" fill="#CDD6F4">
+0.4
+</text>
+<polyline fill="none" opacity="1" stroke="#CDD6F4" stroke-width="1" points="479,430 479,435 "/>
+<text x="579" y="440" dy="0.76em" text-anchor="middle" font-family="sans-serif" font-size="9.67741935483871" opacity="1" fill="#CDD6F4">
+0.5
+</text>
+<polyline fill="none" opacity="1" stroke="#CDD6F4" stroke-width="1" points="579,430 579,435 "/>
+<text x="679" y="440" dy="0.76em" text-anchor="middle" font-family="sans-serif" font-size="9.67741935483871" opacity="1" fill="#CDD6F4">
+0.6
+</text>
+<polyline fill="none" opacity="1" stroke="#CDD6F4" stroke-width="1" points="679,430 679,435 "/>
+<text x="779" y="440" dy="0.76em" text-anchor="middle" font-family="sans-serif" font-size="9.67741935483871" opacity="1" fill="#CDD6F4">
+0.7
+</text>
+<polyline fill="none" opacity="1" stroke="#CDD6F4" stroke-width="1" points="779,430 779,435 "/>
+<text x="879" y="440" dy="0.76em" text-anchor="middle" font-family="sans-serif" font-size="9.67741935483871" opacity="1" fill="#CDD6F4">
+0.8
+</text>
+<polyline fill="none" opacity="1" stroke="#CDD6F4" stroke-width="1" points="879,430 879,435 "/>
+<polyline fill="none" opacity="0.3" stroke="#9696B4" stroke-width="1" points="100,429 879,429 "/>
+<polyline fill="none" opacity="0.3" stroke="#9696B4" stroke-width="1" points="100,353 879,353 "/>
+<polyline fill="none" opacity="0.3" stroke="#9696B4" stroke-width="1" points="100,277 879,277 "/>
+<polyline fill="none" opacity="0.3" stroke="#9696B4" stroke-width="1" points="100,200 879,200 "/>
+<polyline fill="none" opacity="0.3" stroke="#9696B4" stroke-width="1" points="100,124 879,124 "/>
+<polyline fill="none" opacity="0.3" stroke="#9696B4" stroke-width="1" points="100,47 879,47 "/>
+<polyline fill="none" opacity="0.3" stroke="#9696B4" stroke-width="1" points="255,429 255,47 "/>
+<polyline fill="none" opacity="0.3" stroke="#9696B4" stroke-width="1" points="411,429 411,47 "/>
+<polyline fill="none" opacity="0.3" stroke="#9696B4" stroke-width="1" points="567,429 567,47 "/>
+<polyline fill="none" opacity="0.3" stroke="#9696B4" stroke-width="1" points="723,429 723,47 "/>
+<polyline fill="none" opacity="1" stroke="#17BECF" stroke-width="2" points="100,398 113,398 126,397 139,397 152,397 166,397 179,397 192,396 205,396 218,396 232,395 245,395 258,394 271,394 284,393 298,392 311,391 324,391 337,390 350,389 364,388 377,387 390,386 403,385 416,383 430,382 443,380 456,379 469,377 482,375 496,373 509,371 522,369 535,367 548,364 562,362 575,359 588,355 601,352 614,348 628,344 641,340 654,335 667,330 680,324 694,318 707,311 720,304 733,295 746,286 760,276 773,264 786,251 799,236 812,218 826,199 839,176 852,149 865,117 879,79 "/>
+<polyline fill="none" opacity="1" stroke="#BCBD22" stroke-width="2" points="100,398 113,398 126,397 139,397 152,397 166,397 179,397 192,396 205,396 218,396 232,395 245,395 258,394 271,394 284,393 298,393 311,392 324,391 337,391 350,390 364,389 377,388 390,387 403,386 416,385 430,384 443,383 456,382 469,381 482,380 496,379 509,378 522,376 535,375 548,374 562,372 575,371 588,370 601,368 614,367 628,365 641,364 654,362 667,360 680,359 694,357 707,355 720,353 733,351 746,349 760,347 773,346 786,344 799,341 812,339 826,337 839,335 852,333 865,331 879,328 "/>
+<rect x="710" y="52" width="165" height="49" opacity="0.85" fill="#1E1E2E" stroke="none"/>
+<rect x="710" y="52" width="165" height="49" opacity="0.3" fill="none" stroke="#CDD6F4"/>
+<text x="750" y="62" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="11.290322580645162" opacity="1" fill="#CDD6F4">
+numerical integration
+</text>
+<text x="750" y="80" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="11.290322580645162" opacity="1" fill="#CDD6F4">
+short-dipole limit
+</text>
+<polyline fill="none" opacity="1" stroke="#17BECF" stroke-width="2" points="720,67 740,67 "/>
+<polyline fill="none" opacity="1" stroke="#BCBD22" stroke-width="2" points="720,85 740,85 "/>
+</svg>

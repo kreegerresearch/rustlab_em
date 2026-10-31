@@ -91,9 +91,9 @@ print(Z0_ana)                   % textbook 60 ln(b/a) ≈ 83.2 Ω for b/a = 4
 
 <!-- rustlab:output-start -->
 ```text
-37.484133938205574
+37.48413393820559
 40.13036795002273
-88.9880757913102
+88.98807579131017
 83.12011880924634
 ```
 
@@ -155,7 +155,7 @@ legend("exact cosh^-1", "large-d/a approx", "numerical");
 ```
 
 <!-- rustlab:output-start -->
-![plot 2](plots/13-transmission-lines-and-antennas/plot-2-a6dc9138.svg)
+![plot 2](plots/13-transmission-lines-and-antennas/plot-2-1c08f96b.svg)
 
 <!-- rustlab:output-end -->
 
@@ -261,7 +261,7 @@ legend("matched", "open", "short", "Z_L = 2 Z_0")
 ```
 
 <!-- rustlab:output-start -->
-![plot 3](plots/13-transmission-lines-and-antennas/plot-3-b0c39dd5.svg)
+![plot 3](plots/13-transmission-lines-and-antennas/plot-3-91425702.svg)
 
 <!-- rustlab:output-end -->
 
@@ -278,10 +278,10 @@ print(max(abs(real(V_mis(20:80)))))       % ≈ 0.18 ≈ incident / 3  (|Γ| = 1
 
 <!-- rustlab:output-start -->
 ```text
-0.0007880894582246426
-0.527017356187709
-0.5270173544689488
-0.1766564030264243
+0.0007880894582244209
+0.5270173561877103
+0.5270173544689496
+0.17665640302642438
 ```
 
 <!-- rustlab:output-end -->
@@ -357,7 +357,7 @@ print(VSWR_num)                  % ~ 2 to ~ 0.1 %
 ```text
 0.3333333333333333
 1.9999999999999998
-1.9983622453568508
+1.9983622453568552
 ```
 
 <!-- rustlab:output-end -->
@@ -371,7 +371,7 @@ title("Standing-wave envelope on a Z_L = 2 Z_0 line — VSWR ≈ 2")
 ```
 
 <!-- rustlab:output-start -->
-![plot 4](plots/13-transmission-lines-and-antennas/plot-4-12a08662.svg)
+![plot 4](plots/13-transmission-lines-and-antennas/plot-4-9767a148.svg)
 
 <!-- rustlab:output-end -->
 
@@ -408,7 +408,7 @@ legend("analytic", "time-domain");
 ```
 
 <!-- rustlab:output-start -->
-![plot 5](plots/13-transmission-lines-and-antennas/plot-5-8b580cb5.svg)
+![plot 5](plots/13-transmission-lines-and-antennas/plot-5-639543cd.svg)
 
 <!-- rustlab:output-end -->
 
@@ -445,7 +445,7 @@ legend("L/λ = 0.1", "L/λ = 0.3", "L/λ = 0.5", "L/λ = 0.7", "L/λ = 1.0");
 ```
 
 <!-- rustlab:output-start -->
-![plot 6](plots/13-transmission-lines-and-antennas/plot-6-5d4344a3.svg)
+![plot 6](plots/13-transmission-lines-and-antennas/plot-6-dbf0f5d9.svg)
 
 <!-- rustlab:output-end -->
 
@@ -502,7 +502,7 @@ legend("numerical integration", "short-dipole limit");
 ```
 
 <!-- rustlab:output-start -->
-![plot 7](plots/13-transmission-lines-and-antennas/plot-7-b2119710.svg)
+![plot 7](plots/13-transmission-lines-and-antennas/plot-7-af4139be.svg)
 
 <!-- rustlab:output-end -->
 
@@ -516,7 +516,7 @@ print(real(R_half))                   % ~ 73.08 Ohm  (textbook 73.13)
 
 <!-- rustlab:output-start -->
 ```text
-73.07901015618273
+73.07901015618272
 ```
 
 <!-- rustlab:output-end -->

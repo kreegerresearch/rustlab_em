@@ -54,7 +54,7 @@ legend("Φ(t)  (Wb)", "ε(t)/100  (V)")
 ```
 
 <!-- rustlab:output-start -->
-![plot 1](plots/07-faraday-induction/plot-1-ceb2049b.svg)
+![plot 1](plots/07-faraday-induction/plot-1-5a1bc557.svg)
 
 <!-- rustlab:output-end -->
 
@@ -145,7 +145,7 @@ title("B_z from the outer loop sampled on the inner disk's plane")
 ```
 
 <!-- rustlab:output-start -->
-![plot 2](plots/07-faraday-induction/plot-2-8b0b8e95.svg)
+![plot 2](plots/07-faraday-induction/plot-2-1c422552.svg)
 
 <!-- rustlab:output-end -->
 
@@ -164,7 +164,7 @@ print(M_an)                               % ≈ 7.90e-9 H — small-a/b formula,
 
 <!-- rustlab:output-start -->
 ```text
-0.000000007936917228094323
+0.000000007936917228094321
 0.000000007895683520871486
 ```
 
@@ -224,7 +224,7 @@ title("Conducting plate mask (1 inside the disk, 0 outside)")
 ```
 
 <!-- rustlab:output-start -->
-![plot 3](plots/07-faraday-induction/plot-3-fdd0890b.svg)
+![plot 3](plots/07-faraday-induction/plot-3-b2464e72.svg)
 
 <!-- rustlab:output-end -->
 
@@ -255,7 +255,7 @@ hold off;
 ```
 
 <!-- rustlab:output-start -->
-![plot 4](plots/07-faraday-induction/plot-4-95b44a1a.svg)
+![plot 4](plots/07-faraday-induction/plot-4-0dfedbb7.svg)
 
 <!-- rustlab:output-end -->
 
@@ -272,7 +272,7 @@ ylabel("y (m)")
 ```
 
 <!-- rustlab:output-start -->
-![plot 5](plots/07-faraday-induction/plot-5-79b285bf.svg)
+![plot 5](plots/07-faraday-induction/plot-5-18d37519.svg)
 
 <!-- rustlab:output-end -->
 

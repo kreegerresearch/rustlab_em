@@ -79,7 +79,7 @@ E_t   = Q_t / (A_cap * eps0);
 % Numerical ∂E/∂t via centred differences.
 dt    = ts(2) - ts(1);
 Nt    = length(ts);
-dEdt  = zeros(Nt);
+dEdt  = zeros(1, Nt);
 for i = 2:(Nt - 1)
   dEdt(i) = (E_t(i + 1) - E_t(i - 1)) / (2 * dt);
 end
@@ -103,7 +103,7 @@ legend("I_wire (mA)", "I_disp (mA)")
 0.0000000000008854187817000001
 ```
 
-![plot 1](plots/08-maxwell-equations/plot-1-2573d971.svg)
+![plot 1](plots/08-maxwell-equations/plot-1-00d63f17.svg)
 
 <!-- rustlab:output-end -->
 
@@ -133,8 +133,8 @@ J_d_gap = I_now / A_cap;
 Nz = 161;
 Lz = 5 * d_cap;
 zs = linspace(-Lz, Lz, Nz);
-I_cond = zeros(Nz);
-I_disp = zeros(Nz);
+I_cond = zeros(1, Nz);
+I_disp = zeros(1, Nz);
 for iz = 1:Nz
   z = zs(iz);
   if z < -d_cap / 2 || z > d_cap / 2
@@ -157,7 +157,7 @@ legend("I_cond", "I_disp", "I_total")
 ```
 
 <!-- rustlab:output-start -->
-![plot 2](plots/08-maxwell-equations/plot-2-83691690.svg)
+![plot 2](plots/08-maxwell-equations/plot-2-9d4b9720.svg)
 
 <!-- rustlab:output-end -->
 
@@ -219,7 +219,7 @@ ylabel("t")
 ```
 
 <!-- rustlab:output-start -->
-![plot 3](plots/08-maxwell-equations/plot-3-0d108f69.svg)
+![plot 3](plots/08-maxwell-equations/plot-3-2fcdce1f.svg)
 
 <!-- rustlab:output-end -->
 
@@ -259,7 +259,7 @@ ylabel("t")
 ```
 
 <!-- rustlab:output-start -->
-![plot 4](plots/08-maxwell-equations/plot-4-0201843a.svg)
+![plot 4](plots/08-maxwell-equations/plot-4-ec44792f.svg)
 
 <!-- rustlab:output-end -->
 
@@ -320,7 +320,7 @@ ylabel("y")
 ```
 
 <!-- rustlab:output-start -->
-![plot 5](plots/08-maxwell-equations/plot-5-bfab9afe.svg)
+![plot 5](plots/08-maxwell-equations/plot-5-8d7133c3.svg)
 
 <!-- rustlab:output-end -->
 
@@ -350,7 +350,7 @@ title("Radial Poynting profile S_z(r) ∝ 1/r²")
 ```
 
 <!-- rustlab:output-start -->
-![plot 6](plots/08-maxwell-equations/plot-6-b3447854.svg)
+![plot 6](plots/08-maxwell-equations/plot-6-cc436b73.svg)
 
 <!-- rustlab:output-end -->
 

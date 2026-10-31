@@ -30,7 +30,7 @@ dl_y =  Rs * cos(phi) * dphi;
 # vectorise over the N_seg segments — the inner cross product becomes
 # one elementwise expression, no per-segment scalar loop.
 zline   = linspace(-0.10, 0.10, 121);
-Bz_axis = zeros(length(zline));
+Bz_axis = zeros(1, length(zline));
 for iz = 1:length(zline)
   fz_p = zline(iz);
   bz   = 0.0;

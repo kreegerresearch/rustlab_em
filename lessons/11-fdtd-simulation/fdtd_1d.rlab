@@ -35,7 +35,7 @@ t0  = 40 * dt;
 tau = 12 * dt;
 
 # === Material: vacuum + dielectric slab ===
-eps_r = ones(N);
+eps_r = ones(1, N);
 slab_lo = 350; slab_hi = 450;
 eps_r(slab_lo:slab_hi) = 4.0;
 n_slab = 2.0;
@@ -47,22 +47,22 @@ k_refl  = 250;                       # probe in air, also before slab
 k_trans = 500;                       # probe in air, after slab
 
 # === Fields ===
-# Single-arg `zeros(N)` returns a 1-D Vector, which is what rustlab's
-# vector slice-assignment (`Hz(1:N-1) = …`) requires. The two-arg form
-# `zeros(1, N)` is a 1×N row Matrix and only accepts a scalar RHS in a
-# slice-assign — the textbook leapfrog below would not compile.
-Ey = zeros(N);
-Hz = zeros(N);                       # Hz(N) unused
+# `zeros(1, N)` is a 1×N row. Since rustlab 0.3.26 `zeros(N)` is N×N,
+# not a length-N vector. Linear indexing (`Hz(1:N-1) = …`) writes that
+# row in column-major order — for one row, element order — so the
+# leapfrog slice-assign below still reads like the textbook update.
+Ey = zeros(1, N);
+Hz = zeros(1, N);                       # Hz(N) unused
 
 # Pre-compute update coefficients.
 cH  = dt / (mu0 * dx);
 cE  = dt / (eps0 * dx);
-cEr = cE ./ eps_r;                   # length-N Vector
+cEr = cE ./ eps_r;                   # 1×N row
 
 # Records of probe-point Ey over time for R / T extraction.
-E_inc_hist   = zeros(n_step);
-E_refl_hist  = zeros(n_step);
-E_trans_hist = zeros(n_step);
+E_inc_hist   = zeros(1, n_step);
+E_refl_hist  = zeros(1, n_step);
+E_trans_hist = zeros(1, n_step);
 
 xs = (1:N) * dx;
 

@@ -91,7 +91,7 @@ legend("t = 0", "t = T/4", "t = T/2")
 ```
 
 <!-- rustlab:output-start -->
-![plot 1](plots/09-em-waves/plot-1-4ebeaa4c.svg)
+![plot 1](plots/09-em-waves/plot-1-ce381df5.svg)
 
 <!-- rustlab:output-end -->
 
@@ -115,7 +115,7 @@ legend("E_y / E0", "c B_z / E0")
 ```
 
 <!-- rustlab:output-start -->
-![plot 2](plots/09-em-waves/plot-2-dea22645.svg)
+![plot 2](plots/09-em-waves/plot-2-406e07d8.svg)
 
 <!-- rustlab:output-end -->
 
@@ -155,7 +155,7 @@ saveanim("plane_wave.gif", 24)
 ```
 
 <!-- rustlab:output-start -->
-![animation 3](plots/09-em-waves/anim-3-00e43cac.gif)
+![animation 3](plots/09-em-waves/anim-3-cf6ff7a9.gif)
 
 <!-- rustlab:output-end -->
 
@@ -236,7 +236,7 @@ title("Elliptical (2:1)")
 ```
 
 <!-- rustlab:output-start -->
-![plot 4](plots/09-em-waves/plot-4-8c7e9811.svg)
+![plot 4](plots/09-em-waves/plot-4-b1017773.svg)
 
 <!-- rustlab:output-end -->
 
@@ -269,7 +269,7 @@ saveanim("polarization_rcp.gif", 24)
 ```
 
 <!-- rustlab:output-start -->
-![animation 5](plots/09-em-waves/anim-5-a249f387.gif)
+![animation 5](plots/09-em-waves/anim-5-42b368d4.gif)
 
 <!-- rustlab:output-end -->
 
@@ -348,7 +348,7 @@ legend("wt = pi/8", "wt = pi/4", "wt = pi/2", "+envelope", "-envelope")
 0
 ```
 
-![plot 6](plots/09-em-waves/plot-6-bff5220a.svg)
+![plot 6](plots/09-em-waves/plot-6-381a6f1c.svg)
 
 <!-- rustlab:output-end -->
 
@@ -376,7 +376,7 @@ saveanim("standing_wave.gif", 24)
 ```
 
 <!-- rustlab:output-start -->
-![animation 7](plots/09-em-waves/anim-7-4f7899d9.gif)
+![animation 7](plots/09-em-waves/anim-7-066a876d.gif)
 
 <!-- rustlab:output-end -->
 

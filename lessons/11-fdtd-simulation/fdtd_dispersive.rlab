@@ -45,15 +45,16 @@ n_step  = 2000;
 
 # Metal film: cells 380..420 (40 cells, ~ 6 cm thick)
 film_lo = 380; film_hi = 420;
-# Single-arg `zeros(N)` returns a 1-D Vector — needed for the slice-
-# assigning leapfrog below (vector RHS into a Matrix slice is rejected).
-in_film = zeros(N);
+# `zeros(1, N)` is a 1×N row. Since rustlab 0.3.26 `zeros(N)` is N×N,
+# not a length-N vector. Linear slice-assign writes that row in
+# element order (needed by the leapfrog below).
+in_film = zeros(1, N);
 in_film(film_lo:film_hi) = 1.0;
 
 # === Fields ===
-Ey = zeros(N);
-Hz = zeros(N);
-Jp = zeros(N);     # polarisation current — non-zero only inside metal
+Ey = zeros(1, N);
+Hz = zeros(1, N);
+Jp = zeros(1, N);     # polarisation current — non-zero only inside metal
 
 # === Source: Gaussian pulse modulated at f_mod = 2 GHz ===
 # The carrier (2 GHz) sits below f_p = ω_p/2π (3 GHz), so the film is
@@ -77,8 +78,8 @@ cE = dt / (eps0 * dx);
 ade_decay = (1 - gamma * dt / 2) / (1 + gamma * dt / 2);
 ade_drive = eps0 * omega_p^2 * dt   / (1 + gamma * dt / 2);
 
-E_back_hist = zeros(n_step);
-E_fwd_hist  = zeros(n_step);
+E_back_hist = zeros(1, n_step);
+E_fwd_hist  = zeros(1, n_step);
 
 for step = 1:n_step
   t = step * dt;
