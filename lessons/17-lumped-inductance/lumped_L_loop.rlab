@@ -6,9 +6,10 @@
 #             The self-flux of a filament diverges at the wire, so the
 #             flux integral is cut at the inner wire edge r = R - a:
 #                 Phi = int_0^{R-a} Bz(r) 2 pi r dr,   L = Phi / I.
-# Verifies:   L matches the textbook thin-wire loop self-inductance
-#                 L = mu0 R [ln(8R/a) - 2]
-#             (external inductance; high-frequency / surface-current limit).
+# Verifies:   L against mu0 R [ln(8R/a) - 2]. The ~1.2% shortfall is the
+#             filament-flux-cut model (it equals the coplanar mutual
+#             M(R, R-a)), not an O(a/R) error in that formula. The
+#             formula matches a uniform surface current to ~0.01%.
 #
 # Reference: ../../notebooks/17-lumped-inductance.md.
 

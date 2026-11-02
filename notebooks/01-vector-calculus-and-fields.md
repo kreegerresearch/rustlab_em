@@ -1,6 +1,6 @@
 # Lesson 01: Vector Calculus & Fields
 
-Maxwell's equations are statements about $\nabla$, $\nabla\cdot$, and $\nabla\times$. Before any physics, we need to compute these operators on grids and read meaning from the output. This lesson is pure mathematical machinery — gradient, divergence, curl on a 2-D grid, plus the divergence and Stokes' theorems verified numerically.
+Maxwell's equations are statements about $\nabla$, $\nabla\cdot$, and $\nabla\times$. Before any physics, we need to compute these operators on grids and read meaning from the output. This lesson is pure mathematical machinery — gradient, divergence, and curl on a 2-D grid, with Stokes' theorem checked numerically. The divergence theorem is Exercise 2 (and returns as Gauss's law in Lesson 03).
 
 ## Learning Objectives
 

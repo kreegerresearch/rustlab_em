@@ -142,7 +142,7 @@ E_ff    = arrayfun(ff_eplane, ths);
 E_ff_norm = real(E_ff) / max(real(E_ff));
 analytic  = sin(ths);
 err       = max(abs(E_ff_norm - analytic));
-print(err)             # ~ 1e-5 — sin-shape recovered
+print(err)             # 8.6e-6 — sin-shape recovered
 
 # === φ-cut at θ = π/2 (H-plane sanity check) ===
 # For a ẑ dipole the pattern is φ-independent on the equator. Spread

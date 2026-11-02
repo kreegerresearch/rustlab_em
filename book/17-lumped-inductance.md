@@ -53,7 +53,7 @@ R = 0.05;
 % Numerical result from lumped_L_loop.rlab at a = 1 mm.
 L_num = 247.67e-9;                 % H (flux cut at r = R - a)
 L_ana_at_1mm = 250.79e-9;          % mu0 R [ln(8R/a) - 2]
-print(L_num / L_ana_at_1mm)        % 0.988 (the shortfall is the formula's O(a/R) truncation)
+print(L_num / L_ana_at_1mm)        % 0.988 — filament cutoff vs the surface-current formula
 
 % Analytic L(a) over a span of wire radii — the ln signature.
 a_sweep = linspace(0.3e-3, 4.0e-3, 60);
@@ -78,7 +78,7 @@ legend("analytic", "numerical");
 
 <!-- rustlab:output-end -->
 
-The lone numerical point sits right on the analytic curve. The ratio $L_{\rm num}/L_{\rm analytic} = 0.988$, but that $1.2\%$ shortfall is **not** a resolution error: the flux integral is essentially exact — it reproduces the exact coplanar-loop mutual $M(R,\,R-a) = 247.67$ nH (complete elliptic integrals, $k^2 = 0.999898$) to five digits. The gap is the $O(a/R)$ truncation of the *asymptotic* thin-wire formula $\mu_0 R[\ln(8R/a) - 2] = 250.79$ nH, which drops the higher-order terms in $a/R$; at $a/R = 0.02$ those omitted terms are worth about a percent. Refining the grid converges $L_{\rm num}$ to the exact $247.67$ nH, not to the asymptotic $250.79$.
+The lone numerical point sits near the analytic curve. The ratio $L_{\rm num}/L_{\rm analytic} = 0.988$ ($247.67$ nH against $250.79$ nH) is a property of the **filament-flux-cut-at-$R-a$ model**, not a truncation of the thin-wire formula and not something grid refinement removes. Cutting the filament's own flux at the inner wire edge is exactly the mutual inductance of two coplanar filaments of radii $R$ and $R-a$, and that elliptic integral is $247.67$ nH. The formula $\mu_0 R[\ln(8R/a)-2]$ is the external inductance for a round wire with uniform *surface* current. Averaged with the exact Neumann integral over that surface current it gives $250.81$ nH, so the formula itself is good to about $0.01\,\%$ at this $a/R$. The $1.2\,\%$ gap is the difference between those two models. (A uniform *volume* current is a third case: the low-frequency constant is $-7/4$ rather than $-2$, the formula gives $266.50$ nH, and the exact volume average is $266.60$ nH. The flux cut at $R-a$ is not that integral either.) Refining the radial grid converges $L_{\rm num}$ to the filament mutual $247.67$ nH. It does not converge to $250.79$ nH.
 
 ## Per-Unit-Length Inductance Matrix — Cached LU Done Right
 
@@ -144,13 +144,26 @@ which the script evaluates with rustlab's `ellipke` builtin (an arithmetic-geome
 
 ```rustlab
 clf;
-% From mutual_inductance_coil_pair.rlab (R = 5 cm, identical loops).
+% Flux-integral samples from mutual_inductance_coil_pair.rlab.
+% The exact curve and the dipole asymptote are computed here, not copied
+% from those samples.
+mu0 = 4 * pi * 1e-7;
+R = 0.05;
 dR    = [0.5, 0.75, 1.0, 1.5, 2.0, 3.0, 4.0];
-M_num = [55.63, 36.18, 24.70, 12.64, 7.09, 2.75, 1.30];   % nH (flux integral)
-M_ex  = [55.63, 36.18, 24.70, 12.64, 7.09, 2.75, 1.30];   % nH (exact elliptic)
-M_dip = [789.6, 233.9, 98.70, 29.24, 12.34, 3.66, 1.54];  % nH (dipole asymptote)
-print(M_num(3))                    % 24.70 nH — M at d/R = 1 (matches exact elliptic)
-print(M_dip(7) / M_num(7))         % 1.18 — dipole asymptote still ~18% high at d/R = 4
+M_num = [55.630515, 36.182169, 24.703914, 12.637987, 7.092995, 2.748123, 1.299922];   % nH
+M_ex  = zeros(1, length(dR));
+M_dip = zeros(1, length(dR));
+for i = 1:length(dR)
+  d = dR(i) * R;
+  k2 = 4 * R * R / ((2 * R) ^ 2 + d ^ 2);
+  k = sqrt(k2);
+  [K, E] = ellipke(k2);
+  M_ex(i) = mu0 * R * ((2 / k - k) * K - (2 / k) * E) * 1e9;
+  M_dip(i) = mu0 * pi * R ^ 4 / (2 * d ^ 3) * 1e9;
+end
+print(M_ex(3))                         % exact M at d/R = 1
+print(max(abs(M_num - M_ex) ./ M_ex))  % flux integral vs elliptic, at printed precision
+print(M_dip(7) / M_num(7))              % dipole still high at d/R = 4
 
 hold on;
 plot(dR, M_num, "numerical flux");
@@ -165,11 +178,12 @@ legend("numerical", "exact", "dipole");
 
 <!-- rustlab:output-start -->
 ```text
-24.7
-1.1846153846153846
+24.703923153991365
+0.0000005334497154799384
+1.186321708279583
 ```
 
-![plot 3](plots/17-lumped-inductance/plot-3-07b59368.svg)
+![plot 3](plots/17-lumped-inductance/plot-3-7b1d3204.svg)
 
 <!-- rustlab:output-end -->
 
@@ -235,32 +249,44 @@ which rises toward 1 as the coil grows long and thin.
 
 ```rustlab
 clf;
-% From finite_solenoid.rlab (dense single-layer winding).
+% Turn-stack K from finite_solenoid.rlab. The reference curve is the
+% exact Nagaoka coefficient (complete elliptic integrals), not Wheeler.
 ellR   = [1.0, 2.0, 3.0, 4.0, 6.0, 10.0, 15.0, 20.0];
-K_num  = [0.512, 0.678, 0.762, 0.813, 0.870, 0.921, 0.948, 0.963];
-K_whee = [0.526, 0.690, 0.769, 0.816, 0.870, 0.917, 0.943, 0.957];
-print(K_num(8))                    % 0.963 — Nagaoka K at l/R = 20
+K_num  = [0.51237, 0.67800, 0.76224, 0.81269, 0.86982, 0.92092, 0.94841, 0.96266];
+K_ex   = zeros(1, length(ellR));
+for i = 1:length(ellR)
+  k2 = 1 / (1 + (ellR(i) / 2) ^ 2);
+  k  = sqrt(k2);
+  kp = sqrt(1 - k2);
+  [KK, EE] = ellipke(k2);
+  K_ex(i) = (4 / (3 * pi * kp)) * (((1 - k2) / k2) * KK - ((1 - 2 * k2) / k2) * EE - k);
+end
+print(K_ex(1))                              % exact K at l/R = 1
+print((K_num(1) - K_ex(1)) / K_ex(1))       % numerical vs exact, short coil
+print((K_num(8) - K_ex(8)) / K_ex(8))       % numerical vs exact, l/R = 20
 
 hold on;
-plot(ellR, K_num,  "numerical  L / L_inf");
-plot(ellR, K_whee, "Wheeler 1/(1 + 0.9 R/l)");
+plot(ellR, K_num, "numerical  L / L_inf");
+plot(ellR, K_ex,  "exact Nagaoka (ellipke)");
 hold off;
 xlabel("aspect ratio  l / R");
 ylabel("Nagaoka coefficient K");
-title("Finite-solenoid end-effect correction approaches 1");
-legend("numerical", "Wheeler");
+title("Finite-solenoid end effect vs the exact Nagaoka coefficient");
+legend("numerical", "exact");
 ```
 
 <!-- rustlab:output-start -->
 ```text
-0.963
+0.5255100242519278
+-0.025004326550445693
+0.004018405473854807
 ```
 
-![plot 5](plots/17-lumped-inductance/plot-5-0cf3936f.svg)
+![plot 5](plots/17-lumped-inductance/plot-5-c96e8174.svg)
 
 <!-- rustlab:output-end -->
 
-The turn-stack result tracks Wheeler's current-sheet coefficient to better than ~3 % at $\ell/R = 1$, improving to under 1 % beyond $\ell/R \approx 3$, and reaches $K = 0.96$ for a coil twenty radii long. (Wheeler's $1/(1 + 0.9 R/\ell)$ form is itself within $\approx 0.2\%$ of the exact Nagaoka coefficient here — $K = 0.5255$ vs. Wheeler $0.5263$ at $\ell/R = 1$ — so almost all of the $\approx 2.7\%$ residual there is the discreteness of the finite winding, only 12 turns at $\ell/R = 1$, not the benchmark.) The agreement is non-trivial — it confirms that a sum over discrete round-wire turns reproduces the continuous current-sheet idealisation once the winding is dense.
+The exact coefficient (the elliptic-integral current sheet) is the benchmark. Wheeler's $1/(1+0.9\,R/\ell)$ is only an approximation to it. Against the exact curve the turn-stack result sits about $2.5\,\%$ low at $\ell/R = 1$ and about $0.4\,\%$ high at $\ell/R = 20$. The short-coil miss is the discrete winding (only 12 turns at $\ell/R = 1$); the long-coil residual is a fraction of a percent.
 
 ## Force on a Movable Core — Virtual Work
 
@@ -305,7 +331,11 @@ legend("numerical", "analytic");
 
 <!-- rustlab:output-end -->
 
-Numerical and analytic agree to better than $4\times10^{-4}$. The force grows sharply as the plunger nears full insertion — the air reluctance $\propto (\ell - x)$ collapses toward the small core reluctance, so the inductance climbs toward its finite $\mu_r$-times-larger core-filled value $L(\ell) = \mu_0\mu_r N^2 A/\ell \approx 158$ mH and the force scales like $\mu_r^2$ near full insertion. A solenoid valve "snaps" shut, exactly the runaway every actuator designer accounts for. (A true divergence would need $\mu_r \to \infty$; the plunger force stays finite at any real $\mu_r$.)
+Numerical and analytic agree to better than $4\times10^{-4}$ — they are the same reluctance network, finite-differenced two ways. Read the magnitude with a demagnetising caveat. The series model assumes a **closed iron return**. This plunger is an open rod, length over diameter $= 5$. A 5:1 prolate spheroid has demagnetising factor $N_d \approx 0.056$ (the range quoted for a cylinder of this proportion is about $0.04$–$0.06$), so
+
+$$\mu_{\rm eff} = \frac{\mu_r}{1 + N_d(\mu_r - 1)} \approx 18\text{–}25$$
+
+even though the material $\mu_r$ is $1000$. The closed-path formulas therefore overstate the full-insertion inductance (they give $L(\ell) = \mu_0\mu_r N^2 A/\ell \approx 158$ mH; the open rod is closer to a few millihenries) and overstate the $\mu_r^2$ force runaway near full insertion by about $20$–$50\times$. The $304\,\text{mN}$ at $x = 95\,\text{mm}$ is the closed-return number. An open solenoid valve does not snap that hard.
 
 ## Standalone Scripts
 
@@ -318,7 +348,7 @@ Numerical and analytic agree to better than $4\times10^{-4}$. The force grows sh
 | `finite_solenoid.rlab` | Finite-solenoid $L$ vs. $\ell/R$; Nagaoka end-effect vs. Wheeler |
 | `tunable_L_force.rlab` | Movable plunger $L(x)$ (reluctance and energy); virtual-work force vs. closed form |
 
-Run all six with `make lesson-17`, or one at a time via `rustlab run lessons/17-lumped-inductance/<name>.rlab`. Wall time on a 2024-class laptop: $\approx 9$ s total (dominated by the $O(N^2)$ turn-pair sums in the transformer and solenoid scripts).
+Run all six with `make lesson-17`, or one at a time via `rustlab run lessons/17-lumped-inductance/<name>.rlab`. Wall time is about 4 s total (dominated by the turn-pair sums in the transformer and solenoid scripts).
 
 ## Expected Numerical Outputs Summary
 
@@ -332,7 +362,7 @@ Run all six with `make lesson-17`, or one at a time via `rustlab run lessons/17-
 | Coaxial dipole asymptote at $d/R = 4$ | $\approx 18\%$ high (1.54 vs. 1.30 nH) |
 | Coil-pair coupling $k_c$ at $d/R = 0.5$ | $\approx 0.22$ |
 | Transformer $V_2/V_1$ at $\ell/R = 16$ | $\approx 1.89$ (ideal $N_2/N_1 = 2$), $k \approx 0.88$ |
-| Solenoid Nagaoka $K$ at $\ell/R = 20$ | $\approx 0.96$ (Wheeler 0.957) |
+| Solenoid Nagaoka $K$ at $\ell/R = 20$ | numerical $0.963$, exact elliptic $0.959$ ($+0.4\,\%$; $-2.5\,\%$ at $\ell/R = 1$) |
 | Plunger force vs. analytic | rel. err. $\lesssim 4\times10^{-4}$ |
 
 ## Exercises

@@ -232,13 +232,18 @@ left   = zs <= 0;
 Ez = E_in * in_gap;
 Vz = V0 * left + V0 * (1 - zs / d) .* in_gap;
 
+% E_z is ~1e4 V/m and V is ~113 V. One axis hides V, so two panels.
 clf;
-hold on;
-plot(zs * 1000, Ez, "E_z and V across the capacitor gap");
-plot(zs * 1000, Vz);
-hold off;
+subplot(2, 1, 1);
+plot(zs * 1000, Ez, "E_z (V/m)");
 xlabel("z (mm)");
-legend("E_z (V/m)", "V (V)")
+ylabel("E_z (V/m)");
+title("E_z across the capacitor gap");
+subplot(2, 1, 2);
+plot(zs * 1000, Vz, "V (V)");
+xlabel("z (mm)");
+ylabel("V (V)");
+title("V across the capacitor gap");
 ```
 
 ## Numerical Verification of $\nabla\cdot\vec E = \rho/\varepsilon_0$

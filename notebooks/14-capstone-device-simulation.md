@@ -1,8 +1,8 @@
-# Lesson 14: Capstone — End-to-End Device Simulation
+# Lesson 14: Device Walkthrough — 2-D Microstrip Cross-Section
 
-Every prior lesson built one piece of a mini-Ansys pipeline: geometry primitives (Lesson 04), static and frequency-domain solvers (Lessons 05, 10), full-wave time domain (Lesson 11), modal and far-field analysis (Lesson 12), transmission lines and ports (Lesson 13). This capstone composes all of them into a single end-to-end script that takes a layered antenna geometry, runs FDTD with a pulsed feed, and reads the response spectrum and field pattern off a single time-series.
+Every prior lesson built one piece of a field solver: geometry primitives (Lesson 04), static and frequency-domain solvers (Lessons 05, 10), full-wave time domain (Lesson 11), modes and radiation (Lesson 12), transmission lines (Lesson 13). This lesson puts a layered geometry, a material map, and a 2-D FDTD on one script and reads a probe spectrum off the time series. It is a composition exercise in the middle of the course — Lessons 15–17 continue with lumped $C$, matching, and lumped $L$ — not a finished antenna with $S_{11}$ and a gain pattern.
 
-The classic 3-D device target — a rectangular patch antenna on FR-4 at 2.45 GHz — is sized for a desktop CST run, not for an interpreted-rustlab demo. We instead build the **2-D side-view cross-section** of a related device: an air half-space above a substrate-on-ground-plane stack with a metal patch on top, driven by a pulsed feed in the substrate. (The patch we simulate is deliberately oversized to 50 mm rather than the $\approx 30\,\text{mm}$ a 2.45 GHz design would use — the caveat under *The Capstone Loop* explains why.) The 2-D problem captures every algorithmic step (geometry → ε map → PEC mask → FDTD → port-trace → FFT) while staying under a minute of run time. The *From 2-D to 3-D* section at the end of this lesson explains exactly which lines would grow into 3-D Tensor3 calls for a production simulation.
+The classic 3-D device — a rectangular patch on FR-4 — is a TM$_z$-free cavity between the patch and the ground. This lesson does not solve that mode. It builds the **2-D side-view cross-section**: an air half-space, a substrate, a ground row, and a patch row, driven by a pulsed feed. In 2-D TM$_z$ the update unknown is $E_z$, and the PEC rows pin $E_z = 0$ on both plates, so the region between them cannot support the patch cavity mode. What the script records is the driven field of that cross-section. A real patch resonance would be a different polarisation (or a 3-D grid). The *From 2-D to 3-D* section lists what that extension would add. A TM$_z$ patch mode was not swapped in here: the shipped grid cannot host it.
 
 ## Learning Objectives
 
@@ -29,7 +29,7 @@ A side-view of a microstrip patch antenna:
 
 A 1-column **feed** sits at $x = x_{\rm lo}$ (the left edge of the patch), driving $E_z$ between the ground plane and the patch underside with a Gaussian-modulated CW pulse centred at 2.5 GHz. The cross-section is bounded laterally by absorbing strips (cubic-σ bulk loss); the top and bottom rows of the grid are hard (PEC-like) boundaries, so radiated leakage *does* reflect within the simulation window — weak compared with the energy the feed pumps under the patch, but enough that the truncation shapes the driven-response spectrum the probe records (see the discussion under Expected Numerical Outputs).
 
-## The Capstone Loop
+## The 2-D Loop
 
 ### Theory
 
@@ -39,7 +39,7 @@ The four pieces compose like this:
 
 2. **Yee FDTD core.** Lesson 11's leapfrog updates $H_x$, $H_y$, $E_z$ on a staggered grid. The per-cell $\varepsilon_r$ coefficient enters as a precomputed `cE_map(i, j) = \Delta t / (\varepsilon_0\varepsilon_r(i,j)\Delta x)`. Bulk-loss absorbing strips at the lateral edges suppress reflection without a full Bérenger PML — adequate for a 900-step run.
 
-3. **Pulsed feed.** A Gaussian-modulated $\sin(\omega_0 t)$ in a 1-column column of the substrate. The pulse's frequency content roughly covers 1–4 GHz (a $\tau = 0.4$ ns Gaussian envelope on a 2.5 GHz carrier) so a single run probes the patch across its operating band.
+3. **Pulsed feed.** A Gaussian-modulated $\sin(\omega_0 t)$ in one column of the substrate. The envelope is $\exp(-(t/\tau)^2)$ with $\tau = 0.4\,\text{ns}$ on a $2.5\,\text{GHz}$ carrier. The Fourier transform of that Gaussian has a $1/e$ half-width $1/(\pi\tau) \approx 0.8\,\text{GHz}$, so the spectrum is significant from about $1.7$ to $3.3\,\text{GHz}$, not from $1$ to $4\,\text{GHz}$.
 
 4. **Port-trace FFT.** A probe a few cells off the feed column, just above the ground plane, records $E_z(t)$. Over this 900-step run the source is still driving the structure for most of the window, so the trace is the **driven response** of the truncated 2-D box, not a clean free decay (a true ring-down needs a longer run windowed well after the drive ends — Exercise 1 does exactly that). Its Fourier transform is the drive spectrum shaped by the box's response, and over this source-dominated window it peaks at the drive carrier — *not*, as the caveat below the script walkthrough explains, at any resonance of the structure.
 
@@ -107,11 +107,13 @@ The remaining cells of the loop — the Yee update, the source injection, the PE
 8. Plot the spectrum, the time trace, and the final |E_z| heatmap.
 ```
 
-The standalone script that implements this pattern is `patch_antenna.rlab`. Run it with `make lesson-14`; its 900-step animation lands in well under a minute of interpreted-rustlab wall time. **One honest caveat about reading the result.** The patch here is deliberately oversized: at 50 mm its textbook $\lambda/2$ design frequency $f_{\rm res} = c_0 / (2 L_{\rm patch}\sqrt{\varepsilon_{\rm eff}})$ sits near $1.43\,\text{GHz}$, well below the 2.5 GHz feed band (a 2.45 GHz design patch would be the $\approx 30\,\text{mm}$ of the table above) — so a peak at the feed frequency cannot be mistaken for the design mode. The dominant peak the script prints is $\approx 2.44\,\text{GHz}$ — the **drive carrier itself** ($f_0 = 2.5\,\text{GHz}$, within one spectral bin): a broad, low-$Q$ feature of the **driven** response, not a resonance of the structure. The tell-tale is that it does not shift when you sweep the patch length or the substrate $\varepsilon_r$ — Exercises 1–2 run exactly that diagnostic. Nor is the textbook 1.43 GHz mode hiding beneath it: in this 2-D TM$_z$ cross-section $E_z$ is pinned to zero on *both* the patch and the ground plane, so the region between them supports no TEM-like patch mode at all — its lowest resonance is the **vertical** half-wave across the substrate, $f \approx c_0/(2h\sqrt{\varepsilon_r}) \approx 11.9\,\text{GHz}$ for the 6 mm FR-4 gap (Exercise 2 finds it). The patch-mode physics a real antenna lives on belongs to the other polarisation, which is one more reason the table above marks $S_{11}$ and the far field as 3-D extensions. (An earlier revision of this lesson quoted "3.6657 GHz" here — that number was this same carrier peak read off a mislabeled frequency axis, from back when rustlab's `fft` silently zero-padded its input; the axis built from `length(trace)` was stretched by 1024/701. rustlab's `fft` is length-preserving now, so the axis in the script is correct as written.)
+The standalone script that implements this pattern is `patch_antenna.rlab`. Run it with `make lesson-14`. **Read the spectrum as a driven cross-section, not as a patch antenna.** The dominant peak the script prints is $\approx 2.4438\,\text{GHz}$ — the **drive carrier** ($f_0 = 2.5\,\text{GHz}$, one spectral bin off), not a resonance of the metal. It does not move when the patch length or $\varepsilon_r$ changes (Exercises 1–2).
+
+A number that used to be quoted here as the patch design frequency, $\approx 1.43\,\text{GHz}$, is $c_0/(2 L\sqrt{\varepsilon_r})$ with $L = 50\,\text{mm}$ and $\varepsilon_r = 4.4$. That is the substrate permittivity, not an effective permittivity $\varepsilon_{\rm eff}$. A real microstrip patch uses $\varepsilon_{\rm eff}$ between $(\varepsilon_r+1)/2$ and $\varepsilon_r$, so its $\lambda/2$ frequency sits higher than $1.43\,\text{GHz}$, and a $2.45\,\text{GHz}$ FR-4 patch is nearer $30\,\text{mm}$ only after that $\varepsilon_{\rm eff}$ (and fringing) are put in. This 2-D TM$_z$ grid cannot host that mode anyway: $E_z$ is pinned to zero on both plates. The lowest resonance the substrate gap can support in this polarisation is the vertical half-wave $c_0/(2h\sqrt{\varepsilon_r}) \approx 11.9\,\text{GHz}$ for the $6\,\text{mm}$ FR-4 gap (Exercise 2). $S_{11}$ and a far-field gain pattern are 3-D extensions in the table below; they are not outputs of this script. (An earlier revision quoted "3.6657 GHz" for the dominant peak. That was the same carrier read off a mislabeled frequency axis, from when rustlab's `fft` zero-padded its input and `length(trace)` stretched the axis by 1024/701. `fft` is length-preserving now.)
 
 ## From 2-D to 3-D — What Would Change
 
-The 2-D capstone is a faithful reduction of the 3-D problem to its essentials. To grow it into a real patch-antenna simulation:
+The 2-D run is a cross-section with the patch mode absent. Growing it into a patch-antenna simulation would change the following:
 
 | Step | 2-D this script | 3-D production |
 |---|---|---|
@@ -119,8 +121,8 @@ The 2-D capstone is a faithful reduction of the 3-D problem to its essentials. T
 | Material map | `eps_r(i, j)` matrix | `eps_r(i, j, k)` Tensor3 with `rect_mask` slabs |
 | Feed | 1-column source between ground and patch | TF/SF box on a coax-feed port plane |
 | Boundary | absorbing strips on $x$ edges | full Bérenger split-field PML on all six faces |
-| $S_{11}$ | probe-trace FFT (informal) | mode-filtered waveport + time-gating + FFT |
-| Far field | probe field above the patch | NF→FF surface integral on a closed box ([Lesson 12 Ex. 5](12-waveguides-and-radiation.md#exercises)) |
+| $S_{11}$ | not computed (the probe spectrum is the drive) | mode-filtered waveport + time-gating + FFT |
+| Far field | not computed | NF→FF surface integral on a closed box ([Lesson 12](12-waveguides-and-radiation.md)) |
 
 Every element on the right is a tool the curriculum already covered. The 3-D step is a *scale-up*, not a new physics or algorithm.
 
@@ -137,10 +139,10 @@ Run it with `make lesson-14`, or directly via `rustlab run lessons/14-capstone-d
 | Quantity | Expected Value |
 |---|---|
 | Substrate $\varepsilon_r$ (FR-4) | 4.4 |
-| Patch length $L$ for a 2.45 GHz design | $\lambda_0/(2\sqrt{\varepsilon_{\rm eff}}) \sim 30\,\text{mm}$ |
-| Simulated patch length (this script) | $50\,\text{mm}$ — deliberately oversized so the textbook $\lambda/2$ design frequency ($\approx 1.43\,\text{GHz}$) is well separated from the 2.5 GHz feed band; see the caveat below |
-| 2-D dominant spectral peak, this geometry | $\approx 2.44\,\text{GHz}$ (printed 2.4438 GHz) — the drive carrier ($f_0 = 2.5$ GHz, within one bin): a broad, low-$Q$ feature of the **driven** response, *not* the patch's $\lambda/2$ mode ($\approx 1.43\,\text{GHz}$). It stays fixed under patch-length and $\varepsilon_r$ sweeps (Exercises 1–2) — the diagnostic that it is not a patch resonance |
-| Pulse half-width $\tau$ | $\approx 0.4\,\text{ns}$ |
+| $c_0/(2 L \sqrt{\varepsilon_r})$ at $L = 50\,\text{mm}$, $\varepsilon_r = 4.4$ | $\approx 1.43\,\text{GHz}$. This uses $\varepsilon_r$, not $\varepsilon_{\rm eff}$, and this polarisation has no patch mode at that frequency |
+| Simulated patch length (this script) | $50\,\text{mm}$ |
+| 2-D dominant spectral peak | $2.4438\,\text{GHz}$ — the drive carrier ($f_0 = 2.5\,\text{GHz}$, one bin off), not a structural resonance |
+| Pulse half-width $\tau$ | $0.4\,\text{ns}$; $1/e$ spectrum about $1.7$–$3.3\,\text{GHz}$ |
 | Time-step ($S = 0.7$ Courant) | $\sim 2.34\,\text{ps}$ ($\Delta x = 1$ mm) |
 | Total simulation time | $\sim 2.1\,\text{ns}$ (900 steps × $\Delta t$) |
 
@@ -164,8 +166,8 @@ The first fourteen lessons span:
 - **Lessons 10–11**: the two full-wave solvers (FDFD and FDTD)
 - **Lesson 12**: modal eigenproblems and far-field radiation
 - **Lesson 13**: transmission lines and S-parameters
-- **Lesson 14**: composition — this capstone
+- **Lesson 14**: a 2-D microstrip cross-section — geometry, FDTD, driven probe spectrum
 
-Beyond the capstone, Lessons 15–17 extend the arc from fields to circuits: lumped capacitance extraction (Lesson 15), Smith-chart impedance matching (Lesson 16), and lumped inductance extraction (Lesson 17).
+Lessons 15–17 continue from fields to circuits: lumped capacitance (Lesson 15), Smith-chart matching (Lesson 16), and lumped inductance (Lesson 17).
 
 Every script in this curriculum sits in `lessons/<id>-<name>/` as a runnable artefact; every notebook in `notebooks/<id>-<name>.md` documents the physics with interleaved theory and example. The rendered curriculum is at `book/`. The two upstream-feature requests we filed and saw landed — animation export (`frame()`/`saveanim()`) and the SC-PML helpers in `lessons/_shared/em.rlab` — close the loop on the original "what rustlab needs to support the curriculum" survey from `dev/rustlab/requests/em_requests.md`. The remaining 3-D Yee + SC-PML graduation to native Rust waits on the triggers documented in [`yee-and-pml-builders.md`](../dev/rustlab/requests/yee-and-pml-builders.md); until then, the scripted library is the curriculum-side answer.

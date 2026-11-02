@@ -64,7 +64,7 @@ Repository highlighting is managed via [`.gitattributes`](.gitattributes). Note 
 
 ## Lessons
 
-The curriculum targets a "mini Ansys" endpoint: given arbitrary geometry and material assignments, compute electric and magnetic fields, $S$-parameters, and radiation patterns. Lesson 14 is the end-to-end capstone; everything before it builds a piece of the pipeline.
+The curriculum targets a "mini Ansys" endpoint: given arbitrary geometry and material assignments, compute electric and magnetic fields, circuit parameters, and — where the grid supports them — radiation patterns. Lesson 14 is a 2-D microstrip cross-section (a driven probe spectrum, not a patch $S_{11}$ or a 3-D gain pattern). Lessons 15–17 extract lumped $C$ and $L$ and match impedances on a Smith chart.
 
 The links below point at the **rendered** notebooks under [`book/`](book/) — what GitHub displays inline with executed code, captured `print()` output, and inline SVG plots. Sources live at [`notebooks/<slug>.md`](notebooks/) and are regenerated to the book by `make notebooks`.
 
@@ -84,59 +84,74 @@ Electric fields from discrete charges via superposition. Point charges, dipoles,
 Flux through closed surfaces; $\nabla\cdot\vec{E} = \rho/\varepsilon_0$. Symmetric analytic solutions (sphere, cylinder, infinite plane) and their numerical verification. Electric potential $V$, the relation $\vec{E} = -\nabla V$, and equipotential surfaces as contour plots.
 
 ### 04 — Geometry & Material Maps
-**Status: Planned** | [`book/04-geometry-and-material-maps.md`](book/04-geometry-and-material-maps.md)
+**Status: Drafted** | [`book/04-geometry-and-material-maps.md`](book/04-geometry-and-material-maps.md)
 
 The toolkit that bridges "a user drew a shape" and "the solver has numbers to work with." Rasterize primitives (rectangle, disk, polygon) and boolean-combine them into region masks. Assign spatial $\varepsilon_r(x,y)$, $\mu_r(x,y)$, $\sigma(x,y)$ arrays per region. Demonstrate a simple conformal-boundary correction. Every downstream solver consumes these arrays.
 
 ### 05 — Poisson & Laplace BVP — Dielectrics & Conductors
-**Status: Planned** | [`book/05-poisson-laplace-bvp.md`](book/05-poisson-laplace-bvp.md)
+**Status: Drafted** | [`book/05-poisson-laplace-bvp.md`](book/05-poisson-laplace-bvp.md)
 
 The first numerical PDE solver. $\nabla\!\cdot\!(\varepsilon\nabla V) = -\rho$ discretized on a 2D grid via finite differences; iterative relaxation (Jacobi, Gauss-Seidel, SOR) vs. direct sparse solve. Geometries: parallel-plate capacitor with a dielectric slab between, coaxial cable with mixed dielectric fill, L-shaped conductor corner singularity.
 
 ### 06 — Magnetostatics & Vector Potential
-**Status: Planned** | [`book/06-magnetostatics.md`](book/06-magnetostatics.md)
+**Status: Drafted** | [`book/06-magnetostatics.md`](book/06-magnetostatics.md)
 
 Magnetic fields from steady currents. Numerical Biot-Savart integration over arbitrary current paths; Ampère's law with symmetric analytic solutions. Then the BVP counterpart: solve $\nabla^2\vec{A} = -\mu_0\vec{J}$ on a grid with material $\mu_r$ regions, and recover $\vec B = \nabla\times\vec A$ for complex geometries where Biot-Savart is impractical.
 
 ### 07 — Faraday's Law & Induction
-**Status: Planned** | [`book/07-faraday-induction.md`](book/07-faraday-induction.md)
+**Status: Drafted** | [`book/07-faraday-induction.md`](book/07-faraday-induction.md)
 
 $\oint \vec{E}\cdot d\vec{\ell} = -d\Phi_B/dt$. Induced EMF, Lenz's law, self- and mutual inductance. Eddy currents in a thin conducting plate as a 2D simulation.
 
 ### 08 — Maxwell's Equations — The Complete Set
-**Status: Planned** | [`book/08-maxwell-equations.md`](book/08-maxwell-equations.md)
+**Status: Drafted** | [`book/08-maxwell-equations.md`](book/08-maxwell-equations.md)
 
 The displacement current $\partial\vec{D}/\partial t$ and why Ampère's law needed it. The four equations in differential and integral form; charge conservation as a built-in consistency condition; the Poynting vector and energy flow.
 
 ### 09 — EM Wave Equation & Plane Waves
-**Status: Planned** | [`book/09-em-waves.md`](book/09-em-waves.md)
+**Status: Drafted** | [`book/09-em-waves.md`](book/09-em-waves.md)
 
 Deriving the wave equation from Maxwell in vacuum; $c = 1/\sqrt{\mu_0\varepsilon_0}$. Plane waves, polarization states (linear, circular, elliptical), standing waves at a perfect conductor. Animated field visualization.
 
 ### 10 — FDFD — Frequency-Domain Maxwell Solver
-**Status: Planned** | [`book/10-fdfd-frequency-domain.md`](book/10-fdfd-frequency-domain.md)
+**Status: Drafted** | [`book/10-fdfd-frequency-domain.md`](book/10-fdfd-frequency-domain.md)
 
 The steady-state counterpart to FDTD. Discretize the vector Helmholtz / Maxwell curl-curl equation on a Yee grid as a complex-valued sparse linear system, then hand it to `spsolve`. Single-frequency transmission through a stratified dielectric, scattering off a 2D dielectric cylinder, resonance in a driven cavity. Cheap, direct, and the natural way to get an $S$-parameter at one frequency.
 
 ### 11 — FDTD — Time-Domain, Dispersive Materials, PML
-**Status: Planned** | [`book/11-fdtd-simulation.md`](book/11-fdtd-simulation.md)
+**Status: Drafted** | [`book/11-fdtd-simulation.md`](book/11-fdtd-simulation.md)
 
 The Yee grid and leapfrog update equations — the workhorse numerical method of real-world EM simulation. 1D propagation through a dielectric slab; 2D total-field/scattered-field plane-wave injection around a PEC/dielectric cylinder; dispersive media (Drude metal, Debye water, Lorentz resonator) via auxiliary-differential-equation updates; split-field perfectly matched layer absorbing boundaries.
 
 ### 12 — Waveguides, Cavity Eigenmodes & Radiation
-**Status: Planned** | [`book/12-waveguides-and-radiation.md`](book/12-waveguides-and-radiation.md)
+**Status: Drafted** | [`book/12-waveguides-and-radiation.md`](book/12-waveguides-and-radiation.md)
 
 Rectangular waveguide TE/TM modes computed as a numerical generalized eigenvalue problem on a 2D cross-section grid; cavity resonances the same way. Hertzian and half-wave dipole radiation patterns, plus a near-field-to-far-field transform so FDTD simulations can be turned into 3D gain patterns without filling the whole far-field region with grid cells.
 
 ### 13 — Transmission Lines, S-Parameters & Antennas
-**Status: Planned** | [`book/13-transmission-lines-and-antennas.md`](book/13-transmission-lines-and-antennas.md)
+**Status: Drafted** | [`book/13-transmission-lines-and-antennas.md`](book/13-transmission-lines-and-antennas.md)
 
 Connecting the 3D field picture back to 1D circuit parameters. Capacitance extraction from 2D Laplace solutions; characteristic impedance $Z_0 = \sqrt{L'/C'}$ of coax and twin-wire lines; telegrapher's equations and reflection at a terminated load (VSWR). Multiport $S$-parameters via waveport excitation, time-gating, and de-embedding. Dipole antennas as open-ended transmission-line stubs — derivation of $I(z) = I_0\sin[k(L/2-|z|)]$ and the 73 Ω half-wave radiation resistance by far-field Poynting integration.
 
-### 14 — Capstone: End-to-End Device Simulation
-**Status: Planned** | [`book/14-capstone-device-simulation.md`](book/14-capstone-device-simulation.md)
+### 14 — Device Walkthrough: 2-D Microstrip Cross-Section
+**Status: Drafted** | [`book/14-capstone-device-simulation.md`](book/14-capstone-device-simulation.md)
 
-Put everything together. Build a microstrip-fed rectangular patch antenna from scratch — substrate, ground plane, trace, patch — as a material map (Lesson 04). Run it through FDTD (Lesson 11) with waveport excitation (Lesson 13) and a TF/SF source, extract $S_{11}$ via time-gating, and compute the 3D gain pattern via the NF→FF transform (Lesson 12). Compare the result to a published design. A working "mini Ansys" session, top to bottom.
+Compose a layered microstrip cross-section as a material map (Lesson 04) and run the 2-D Yee scheme (Lesson 11) with a pulsed feed. The unknown is $E_z$, pinned to zero on the ground and patch rows, so this polarisation has no patch cavity mode. The probe spectrum peaks at the drive carrier. $S_{11}$ and a 3-D gain pattern are listed as extensions, not as outputs of the script.
+
+### 15 — Lumped Capacitance Extraction
+**Status: Drafted** | [`book/15-lumped-capacitance.md`](book/15-lumped-capacitance.md)
+
+Energy and Gauss extraction of lumped $C$, multi-conductor capacitance matrices, a thin-film MIM capacitor, bond-pad parasitics, and the virtual-work force on a movable plate.
+
+### 16 — Smith Chart & Impedance Matching
+**Status: Drafted** | [`book/16-smith-chart.md`](book/16-smith-chart.md)
+
+The bilinear $\Gamma$ map, L-section and stub matching, a quarter-wave transformer, and a synthetic patch resonator on the chart. The locus is not Lesson 14's field solve.
+
+### 17 — Lumped Inductance Extraction
+**Status: Drafted** | [`book/17-lumped-inductance.md`](book/17-lumped-inductance.md)
+
+Loop and solenoid inductance, a mutual-inductance matrix, transformer coupling, the Nagaoka end effect, and the virtual-work force on a magnetic plunger (closed-return model, with the open-rod demagnetising caveat).
 
 ## Repository Structure
 

@@ -203,38 +203,42 @@ omega_h = 2 * pi * f0_h;
 k0_h    = omega_h / c0_h;
 
 ths_full = linspace(0, 2 * pi, 721);
-P_full   = abs(sin(ths_full));
-polar(ths_full, P_full, "|F(theta)|  (Hertzian)");
-title("Hertzian dipole far-field pattern  —  |F| ∝ sin θ")
+P_full   = sin(ths_full) .^ 2;
+polar(ths_full, P_full, "power  (Hertzian)");
+title("Hertzian dipole power pattern  —  dP/dOmega ∝ sin^2 θ")
 ```
 
 <!-- rustlab:output-start -->
-![plot 3](plots/12-waveguides-and-radiation/plot-3-c88d7ac0.svg)
+![plot 3](plots/12-waveguides-and-radiation/plot-3-68e41284.svg)
 
 <!-- rustlab:output-end -->
 
 ```rustlab
-% Numerical Poynting integral over the unit sphere.
+% Angular integral of the far-field Poynting flux of the sin(θ) pattern.
+% |E_θ| r = η I k dℓ sinθ / (4π). Integrating |E|^2/(2η) over the sphere
+% is ∫ sin^3 θ dθ, not a closed-form constant pasted in afterwards.
 ths_n = linspace(0, pi, 361);
 int_sin3 = trapz(ths_n, sin(ths_n) .^ 3);
 print(int_sin3)                  % ≈ 4/3
-print(2 * pi * int_sin3)         % ≈ 8 π/3 ≈ 8.378
-
-% Closed-form radiated power
-P_rad = eta0_h * I0_h^2 * (k0_h * dell)^2 / (12 * pi);
-print(P_rad)                     % ~ 0.44 W
+pref = eta0_h * I0_h * k0_h * dell / (4 * pi);
+P_rad = (pref ^ 2 * pi / eta0_h) * int_sin3;
+P_closed = eta0_h * I0_h^2 * (k0_h * dell)^2 / (12 * pi);
+print(P_rad)                     % ~ 0.44 W, from the trapz
+print(P_closed)                  % same closed form
+print(abs(P_rad - P_closed) / P_closed)
 ```
 
 <!-- rustlab:output-start -->
 ```text
 1.333333333429994
-8.377580410180117
+0.43895275495152003
 0.4389527549196978
+0.00000000007249575535378509
 ```
 
 <!-- rustlab:output-end -->
 
-The pattern is a flat $\sin\theta$ trace, sharp null directly along the dipole axis ($\theta = 0, \pi$), and a peak in the equatorial plane. The numerical $\int\sin^3\theta\,d\theta$ recovers $4/3$ to seven decimal places — pure trapezoidal-rule precision.
+The power pattern is $\sin^2\theta$ (the field factor is $\sin\theta$): a null on the dipole axis ($\theta = 0, \pi$) and a peak in the equatorial plane. The radiated power is that pattern integrated over the sphere. The trapezoidal $\int\sin^3\theta\,d\theta$ recovers $4/3$, and $P_{\rm rad}$ built from it matches $\eta_0|I_0|^2|k\,d\ell|^2/(12\pi)$.
 
 ## Half-Wave Dipole — Numerical Integration Over a Sinusoidal Current
 
@@ -278,7 +282,7 @@ for t = 1:length(ths_d)
 end
 F_num_n = F_num / max(F_num);
 
-print(max(abs(F_anal_n - F_num_n)))    % ~ 1e-5
+print(max(abs(F_anal_n - F_num_n)))    % 6.8e-6
 ```
 
 <!-- rustlab:output-start -->
@@ -336,28 +340,25 @@ projected onto the plane $\perp\hat r$ (an $e^{+j\omega t}$ time convention, so 
 
 ```rustlab
 clf;
-% Baked E-plane cut from nf2ff_transform.rlab's surface integral
-% (cube half-side lambda/4); compared to the analytic sin(theta).
-th_deg = [0, 15, 30, 45, 60, 75, 90, 105, 120, 135, 150, 165, 180];
-E_ff   = [0.0, 0.2588, 0.5000, 0.7071, 0.8660, 0.9659, 1.0, ...
-          0.9659, 0.8660, 0.7071, 0.5000, 0.2588, 0.0];
+% The analytic sin(θ) the transform is supposed to recover. The surface
+% integral itself is nf2ff_transform.rlab (21×21 samples per cube face);
+% its printed max |E_ff/max − sin θ| is 8.6e-6, so a 4-decimal overlay
+% of sin θ would be the analytic curve typed twice.
+th_deg = linspace(0, 180, 181);
 analytic = sin(th_deg * pi / 180);
-hold on;
-plot(th_deg, E_ff,     "NF->FF surface integral");
 plot(th_deg, analytic, "analytic sin(theta)");
-hold off;
 xlabel("theta  (deg)");
 ylabel("|E_ff| / max");
-title("NF->FF transform recovers the Hertzian sin(theta) pattern");
-legend("NF->FF integral", "sin(theta)");
+title("Hertzian E-plane target for the NF->FF integral");
+legend("sin(theta)");
 ```
 
 <!-- rustlab:output-start -->
-![plot 5](plots/12-waveguides-and-radiation/plot-5-e79d7be2.svg)
+![plot 5](plots/12-waveguides-and-radiation/plot-5-670ce8cb.svg)
 
 <!-- rustlab:output-end -->
 
-At full resolution the integral matches $\sin\theta$ to a maximum error of $\approx 1\times 10^{-5}$, and the equatorial ($\theta=\pi/2$) cut is flat in $\varphi$ to $\approx 0.02\,\%$ — confirming the kernel is both accurate and rotationally symmetric. Love's equivalence is exact for any closed surface, so the only residual is the cube's finite $21\times 21$-per-face sampling. This is exactly the transform a 3-D production capstone would use to convert its boxed near field into a radiation pattern — Lesson 14 maps it as the 3-D extension, not the shipped 2-D run.
+`nf2ff_transform.rlab` samples the analytic Hertzian near field on the cube, forms the Love currents, and integrates. The E-plane cut matches $\sin\theta$ with maximum error $8.6\times 10^{-6}$ (the script's print; a 4-decimal table of $\sin\theta$ cannot show that residual). The equatorial ($\theta=\pi/2$) cut is flat in $\varphi$ to $\approx 0.02\,\%$. Love's equivalence is exact for any closed surface, so the residual is the cube's finite $21\times 21$-per-face sampling. This is the transform a 3-D production run would use on a boxed near field — Lesson 14's shipped 2-D cross-section does not call it.
 
 ## Standalone Scripts
 
@@ -381,9 +382,9 @@ Run all five with `make lesson-12`, or one script at a time via `rustlab run les
 | Cavity mode 4 (TM$_{31}$) | $4.9152\,\text{GHz}$ printed — $0.12\,\%$ below the analytic $4.921\,\text{GHz}$; identical for 4–60 requested modes |
 | $\int_0^\pi \sin^3\theta\,d\theta$ | $4/3$ |
 | Hertzian $P_{\rm rad}$ ($I_0=1\,\text{A}$, $d\ell=1\,\text{cm}$, $f=1\,\text{GHz}$) | $\approx 0.439\,\text{W}$ |
-| Half-wave pattern numerical-vs-analytic max error | $\sim 10^{-5}$ |
+| Half-wave pattern numerical-vs-analytic max error | $6.8\times 10^{-6}$ |
 | Half-wave $R_{\rm rad}$ | $\approx 73.08\,\Omega$ |
-| NF→FF $\sin\theta$ recovery (E-plane max error) | $\approx 1\times 10^{-5}$ |
+| NF→FF $\sin\theta$ recovery (E-plane max error) | $8.6\times 10^{-6}$ (`nf2ff_transform.rlab`) |
 | NF→FF equatorial $\varphi$ flatness | $\approx 0.02\,\%$ |
 
 ## Exercises

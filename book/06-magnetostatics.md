@@ -30,7 +30,7 @@ $$\vec B(\vec r) = \frac{\mu_0 I}{4\pi}\oint_C\frac{d\vec\ell\times(\vec r-\vec 
 
 a direct numerical recipe: parametrise the path $C$ by arc length, evaluate the integrand at each segment, sum. The kernel magnitude falls off as $1/r^2$, just like Coulomb's (the numerator carries an unnormalised displacement vector), and on a closed smooth path the integrand is smooth and periodic, so the segment sum converges rapidly — a modest segment count (say $N \sim 100$) is plenty for engineering accuracy.
 
-Numerically, the natural pattern in rustlab is to **vectorise over field points and loop over source segments**: for each segment, the displacement vector `(Xg - rxs(k), Yg - rys(k), Zg - rzs(k))` broadcasts over the entire grid in one elementwise expression, and the cross-product contribution accumulates onto an `Nm × Nm` matrix. Six lines of broadcast-style array math in one outer loop reads the same as the textbook sum and runs ~30× faster than three nested scalar loops.
+Numerically, the natural pattern in rustlab is to **vectorise over field points and loop over source segments**: for each segment, the displacement vector `(Xg - rxs(k), Yg - rys(k), Zg - rzs(k))` broadcasts over the entire grid in one elementwise expression, and the cross-product contribution accumulates onto an `Nm × Nm` matrix. Six lines of broadcast-style array math in one outer loop reads the same as the textbook sum and replaces three nested scalar loops.
 
 ### Example — Circular loop in vacuum
 
@@ -220,7 +220,7 @@ legend("Biot-Savart sum", "μ₀nI (∞ limit)")
 
 <!-- rustlab:output-end -->
 
-The interior field sits just below the infinite-solenoid value $\mu_0 n I$ — 8.8 % under here, because the finite ends leak flux. The finite-solenoid closed form $B(0) = \mu_0 n I\,(L/2)/\sqrt{(L/2)^2 + R^2}$ accounts for exactly that leakage (the geometric factor is $\approx 0.928$ for this $L/R = 5$ coil) and agrees with the Biot–Savart sum to ~1.7 % — the small residual comes from the discrete 50-loop stack standing in for a continuous winding. At each end the field drops to roughly half its central value, and beyond the ends the on-axis field decays algebraically, settling into the $1/z^3$ dipole tail of the whole coil far away. This is the basis for every air-core inductor and every "uniform field" lab magnet.
+The interior field sits just below the infinite-solenoid value $\mu_0 n I$ — 8.8 % under here, because the finite ends leak flux. The finite-solenoid closed form $B(0) = \mu_0 n I\,(L/2)/\sqrt{(L/2)^2 + R^2}$ accounts for that leakage (the geometric factor is $\approx 0.928$ for this $L/R = 5$ coil). The remaining ~1.7 % is the turn density, not a failed integral: `linspace` places $N = 50$ loops from $-L/2$ to $L/2$, which is $N-1$ gaps, so the stack's $n_{\rm eff} = (N-1)/L$ is $49/50$ of the $n = N/L$ in the continuous formula. Multiplying the closed form by $(N-1)/N$ removes that offset. At each end the field drops to roughly half its central value, and beyond the ends the on-axis field decays algebraically, settling into the $1/z^3$ dipole tail of the whole coil far away. This is the basis for every air-core inductor and every "uniform field" lab magnet.
 
 ## Helmholtz Coils — Field Uniformity
 
@@ -266,29 +266,31 @@ legend("d/R = 0.5", "d/R = 1.0", "d/R = 1.5")
 <!-- rustlab:output-end -->
 
 ```rustlab
-% Quantify uniformity: Bz at midpoint vs Bz at z = ±0.5R off-centre.
+% Uniformity at a SMALL offset. z = 0.5 R is far enough that the
+% second-derivative cancellation is no longer what the ratio measures:
+% a coarse sweep of B(0.5 R)/B(0) bottoms near d/R ≈ 1.15, not at 1.
+% At z = 0.1 R the ratio nearest 1 is the Helmholtz spacing d = R.
+z_off = 0.1 * Rh;
 for rk = 1:3
   d_h = ratios(rk) * Rh;
   Bz0 = (mu0 * Ih * Rh^2) / ((Rh^2 + (d_h/2)^2) ^ 1.5);
-  z_off = 0.5 * Rh;
   Bz_off = (mu0 * Ih * Rh^2 / 2.0) * ...
            (1.0 / ((Rh^2 + (z_off - d_h/2)^2) ^ 1.5) + ...
             1.0 / ((Rh^2 + (z_off + d_h/2)^2) ^ 1.5));
   print(real(Bz_off / Bz0))
 end
-% Ratio closest to 1.0 (least variation) → Helmholtz d/R = 1
 ```
 
 <!-- rustlab:output-start -->
 ```text
-0.780371182542001
-0.9458241851693391
-1.1297448510218757
+0.9900764472540342
+0.9998860576755305
+1.0075786909845998
 ```
 
 <!-- rustlab:output-end -->
 
-The middle line ($d/R = 1$) is visibly flattest near $z = 0$; the printed `Bz_off / Bz0` ratio is closest to 1 for the Helmholtz case, confirming the second-derivative cancellation at the midpoint.
+The middle line ($d/R = 1$) is visibly flattest near $z = 0$. The printed `Bz_off / Bz0` ratio, taken at $z = 0.1R$, is closest to 1 for $d/R = 1$. A check at $z = 0.5R$ does not have that property: that far off axis the ratio is no longer a probe of $d^2B/dz^2|_{z=0}$, and a coarse three-point sweep can look best near $d/R \approx 1.15$.
 
 ## Vector Potential Poisson Equation
 
@@ -398,7 +400,7 @@ print(By_an)                                     % analytic  ≈ -2.78e-6 T (sna
 
 <!-- rustlab:output-end -->
 
-Measured against the **snapped-geometry** reference — the analytic two-wire formula evaluated at the wires' actual grid positions ($d_{\rm act} = 0.0417$ m rather than the nominal $0.04$ m) — the numerical $B_y$ on the symmetry axis sits about 14.5 % below it. That residual is genuine discretization error with two pieces: each wire is approximated as a single cell (so the near-wire kernel is regularised at the cell scale), and the grounded outer boundary distorts the dipolar tail; both shrink under grid refinement. (The sample column itself lands ~1 mm off the true midline, a reminder to read the geometry off the grid rather than the nominal coordinates.) The pipeline — solve a scalar Poisson, take a 2-D curl — is now ready to handle magnetic materials, which Biot–Savart cannot.
+Measured against the **snapped-geometry** reference — the analytic two-wire formula evaluated at the wires' actual grid positions ($d_{\rm act} = 0.0417$ m rather than the nominal $0.04$ m) — the numerical $B_y$ on the symmetry axis sits about 14.5 % below it (ratio $\approx 0.855$ on this $150\times 150$, $0.30\,\text{m}$ box). Most of that is the grounded box truncating the return flux, not the stencil. Refining the same $0.30\,\text{m}$ box only moves the ratio $0.855 \to 0.873 \to 0.882$ at $N = 150/300/600$ (about 3 points). Opening the box to $0.60\,\text{m}$ at $N = 300$ reaches $\approx 0.938$ (about 8 points of the original gap). The sample column itself lands ~1 mm off the true midline, so the reference has to be read off the grid rather than the nominal coordinates. The pipeline — solve a scalar Poisson, take a 2-D curl — is now ready to handle magnetic materials, which Biot–Savart cannot.
 
 ## Magnetic Materials and Variable $\mu$
 
@@ -545,7 +547,7 @@ Run all five with `make lesson-06`, or individually via `rustlab run lessons/06-
 | Solenoid centre $B_z$ | $\approx 5.73\times10^{-4}$ T, 8.8 % under $\mu_0 n I \approx 6.28\times10^{-4}$ T ($n = 500$ turns/m) |
 | Finite-solenoid closed form $B(0)$ | $\approx 5.83\times10^{-4}$ T (factor $\approx 0.928$); numerical agrees to ~1.7 % |
 | Helmholtz $B_{\rm off}/B_0$ ratio at $d/R = 1$ | closest to 1 across the three cases |
-| Two-wire $B_y$ above midpoint | numerical $\approx -2.38\times10^{-6}$ T, ~14.5 % below the snapped-geometry reference $\approx -2.78\times10^{-6}$ T (single-cell source + grounded box) |
+| Two-wire $B_y$ above midpoint | numerical $\approx -2.38\times10^{-6}$ T, ~14.5 % below the snapped-geometry reference $\approx -2.78\times10^{-6}$ T (about 8 points grounded-box truncation, about 3 points stencil) |
 | $\lvert B\rvert$ in iron shell | $\sim 1000\times$ larger than just outside |
 | $\lvert B\rvert$ outside iron at snapped $r = 7.11$ cm | within ~6.6 % of the $\mu_0 I/(2\pi r)$ reference (snapped $r = 9.09$ cm reads ~20 % high — grounded-box effect) |
 

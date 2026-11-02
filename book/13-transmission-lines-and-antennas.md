@@ -159,7 +159,7 @@ legend("exact cosh^-1", "large-d/a approx", "numerical");
 
 <!-- rustlab:output-end -->
 
-The numerical point lands at $Z_0 \approx 166\,\Omega$ — about 5 % above the exact $\cosh^{-1}$ value of 157.9 Ω at this *close* $d/2a = 2$ spacing. The staircased disks and finite box are least accurate when the conductors nearly touch (proximity effect crowds the surface charge); the agreement tightens at larger $d/a$, which Exercise 1 confirms by running the solver at several spacings.
+The numerical point lands at $Z_0 \approx 166\,\Omega$ — about 4.9 % above the exact $\cosh^{-1}$ value of 157.9 Ω at $d/2a = 2$. The $\cosh^{-1}$ formula already includes the proximity effect (it is the exact two-cylinder capacitance, not a thin-wire guess). The 4.9 % is the staircased disk boundary plus the finite grounded box. Whether that gap shrinks at larger $d/a$ is Exercise 1 — it is not shown by this single point.
 
 ## Pulse Propagation on a 1-D Telegrapher Leapfrog
 
@@ -393,9 +393,11 @@ To extract these from a simulation, run the 1-D leapfrog twice — once on the u
 
 ```rustlab
 clf;
-% From s_parameters_tline.rlab — 50 -> 100 Ohm step.
+% Analytic |S11|, |S21| from the impedance step. The two time-domain
+% numbers are the peak ratios printed by s_parameters_tline.rlab.
 labels = [1, 2];                      % 1 = |S11|, 2 = |S21|
-S_analytic   = [0.3333, 0.9428];      % Gamma = 1/3, 2 sqrt(Z1 Z2)/(Z1+Z2)
+Z1 = 50; Z2 = 100;
+S_analytic   = [(Z2 - Z1) / (Z2 + Z1), 2 * sqrt(Z1 * Z2) / (Z1 + Z2)];
 S_timedomain = [0.3346, 0.9437];      % FDTD peak-ratio extraction
 hold on;
 plot(labels, S_analytic,   "analytic");
@@ -521,7 +523,7 @@ print(real(R_half))                   % ~ 73.08 Ohm  (textbook 73.13)
 
 <!-- rustlab:output-end -->
 
-The integral returns $73.08\,\Omega$ at $L=\lambda/2$ — within 0.07 % of the textbook 73.13 Ω, an offset that is the $\eta_0$ convention, not numerical error: with the exact $\eta_0 = 376.73\,\Omega$, $(\eta_0/4\pi)\,\mathrm{Cin}(2\pi) = 73.08\,\Omega$, while the textbook 73.13 assumes $\eta_0 = 120\pi$. It also tracks the $20\pi^2(L/\lambda)^2$ short-dipole law at small lengths (0.49 Ω at $L/\lambda=0.05$, sub-percent). This 73 Ω is the number every half-wave-dipole and folded-dipole design starts from.
+The integral returns $73.08\,\Omega$ at $L=\lambda/2$. That is the same $\eta_0$-convention result already computed in Lesson 12 (exact $\eta_0 = 376.73\,\Omega$ gives $(\eta_0/4\pi)\,\mathrm{Cin}(2\pi) = 73.08\,\Omega$; the textbook 73.13 assumes $\eta_0 = 120\pi$). The new content here is the length sweep: the curve tracks $20\pi^2(L/\lambda)^2$ at small lengths (0.49 Ω at $L/\lambda=0.05$).
 
 ## Standalone Scripts
 

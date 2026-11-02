@@ -12,13 +12,14 @@
 #                          - (H_x(i,j) - H_x(i-1,j))/dy]
 # CFL: c0 dt ≤ Δ / √2 in 2-D.
 #
-# Source: a CW (continuous-wave) sinusoidal **line source** of E_z at
-# column j_src — a soft source that emits a +x plane wave. The grid
-# is bounded on left and right by a thick band of bulk-conductive
-# absorbing cells (cheap stand-in for a full Bérenger PML); the top and
-# bottom walls do reflect (the round trip is only ~40 steps ≪ 200), but
-# the diffraction that reaches them is weak, so the echo is tolerated
-# rather than absorbed.
+# Source: a CW (continuous-wave) sinusoidal line source of E_z at
+# column j_src, added only on rows 2:ny-1. Those are the rows the E
+# update actually touches. Adding the source on rows 1 and ny (which
+# the leapfrog never updates) integrates the drive there — |E_z| grows
+# to ~10 — and the PEC top and bottom then support a parallel-plate
+# mode rather than a plane wave (empty-domain lee/lit ratio ~1.36).
+# Bulk-loss strips on all four edges absorb that waveguide mode. The
+# on-axis shadow is then the cylinder's, not the plate-filled one.
 #
 # Scatterer: a PEC cylinder enforced by zeroing E_z each step inside
 # the cylinder mask.
@@ -56,15 +57,21 @@ R_pec = 0.4 * lambda;
 pec_mask = disk_mask(Xg, Yg, xc, yc, R_pec);
 inside_pec = 1 - pec_mask;            # 1 outside, 0 inside
 
-# === Cheap absorbing strips on left/right via bulk loss ===
+# === Cheap absorbing strips on all four edges via bulk loss ===
 # Cubic σ ramp: σ peaks at the outermost cell and tapers to zero at the
-# inner edge of each strip. Symmetric in x.
+# inner edge of each strip. The top/bottom strips are narrower than the
+# left/right ones so the cylinder (diameter ~32 cells) stays clear of them.
 sigma_b   = 8 * eps0 * c0 / dx;
 absorb_w  = 14;
+absorb_wy = 8;
 ramp      = (absorb_w:-1:1) / absorb_w;
+ramp_y    = (absorb_wy:-1:1) / absorb_wy;
 sig_x     = zeros(1, nx);
+sig_y     = zeros(1, ny);
 sig_x(1:absorb_w)              = sigma_b * ramp.^3;
 sig_x(nx-absorb_w+1:nx)        = sigma_b * (ramp(absorb_w:-1:1)).^3;
+sig_y(1:absorb_wy)             = sigma_b * ramp_y.^3;
+sig_y(ny-absorb_wy+1:ny)       = sigma_b * (ramp_y(absorb_wy:-1:1)).^3;
 
 # === Fields ===
 Ez = zeros(ny, nx);
@@ -78,10 +85,10 @@ j_src = 18;
 cH = dt / (mu0 * dx);
 cE = dt / (eps0 * dx);
 
-# Implicit-loss damping factor depends only on x (one value per column).
-# Build the interior submatrix once and broadcast across rows.
-damp_row = 1 ./ (1 + dt * sig_x / (2 * eps0));
-damp_int = repmat(damp_row(2:nx-1), ny-2, 1);
+# Implicit-loss damping. σ = σ_x(x) + σ_y(y); corners see both.
+sig_xy   = repmat(sig_y.', 1, nx) + repmat(sig_x, ny, 1);
+damp     = 1 ./ (1 + dt * sig_xy / (2 * eps0));
+damp_int = damp(2:ny-1, 2:nx-1);
 
 # === Shadow-depth probes ===
 # Lee probe: on the beam axis (centre row), a couple of cells behind the
@@ -108,9 +115,12 @@ for step = 1:n_step
         - (Hx(2:ny-1, 2:nx-1) - Hx(1:ny-2, 2:nx-1));
   Ez(2:ny-1, 2:nx-1) = damp_int .* (Ez(2:ny-1, 2:nx-1) + cE * curlH);
 
-  # ---- CW soft line source on column j_src ----
+  # ---- CW soft line source on column j_src, updated rows only ----
+  # Rows 1 and ny are never touched by the E update. Driving them
+  # integrates the source (they climb to |E| ~ 10) and feeds a
+  # parallel-plate mode between the PEC edges.
   src_amp = sin(omega * t) * (1 - exp(-(t / (15 * dt))^2));     # ramped CW
-  Ez(:, j_src) = Ez(:, j_src) + src_amp;
+  Ez(2:ny-1, j_src) = Ez(2:ny-1, j_src) + src_amp;
 
   # ---- PEC: force E_z = 0 inside cylinder ----
   Ez = Ez .* inside_pec;
@@ -140,6 +150,9 @@ shadow_norm = shadow_abs / lit_max;
 print(shadow_abs)          # lee-probe |E_z| amplitude, late window
 print(lit_max)             # lit-side |E_z| amplitude, late window
 print(shadow_norm)         # shadow depth = lee / lit
+# Source on rows 2:ny-1 with PEC top/bottom (no sig_y) gives ~0.049.
+# The four-sided strips in this script remove the parallel-plate fill
+# and the ratio drops to ~0.006. This print is the second of those.
 
 # Final snapshot
 figure();

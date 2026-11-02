@@ -54,7 +54,10 @@ Each lesson depends on the ones before it.
 |---|--------|-------|
 | 12 | [Waveguides, Cavity Eigenmodes & Radiation](12-waveguides-and-radiation.md) | generalized eigenvalue problem for waveguide & cavity modes; near-field to far-field transform |
 | 13 | [Transmission Lines, S-Parameters & Antennas](13-transmission-lines-and-antennas.md) | $Z_0$ from geometry, telegrapher + VSWR, multiport S-parameters, 73 Ω half-wave dipole |
-| 14 | [Capstone — End-to-End Device Simulation](14-capstone-device-simulation.md) | microstrip patch antenna: geometry → material map → FDTD → $S_{11}$ + 3D gain pattern |
+| 14 | [Device Walkthrough — 2-D Microstrip Cross-Section](14-capstone-device-simulation.md) | layered cross-section → material map → 2-D FDTD → driven probe spectrum (no patch mode, no $S_{11}$, no 3-D gain pattern) |
+| 15 | [Lumped Capacitance Extraction](15-lumped-capacitance.md) | energy and Gauss $C$, capacitance matrices, MIM and bond-pad parasitics, virtual-work force |
+| 16 | [Smith Chart & Impedance Matching](16-smith-chart.md) | bilinear $\Gamma$ map, L-match / stub / $\lambda/4$, synthetic patch locus |
+| 17 | [Lumped Inductance Extraction](17-lumped-inductance.md) | loop and solenoid $L$, mutual matrix, Nagaoka coefficient, plunger force |
 
 ## Local interactive view
 

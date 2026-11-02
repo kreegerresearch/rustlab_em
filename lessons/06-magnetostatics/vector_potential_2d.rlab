@@ -7,7 +7,9 @@
 # Verifies:   By(0, y) at y ≈ 0.05 m sits ~14.5 % below the analytic
 #             two-wire formula By = -μ₀ I d / (2π((d/2)² + y²)) evaluated
 #             at the snapped wire separation d_act = 0.0417 m (single-cell
-#             sources + grounded box; the residual shrinks under refinement).
+#             sources + grounded box). About 8 points of the 14.5% is
+#             the 0.30 m box (a 0.60 m box at N = 300 reaches ~0.94);
+#             refining N = 150/300/600 on this box only gains ~3 points.
 #
 # Reference: ../../notebooks/06-magnetostatics.md.
 

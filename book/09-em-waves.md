@@ -53,7 +53,7 @@ Three properties to confirm numerically:
 - **Amplitude ratio.** $|E_0|/|B_0| = c$ — and *not* the more common $\eta_0 = \sqrt{\mu_0/\varepsilon_0} \approx 376.7\,\Omega$, which is $|E_0|/|H_0|$. The two differ by a factor of $\mu_0$.
 - **Phase coherence.** $E_y$ and $B_z$ share the same phase $kx - \omega t$ at every point: their zero crossings, peaks, and troughs coincide.
 
-Phase velocity follows from $kx - \omega t = \text{const}$ ⟹ $dx/dt = \omega/k = c$. Group velocity equals phase velocity in vacuum (no dispersion); in matter the two split, with rich consequences (Lessons 11, 13).
+Phase velocity follows from $kx - \omega t = \text{const}$ ⟹ $dx/dt = \omega/k = c$. Group velocity equals phase velocity in vacuum (no dispersion); in a waveguide the two split (Lesson 12).
 
 ### Example — Snapshots and a propagation animation
 
@@ -409,7 +409,7 @@ Run all three with `make lesson-09`, or one at a time via `rustlab run lessons/0
 
 1. **Phase velocity from a single grid sample.** From the propagation-animation snapshots, fit a straight line to the position of the leading zero crossing of $E_y$ vs $t$. Verify the slope equals $c$ to within the resolution set by the grid spacing $\Delta x$.
 2. **$\eta_0$ from the wave.** Compute $|E|/|H|$ at any point; you should get $\eta_0 = \mu_0 c \approx 376.73\,\Omega$. This is the **impedance of free space**, the value that every antenna, waveguide, and transmission line is matched against (Lesson 13).
-3. **Add an RCP plus LCP.** Combine equal-amplitude RCP and LCP plane waves in `polarization.rlab` and verify that the tip of $\vec E$ traces a *line* in the $(E_y, E_z)$ plane — linear polarisation is just the superposition of two equal-amplitude, opposite-chirality circular polarisations. This is the basis for quarter-wave-plate polarisation conversion in optics.
+3. **Add an RCP plus LCP.** Combine equal-amplitude RCP and LCP plane waves in `polarization.rlab` and verify that the tip of $\vec E$ traces a *line* in the $(E_y, E_z)$ plane — linear polarisation is the superposition of two equal-amplitude, opposite-chirality circular polarisations. (A quarter-wave plate is a different operation: it puts a $\pi/2$ phase between two linear components. This exercise only checks the circular-to-linear sum.)
 4. **Partial-reflection standing wave.** In `standing_wave.rlab`, replace the perfect $-1$ reflection with $\Gamma = -0.7$ — a finite-impedance reflector that keeps the PEC's $180°$ reflection phase but has $|\Gamma| < 1$, so the interference minima no longer reach zero. Measure the VSWR $= (1+|\Gamma|)/(1-|\Gamma|)$ from the ratio of $|E|_{\max}$ to $|E|_{\min}$ along the line and compare to the analytic value.
 5. **Transverse standing wave.** Replace the PEC at $x = 0$ with two PECs at $x = 0$ and $x = L$, supporting only modes with $kL = n\pi$. Plot the first three transverse modes ($n = 1, 2, 3$) and verify their resonant frequencies $f_n = n c/(2L)$. This is the 1-D version of the rectangular cavity in Lesson 12.
 

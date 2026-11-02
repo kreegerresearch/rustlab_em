@@ -2,7 +2,7 @@
 
 # Lesson 16: Smith Chart & Impedance Matching
 
-Every RF and microwave engineer reads impedance matches off a **Smith chart** — the conformal map that turns "translate along a transmission line" into "rotate on a constant-$|\Gamma|$ circle." This lesson treats the chart as a *computation*: bilinear transform first, then synthesise real matching networks (L-match, single-stub, double-stub, $\lambda/4$ transformer) and read the resonant locus of the Lesson 14 patch antenna directly off the chart. The link between Lesson 13's algebra ($\Gamma$, VSWR, $S_{11}$) and the visual reasoning that drives practical antenna and amplifier design.
+Every RF and microwave engineer reads impedance matches off a **Smith chart** — the conformal map that turns "translate along a transmission line" into "rotate on a constant-$|\Gamma|$ circle." This lesson treats the chart as a *computation*: bilinear transform first, then synthesise real matching networks (L-match, single-stub, double-stub, $\lambda/4$ transformer) and plot a synthetic patch resonator. Lesson 14's 2-D cross-section does not produce a port $S_{11}$. The link between Lesson 13's algebra ($\Gamma$, VSWR, $S_{11}$) and the visual reasoning that drives practical antenna and amplifier design.
 
 rustlab ships `smith(...)`, `marker(...)`, `smith_circle(...)`, and a tagged `sparameters` struct with `s2td(...)` for time-domain step / impulse response. Every example in this lesson uses those primitives — no hand-drawn chart geometry.
 
@@ -18,7 +18,7 @@ rustlab ships `smith(...)`, `marker(...)`, `smith_circle(...)`, and a tagged `sp
 
 ## Background
 
-Lesson 13 (transmission-line $\Gamma$, VSWR, $S_{11}$ extraction), Lesson 14 (patch-antenna FDTD; the headline use-case for the Smith locus). Algebraic prerequisites: complex arithmetic, the bilinear $\Gamma \leftrightarrow z$ map, $\tan$ / $\cot$ identities for short-/open-circuited stubs.
+Lesson 13 (transmission-line $\Gamma$, VSWR, $S_{11}$ extraction). The patch locus below is a textbook resonator, not Lesson 14's field solve. Algebraic prerequisites: complex arithmetic, the bilinear $\Gamma \leftrightarrow z$ map, $\tan$ / $\cot$ identities for short-/open-circuited stubs.
 
 ## The Bilinear Map
 
@@ -390,15 +390,15 @@ title("λ/4 transformer Γ locus");
 
 <!-- rustlab:output-end -->
 
-A 2:1 $Z_L/Z_0$ mismatch is quite broadband — fractional BW of ~150%. Higher mismatches narrow rapidly; the multi-section Chebyshev transformer broadens it back at the cost of additional length.
+A 2:1 $Z_L/Z_0$ mismatch is quite broadband — the $-10\,\text{dB}$ fractional bandwidth printed above is $\approx 156\,\%$. Higher mismatches narrow rapidly; the multi-section Chebyshev transformer broadens it back at the cost of additional length.
 
 ## Patch Antenna on the Smith Chart
 
-Lesson 14's capstone runs a 2-D FDTD of a microstrip patch and reports $|E_z(f)|$ at the feed probe — a spectral magnitude, not a port $S_{11}$. To turn that into a clean Smith picture we model the patch with the textbook narrow-band approximation
+Lesson 14's 2-D TM$_z$ cross-section pins $E_z = 0$ on both plates, so it has no patch resonance and no port $S_{11}$ to plot here. The locus below is a textbook parallel resonator standing in for a patch,
 
 $$Z_{\rm in}(f) \approx \frac{R_0}{1 + jQ(f/f_0 - f_0/f)},$$
 
-with $f_0 \approx 2.45\,\text{GHz}$, $Q \approx 30$ (typical FR-4 patch), and $R_0 = 40\,\Omega$ (well-tuned but slightly off the 50 Ω feed). The locus is the canonical "resonant loop" near the chart centre that every VNA datasheet shows.
+with $f_0 \approx 2.45\,\text{GHz}$, $Q = 30$, and $R_0 = 40\,\Omega$ (slightly off the 50 Ω feed). $Q \approx 30$ is on the high side for FR-4: a loss tangent near $0.02$ and a few-percent match bandwidth usually pull a real FR-4 patch down toward $Q \sim 10$–$20$. The number is a clean synthetic example, not a measured FR-4 patch. The locus is the canonical resonant loop near the chart centre.
 
 ### Theory
 
@@ -470,7 +470,7 @@ title("S_{11} step response via s2td — ring-down at the patch resonance");
 
 <!-- rustlab:output-end -->
 
-The ring-down envelope decays at rate $\pi f_0 / Q \approx 0.26\,\text{ns}^{-1}$, consistent with a $Q = 30$ resonator at 2.45 GHz.
+The unloaded field envelope of a $Q = 30$ resonator at $2.45\,\text{GHz}$ decays at $\pi f_0/Q \approx 0.26\,\text{ns}^{-1}$. This trace is $S_{11}$ of that resonator as seen from a $50\,\Omega$ source. For the parallel model the source loads the resonator by the factor $1 + R_0/Z_0 = 1 + 40/50 = 1.8$, so the loaded ring-down rate is about $0.46\,\text{ns}^{-1}$, not $0.26$.
 
 ## Standalone Scripts
 
@@ -506,7 +506,7 @@ Run all seven with `make lesson-16`, or one at a time via `rustlab run lessons/1
 1. **L-match the other way.** Pick a load with $R_L > Z_0$ (e.g. $Z_L = 100 + j50\,\Omega$) and synthesise both shunt-first L-matches; verify on the chart that the load's constant-$g$ admittance circle now intersects the unit-resistance circle.
 2. **Stub bandwidth comparison.** For the single-stub example, run both $(d, \ell)$ solutions through a $\pm 10\,\%$ frequency sweep and compare the matching bandwidth. One solution is reliably broader — which?
 3. **Three-section Chebyshev transformer.** Replace the single $\lambda/4$ section in `quarter_wave_transformer.rlab` with a three-section equal-ripple Chebyshev transformer (Pozar §5.6). Verify the $-10\,\text{dB}$ bandwidth grows by a factor of $\sim 3$ for a 4:1 mismatch.
-4. **Replumb the patch.** Modify `patch_antenna.rlab` (Lesson 14) to emit $S_{11}(f)$ — record both an incident-reference probe (open feed, no patch) and a step probe (patch present), take ratio of FFTs, save to a file or rebuild in this script. Re-run `patch_antenna_smith.rlab` against the FDTD-derived $S_{11}$ instead of the analytic surrogate. The locus shape should track the synthetic version near resonance and diverge in the wings.
+4. **What Lesson 14 cannot feed this chart.** `patch_antenna.rlab` is a 2-D TM$_z$ side view with $E_z = 0$ pinned on the ground and on the patch, so there is no patch cavity mode and no port $S_{11}$ to drop into `patch_antenna_smith.rlab`. The locus in this lesson stays on the synthetic parallel resonator above. Replacing it with a field-solver $S_{11}$ needs a 3-D (or TM$_z$-free) run that actually supports the patch mode — the extension Lesson 14's table points at, not a post-process of the shipped script.
 5. **VSWR overlays on every matching example.** In each of the L-match / single-stub / double-stub / $\lambda/4$ scripts, overlay the constant-VSWR circle that bounds the matching tolerance you want (say VSWR $\le 1.5$). Use `smith_circle(0, gamma_max, "VSWR ≤ 1.5")` where $\Gamma_{\rm max} = (\text{VSWR} - 1)/(\text{VSWR} + 1)$.
 
 ## What's next

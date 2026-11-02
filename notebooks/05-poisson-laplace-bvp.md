@@ -152,7 +152,7 @@ for target = iters
 end
 ```
 
-The three printed errors decay roughly an order of magnitude every ~100 iterations until the iteration floors out at the grid's $h^2$ truncation error around iteration 300: $\sim 10^{-1}$ after 50, $\sim 3\times10^{-3}$ after 200, $\sim 6\times10^{-4}$ after 1000. `spsolve` produced the same accuracy in one factorisation, taking less time than even the 50-iteration Gauss–Seidel pass. From here the rest of the lesson uses the direct solver exclusively.
+The three printed errors decay roughly an order of magnitude every ~100 iterations until the iteration floors out at the grid's $h^2$ truncation error around iteration 300: $\sim 10^{-1}$ after 50, $\sim 3\times10^{-3}$ after 200, $\sim 6\times10^{-4}$ after 1000. `spsolve` reaches that same accuracy in one factorisation. From here the rest of the lesson uses the direct solver exclusively.
 
 ## Parallel Plates with Fringing Fields
 
@@ -465,7 +465,7 @@ xlabel("r (m)");
 ylabel("|E| (V/m)")
 ```
 
-The fitted slope sits in the neighbourhood of $-1/3$ — the asymptotic singularity exponent — but it is *not* a robust point estimate. It is sensitive both to the fit window and to the one-cell ambiguity in where $r = 0$ sits relative to the corner cell. Holding the cell-index window fixed, the fitted exponent actually drifts *away* from $-1/3$ as the grid refines ($\approx -0.38$ at $100^2$, $-0.32$ at $200^2$, $-0.29$ at $400^2$); holding a fixed *physical* window instead pulls it the other way (toward $\approx -0.42$), because on a finer grid that window covers a less-asymptotic range of $r$. Across $100^2$–$400^2$ grids the estimate scatters over roughly $-0.29$ to $-0.42$ around the true $-1/3$; recovering it sharply needs both $h \to 0$ *and* a window pushed to smaller physical $r$. The qualitative point — that $|\vec E|$ does diverge as $r \to 0$, with a power-law slope visible on log-log axes — is robust and is the only thing the lightning-rod argument actually needs.
+The fitted slope sits in the neighbourhood of $-1/3$ — the asymptotic singularity exponent — but it is *not* a robust point estimate. It is sensitive both to the fit window and to the one-cell ambiguity in where $r = 0$ sits relative to the corner cell. Holding the cell-index window fixed, the fitted exponent passes *through* $-1/3$ as the grid refines ($\approx -0.38$ at $100^2$, $-0.32$ at $200^2$, $-0.29$ at $400^2$) rather than locking onto it. Holding a fixed *physical* window instead pulls the other way (toward $\approx -0.42$), because on a finer grid that window covers a less-asymptotic range of $r$. Across $100^2$–$400^2$ grids the estimate scatters over roughly $-0.29$ to $-0.42$ around the true $-1/3$; recovering it sharply needs both $h \to 0$ *and* a window pushed to smaller physical $r$. The qualitative point — that $|\vec E|$ does diverge as $r \to 0$, with a power-law slope visible on log-log axes — is robust and is the only thing the lightning-rod argument actually needs.
 
 ## Standalone Scripts
 
