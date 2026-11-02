@@ -130,15 +130,15 @@ I_total = I_cond + I_disp;
 hold on;
 plot(zs * 1e3, I_cond  * 1e3, "I_cond(z)");
 plot(zs * 1e3, I_disp  * 1e3, "I_disp(z)");
-plot(zs * 1e3, I_total * 1e3, "I_total(z)");
 hold off;
 xlabel("z  (mm)");
 ylabel("current at t = 0  (mA)");
-title("Ampère's loop: I_cond + I_disp is the same everywhere");
-legend("I_cond", "I_disp", "I_total")
+title("Conduction in the wires, displacement in the gap");
+legend("I_cond", "I_disp");
+print(max(abs(I_total - I_now)))
 ```
 
-The total-current trace is a horizontal line at $1\,\text{mA}$ across the entire stack — wire, gap, wire — independent of $z$. That horizontal line is what Ampère's law sees no matter which surface is attached to a loop around the circuit.
+The two traces swap at the plate faces: $I_{\rm cond} = I(t)$ in the wires and $0$ in the gap, $I_{\rm disp}$ the other way around. Their sum equals $I(t)$ at every $z$ because both were assigned from the same $I(t)$ — that is the circuit statement of Ampère's law drawn as a picture, not a second measurement. The printed $\max|I_{\rm total}-I(t)|$ is zero for that reason.
 
 ## Maxwell's Equations as a Closed System
 
@@ -222,7 +222,7 @@ xlabel("x");
 ylabel("t")
 ```
 
-The residuals are not just small — they are *structured*, and the structure is worth reading. In the grid interior the two truncation errors nearly cancel: with $N_x = N_t = 81$ over one wavelength × one period, $k\Delta x = \omega\Delta t$, so the $O(h^2)$ centred-difference errors of $\partial E_y/\partial x$ and $\partial B_z/\partial t$ are identical cosine stripes that subtract away. The maximum residual instead lives on the grid edges, where `gradient` falls back to one-sided stencils: their error is larger but still $O(h^2)$, $\approx (k\Delta x)^2/2 \approx 3.1\times10^{-3}$ at $N = 81$ — exactly the printed value. Because the dominant edge error is still second order, halving the grid spacing drops the maximum residual by a factor of four; the convergence sweep at $N \in \{41, 81, 161\}$ in the standalone `maxwell_consistency.rlab` confirms it (that script produces `residual_convergence.svg`).
+The residuals are not just small — they are *structured*, and the structure is worth reading. In the grid interior the two truncation errors nearly cancel: with $N_x = N_t = 81$ over one wavelength × one period, $k\Delta x = \omega\Delta t = h$, so the $O(h^2)$ centred-difference errors of $\partial E_y/\partial x$ and $\partial B_z/\partial t$ are identical cosine stripes that subtract away. The maximum residual lives on the grid edges. There `gradient` uses a one-sided $x$-stencil, whose leading error is $h^2/3$, while the $t$-derivative on that same edge is still the centred stencil, error $h^2/6$. They add: $h^2/3 + h^2/6 = h^2/2 \approx 3.08\times10^{-3}$ at $N = 81$, which is the printed edge residual. Because that sum is still second order, halving the grid spacing drops the maximum residual by a factor of four; the convergence sweep at $N \in \{41, 81, 161\}$ in the standalone `maxwell_consistency.rlab` confirms it (that script produces `residual_convergence.svg`).
 
 The two divergence equations $\nabla\cdot\vec E = 0$ and $\nabla\cdot\vec B = 0$ are satisfied *identically* for a plane wave that has only $E_y$ and $B_z$ — the relevant partial derivatives are zero in our 2-D layout. The plane wave is a self-checking solution: Faraday and Ampère imply $\omega^2 = c^2 k^2$, and the two divergence equations follow from the polarisation choice.
 

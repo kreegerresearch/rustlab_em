@@ -239,7 +239,7 @@ r5  = r2 .^ 2.5;
 Exd = ke * p * (2 * X .^ 2 - Y .^ 2) ./ r5;
 Eyd = ke * p * (3 * X .* Y)            ./ r5;
 
-print(Exd(26, 36))            % at (0.02, 0):  ≈ 44937 V/m  (= 2 k_e p / x³)
+print(Exd(26, 36))            % x = d = 2 cm on axis: the formula, not yet the far field
 print(Eyd(26, 36))            % ≈ 0  on the dipole axis
 ```
 
@@ -377,7 +377,7 @@ Run all three with `make lesson-02` from the repo root, or one at a time via `ru
 | `Ey_pt(26, 31)` | ≈ 0 |
 | `Ex(26, 26)` (dipole midpoint) | ≈ −179750 V/m |
 | `Ey(26, 26)` | ≈ 0 |
-| `Exd(26, 36)` (far-field on axis) | ≈ 44937 V/m |
+| `Exd(26, 36)` (dipole formula at $x = d$, on axis) | ≈ 44937 V/m |
 | `Eyd(26, 36)` | ≈ 0 |
 | `err` (ring numerical–analytic max) | ≈ 1e-10 V/m (machine precision — exact for any $N_{\rm seg}$ on-axis; segment count matters only off-axis, cf. Exercise 4) |
 

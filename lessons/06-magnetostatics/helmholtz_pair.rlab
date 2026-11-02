@@ -33,11 +33,13 @@ title("Helmholtz pair: Bz(z) for d/R = 0.5, 1.0, 1.5");
 legend("d/R = 0.5", "d/R = 1.0 (Helmholtz)", "d/R = 1.5");
 savefig("helmholtz_sweep.svg");
 
-# Quantify uniformity: Bz(z = 0) vs Bz(z = ±0.5R) for each ratio.
+# Quantify uniformity at z = 0.1R. A probe at 0.5R is far enough that
+# a coarse d/R sweep looks best near 1.15 rather than at the Helmholtz
+# spacing d = R.
 for rk = 1:3
   d_h = ratios(rk) * Rh;
   Bz0 = (mu0 * Ih * Rh^2) / ((Rh^2 + (d_h/2)^2) ^ 1.5);
-  z_off = 0.5 * Rh;
+  z_off = 0.1 * Rh;
   Bz_off = (mu0 * Ih * Rh^2 / 2.0) * ...
            (1.0 / ((Rh^2 + (z_off - d_h/2)^2) ^ 1.5) + ...
             1.0 / ((Rh^2 + (z_off + d_h/2)^2) ^ 1.5));

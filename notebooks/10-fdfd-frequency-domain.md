@@ -13,7 +13,7 @@ The four full-wave equations from Lesson 08 — $\nabla\cdot\vec D=\rho$, $\nabl
 
 ## Background
 
-Lessons 04 (geometry/material maps), 05 (sparse Poisson + `laplacian_2d`), 08 (Maxwell's equations as a closed system, displacement current), 09 (plane waves, polarisation, dispersion). Familiarity with `spsolve` and the column-major flattening convention is assumed.
+Lessons 04 (geometry/material maps), 05 (sparse Poisson + `laplacian_2d`), 08 (Maxwell's equations as a closed system, displacement current), 09 (plane waves, polarisation, standing waves). Familiarity with `spsolve` and the column-major flattening convention is assumed.
 
 ## From Time-Harmonic Maxwell to FDFD
 
@@ -130,7 +130,7 @@ sW_v = abs(E_pml(ic, jc - r));
 print((max([sN_v, sS_v, sE_v, sW_v]) - min([sN_v, sS_v, sE_v, sW_v])) / mean([sN_v, sS_v, sE_v, sW_v]))
 ```
 
-The hard-wall image shows the cavity's rectangular mode pattern — that is *not* the response of a free point source. The printed cardinal-sample asymmetry is $\sim 10^{-14}$: the four points are related by exact grid reflection symmetry (the source is dead-centre on an odd-sized grid), so this is a solver/assembly sanity check that must come out at round-off regardless of stencil quality. (Measuring the 5-point stencil's *true* numerical anisotropy would require comparing cardinal against **diagonal** propagation directions, where the dispersion mismatch at 12 cells per wavelength is of order $10^{-3}$–$10^{-2}$.) SC-PML is the workhorse that lets every later FDFD demo treat the computational box as if it extends to infinity.
+The hard-wall image is the driven field of a closed PEC box — a standing-wave mix of many cavity modes, not one rectangular-waveguide mode, and not the response of a free point source. The printed cardinal-sample asymmetry is $\sim 10^{-14}$: the four points are related by exact grid reflection symmetry (the source is dead-centre on an odd-sized grid), so this is a solver/assembly sanity check that must come out at round-off regardless of stencil quality. (Measuring the 5-point stencil's *true* numerical anisotropy would require comparing cardinal against **diagonal** propagation directions, where the dispersion mismatch at 12 cells per wavelength is of order $10^{-3}$–$10^{-2}$.) SC-PML is the workhorse that lets every later FDFD demo treat the computational box as if it extends to infinity.
 
 ## 1-D Stratified Helmholtz
 
@@ -248,7 +248,7 @@ title("Air-region ripple disappears with the quarter-wave AR coating");
 legend("with AR", "no AR")
 ```
 
-The AR-coated air region has $|E_z|$ nearly constant — a pure travelling +x wave from the source — while the uncoated case shows a clear standing-wave ripple matching the analytic Fresnel prediction $|R| = 1/3$, VSWR $= 2$. A frequency sweep ($0.6f_0$ to $1.4f_0$) puts a $\text{sech}^2$-like AR transmission peak right at the design frequency. The full sweep is in the standalone script `fdfd_1d_layers.rlab`.
+The AR-coated air region has $|E_z|$ nearly constant — a pure travelling +x wave from the source — while the uncoated case shows a clear standing-wave ripple matching the analytic Fresnel prediction $|R| = 1/3$, VSWR $= 2$. A frequency sweep ($0.6f_0$ to $1.4f_0$) peaks at the design frequency. The full sweep is in the standalone script `fdfd_1d_layers.rlab`.
 
 ## 2-D TMz Scattering — Dielectric Cylinder
 
@@ -342,7 +342,7 @@ print(mean(lit_blk(:)))                % lit side  (mean |E_total| in front)
 print(mean(lee_blk(:)))                % shadow    (mean |E_total| behind)
 ```
 
-The total-field images show the classic optical signatures: a bright **lit side** on the source-facing ($-x$) surface where the incident and scattered fields interfere constructively, and a **shadow** in the $+x$ lee where the cylinder casts a dim spot — the probe block reads mean $\lvert E_{\rm total}\rvert \approx 1.03$ just in front against $\approx 0.64$ just behind. The scattered-only image isolates the outgoing radiation, and its brightest lobe points **forward** (the $+x$, shadow-forming direction): on a $1.5\lambda_0$ circle the scattered amplitude is $\approx 1.21$ forward versus $\approx 0.32$ backward, a forward/back ratio of $\approx 3.8$. That forward dominance is exactly what the analytic 2-D Mie series predicts for a scatterer of this size ($ka \approx 2.5$): the shadow is *built* by the forward-scattered lobe interfering destructively with the incident wave behind the obstacle, so a bright forward scatter and a deep shadow are two views of the same physics.
+The total-field images show the classic optical signatures: a bright **lit side** on the source-facing ($-x$) surface where the incident and scattered fields interfere constructively, and a **shadow** in the $+x$ lee where the cylinder casts a dim spot — the probe block reads mean $\lvert E_{\rm total}\rvert \approx 1.03$ just in front against $\approx 0.64$ just behind. The scattered-only image isolates the outgoing radiation, and its brightest lobe points **forward** (the $+x$, shadow-forming direction): on a $1.5\lambda_0$ circle the scattered amplitude is $\approx 1.21$ forward versus $\approx 0.32$ backward, a forward/back ratio of $\approx 3.8$. The analytic 2-D Mie series for this size ($ka \approx 2.5$) also peaks in the forward direction, at about $1.40$ forward and $0.39$ backward. The grid result sits about 14 % and 19 % below those two Mie amplitudes — a staircase error of order 15 % at 12 cells per wavelength, not an exact match. The shadow is still built by the forward-scattered lobe interfering with the incident wave, so a bright forward scatter and a deep shadow are two views of the same physics.
 
 ## Closed-Cavity Resonance Sweep
 

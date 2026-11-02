@@ -15,10 +15,10 @@
 # probe within the simulation time. Because sigma_max is rescaled so
 # every depth targets the same theoretical reflection R_target = 1e-8,
 # the measured
-# residual |E_residual| / |E_incident| is dominated by DISCRETE
-# reflection — off the sampled cubic ramp AND off the co-located σ*
-# (see the H-conductivity note below); it drops by ~ ×2.5 per doubling
-# of d (a power law ~ d^−1.3), not exponentially.
+# residual |E_residual| / |E_incident| is the discrete reflection off
+# the sampled cubic ramp. σ* is face-centred (half a cell off σ, at
+# the H faces). With that offset the residual falls roughly
+# exponentially: about 5e-3, 1e-4, 2e-5 at d = 4, 8, 16.
 #
 # Split-field PML (Bérenger, 1994) for 2-D TMz:
 #   E_z is split into E_zx and E_zy:
@@ -73,6 +73,24 @@ function s = build_sigma_x(nx, d, sigma_max)
   end
 end
 
+# σ at the H face to the right of cell j (between E columns j and j+1).
+# The PML interface is that face at j = d (left) and j = nx - d (right),
+# where the sample is zero — half a cell closer to the interior than the
+# E-cell sample (k - 0.5)/d in build_sigma_x. Same idea as Lesson 10:
+# σ* is sampled on the dual face, not copied from the E cell.
+function s = build_sigma_face(nx, d, sigma_max)
+  s = zeros(1, nx);
+  if d <= 0; return; end
+  for j = 1:(d - 1)
+    rmp = (d - j) / d;
+    s(j) = sigma_max * rmp ^ 3;                  # left band, H faces
+  end
+  for j = 1:(d - 1)
+    rmp = j / d;
+    s(nx - d + j) = sigma_max * rmp ^ 3;         # right band, H faces
+  end
+end
+
 # === One self-contained PML-FDTD run ===
 function E_pr_trace = run_pml(d, nx, ny, dx, dy, dt, n_step, c0, mu0, eps0, ...
                               i_src, j_src, i_pr, j_pr, t0, tau, f0)
@@ -82,13 +100,12 @@ function E_pr_trace = run_pml(d, nx, ny, dx, dy, dt, n_step, c0, mu0, eps0, ...
   sigma_max = -log(1e-8) * (3 + 1) * eps0 * c0 / (2 * d * dx);
   sig_x_E = build_sigma_x(nx, d, sigma_max);              # at E_z columns
   sig_y_E = build_sigma_x(ny, d, sigma_max);              # at E_z rows
-  # Magnetic conductivity σ*. Textbook SC-PML places it face-centred at
-  # the H positions (half-step offset); here we CO-LOCATE it at the E_z
-  # cells by reusing the E profile — the shortcut Lesson 10 warns about.
-  # This co-location is a measurable contributor to the residual-
-  # reflection floor, on top of the discretised cubic ramp.
-  sig_x_H = sig_x_E;
-  sig_y_H = sig_y_E;
+  # Magnetic conductivity σ* lives on the H faces, half a cell off σ.
+  # Co-locating it on the E cells (the shortcut Lesson 10 warns about)
+  # leaves a power-law reflection floor; the face-centred sample below
+  # restores the exponential decay.
+  sig_x_H = build_sigma_face(nx, d, sigma_max);
+  sig_y_H = build_sigma_face(ny, d, sigma_max);
 
   # Diagonalise the update via the standard trapezoidal coefficients.
   # E_zx update coefficients depend on σ_x at the cell's column.
@@ -180,5 +197,5 @@ figure();
 semilogy(depths, res / inc_pk, "|R(d)|  (residual / incident)");
 xlabel("PML depth  (cells)");
 ylabel("|R|");
-title("Bérenger split-field PML reflection vs depth — power-law trend");
+title("Berenger split-field PML reflection vs depth — face-centred sigma*");
 savefig("pml_depth_sweep.svg");

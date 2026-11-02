@@ -1,7 +1,7 @@
 <svg width="900" height="500" viewBox="0 0 900 500" xmlns="http://www.w3.org/2000/svg">
 <rect x="0" y="0" width="900" height="500" opacity="1" fill="#1E1E2E" stroke="none"/>
 <text x="450" y="25" dy="0.76em" text-anchor="middle" font-family="sans-serif" font-size="17.741935483870968" opacity="1" fill="#CDD6F4">
-NF-&gt;FF transform recovers the Hertzian sin(theta) pattern
+Hertzian E-plane target for the NF-&gt;FF integral
 </text>
 <text x="20" y="238" dy="0.76em" text-anchor="middle" font-family="sans-serif" font-size="11.290322580645162" opacity="1" fill="#CDD6F4" transform="rotate(270, 20, 238)">
 |E_ff| / max
@@ -61,16 +61,11 @@ theta  (deg)
 <polyline fill="none" opacity="0.3" stroke="#9696B4" stroke-width="1" points="405,429 405,47 "/>
 <polyline fill="none" opacity="0.3" stroke="#9696B4" stroke-width="1" points="563,429 563,47 "/>
 <polyline fill="none" opacity="0.3" stroke="#9696B4" stroke-width="1" points="721,429 721,47 "/>
-<polyline fill="none" opacity="1" stroke="#17BECF" stroke-width="2" points="90,398 155,315 221,238 287,173 353,122 418,90 484,79 550,90 616,122 681,173 747,238 813,315 879,398 "/>
-<polyline fill="none" opacity="1" stroke="#BCBD22" stroke-width="2" points="90,398 155,315 221,238 287,173 353,122 418,90 484,79 550,90 616,122 681,173 747,238 813,315 879,398 "/>
-<rect x="745" y="52" width="130" height="49" opacity="0.85" fill="#1E1E2E" stroke="none"/>
-<rect x="745" y="52" width="130" height="49" opacity="0.3" fill="none" stroke="#CDD6F4"/>
-<text x="785" y="62" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="11.290322580645162" opacity="1" fill="#CDD6F4">
-NF-&gt;FF integral
-</text>
-<text x="785" y="80" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="11.290322580645162" opacity="1" fill="#CDD6F4">
+<polyline fill="none" opacity="1" stroke="#17BECF" stroke-width="2" points="90,398 94,392 98,387 103,381 107,375 111,370 116,364 120,359 125,353 129,348 133,342 138,337 142,331 146,326 151,321 155,315 160,310 164,305 168,299 173,294 177,289 182,284 186,278 190,273 195,268 199,263 203,258 208,253 212,248 217,243 221,238 225,234 230,229 234,224 239,220 243,215 247,211 252,206 256,202 260,197 265,193 269,189 274,185 278,181 282,177 287,173 291,169 296,165 300,161 304,157 309,154 313,150 317,147 322,143 326,140 331,137 335,134 339,131 344,128 348,125 353,122 357,119 361,117 366,114 370,112 374,109 379,107 383,105 388,103 392,100 396,99 401,97 405,95 409,93 414,92 418,90 423,89 427,87 431,86 436,85 440,84 445,83 449,82 453,82 458,81 462,81 466,80 471,80 475,80 480,79 484,79 488,79 493,80 497,80 502,80 506,81 510,81 515,82 519,82 523,83 528,84 532,85 537,86 541,87 545,89 550,90 554,92 559,93 563,95 567,97 572,99 576,100 580,103 585,105 589,107 594,109 598,112 602,114 607,117 611,119 616,122 620,125 624,128 629,131 633,134 637,137 642,140 646,143 651,147 655,150 659,154 664,157 668,161 672,165 677,169 681,173 686,177 690,181 694,185 699,189 703,193 708,197 712,202 716,206 721,211 725,215 729,220 734,224 738,229 743,234 747,238 751,243 756,248 760,253 765,258 769,263 773,268 778,273 782,278 786,284 791,289 795,294 800,299 804,305 808,310 813,315 817,321 822,326 826,331 830,337 835,342 839,348 843,353 848,359 852,364 857,370 861,375 865,381 870,387 874,392 879,398 "/>
+<rect x="776" y="52" width="99" height="31" opacity="0.85" fill="#1E1E2E" stroke="none"/>
+<rect x="776" y="52" width="99" height="31" opacity="0.3" fill="none" stroke="#CDD6F4"/>
+<text x="816" y="62" dy="0.76em" text-anchor="start" font-family="sans-serif" font-size="11.290322580645162" opacity="1" fill="#CDD6F4">
 sin(theta)
 </text>
-<polyline fill="none" opacity="1" stroke="#17BECF" stroke-width="2" points="755,67 775,67 "/>
-<polyline fill="none" opacity="1" stroke="#BCBD22" stroke-width="2" points="755,85 775,85 "/>
+<polyline fill="none" opacity="1" stroke="#17BECF" stroke-width="2" points="786,67 806,67 "/>
 </svg>

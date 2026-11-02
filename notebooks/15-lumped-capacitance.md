@@ -5,10 +5,10 @@ Lesson 13 extracted per-unit-length $C'$ from an infinite 2-D transmission-line 
 ## Learning Objectives
 
 - Extract a single-conductor lumped capacitance $C$ from a 3-D Laplace solve via both **energy** ($C = 2 U_E / V^2$) and **Gauss** ($C = Q / V$) methods, and read the discretisation tradeoff between them.
-- Quantify the **fringing-field correction** to the textbook $C = \varepsilon A / d$ for a finite parallel-plate capacitor and straddle the analytic strip-fringing estimate (itself a lower bound for a square plate) between the two extraction methods.
+- Quantify the **fringing-field correction** to the textbook $C = \varepsilon A / d$ for a finite parallel-plate capacitor, and see why a 10×10-cell plate over a 2-cell gap does not yet bracket the true square-plate value.
 - Build the **multi-conductor capacitance matrix** $C_{ij}$ by solving $N$ Laplace problems with $V_k = 1$ on conductor $k$ and 0 on all others; check **reciprocity** ($C_{ij} = C_{ji}$) as a sanity check.
 - Recognise the difference between the **Maxwell** ("short-circuit") and **mutual** ("partial") capacitance conventions, and convert between them by row sums.
-- Compute the **electrostatic force** on a capacitor plate from $F = \tfrac12 V^2 \,\partial C/\partial x$ and verify against the analytic $-\tfrac12 \varepsilon A V^2/d^2$.
+- Compute the **electrostatic force** on a capacitor plate from $F = \tfrac12 V^2 \,\partial C/\partial x$, and compare it to a fringing-corrected reference when $L/d$ is not large.
 
 ## Background
 
@@ -32,13 +32,13 @@ $$Q = \oint_S \varepsilon\,\vec E\cdot\hat n\,dA, \qquad C = \frac{Q}{V_0}.$$
 
 A tight "pillbox" hugging the conductor faces (one cell of standoff) captures the strongest fields and converges fastest at coarse grids.
 
-At infinite resolution the two methods give identical answers. At finite grid spacing they bracket the true $C$. The energy sum tends **low**: the field samples sit at cell centres, so half a cell of the pin-to-pin gap volume goes uncounted at each conductor face — for a tight $N$-cell gap that is an $(N-1)/N$ deficit on the plate term (the MIM cap below, a 4-cell gap, prints $0.760$: exactly $3/4$ plus a $\sim 1\%$ fringing excess). The Gauss pillbox tends **high**: it cuts through cells where the one-sided stencils are noisy. Refining $\Delta z$ shrinks the half-cell defect and tightens both onto the true value.
+At infinite resolution the two methods give the same answer. On a coarse grid they need not bracket the true $C$. The energy sum tends **low** when the gap is only a few cells: the field samples sit at cell centres, so half a cell of the pin-to-pin gap volume goes uncounted at each conductor face — for a tight $N$-cell gap that is an $(N-1)/N$ deficit on the plate term (the MIM cap below, a 4-cell gap, prints $0.760$: exactly $3/4$ plus a $\sim 1\%$ fringing excess). The Gauss pillbox can sit high or low depending on the box and the stencil. Refining $\Delta z$ shrinks the half-cell defect.
 
 ### Example — Finite parallel plate at $L/d = 5$
 
-A square plate of side $L$ at $V = +V_0/2$ over a parallel plate at $-V_0/2$, separated by air in a 3-D box. Reads out $C$ both ways at $L/d = 5$ and overlays the analytic strip-fringing estimate. That estimate applies the 2-D (infinite-strip) edge correction once; a true square plate has two fringing edge-pairs, so its real fringing is larger (published square-plate numerics put $C/C_0 \approx 1.56$ at $L/d = 5$ versus the strip value $1.28$) — read the strip curve as a **lower bound**. The two numerical points straddle it: energy below, Gauss above.
+A square plate of side $L$ at $V = +V_0/2$ over a parallel plate at $-V_0/2$, separated by air in a grounded 3-D box. The script reads $C$ both ways at $L/d = 5$ and overlays the analytic strip-fringing estimate. That estimate applies the 2-D (infinite-strip) edge correction once; a true square plate has two fringing edge-pairs, so its real fringing is larger (published square-plate numerics put $C/C_0 \approx 1.57$ at $L/d = 5$; this notebook's older $1.56$ is the same literature value). The strip curve ($\approx 1.28$) is a lower bound on that true value, not a target the two solvers should straddle.
 
-The setup: `n = 25` cubic grid, plates 10×10 cells centred in $x$/$y$, separated by 2 cells in $z$. The full script (`lumped_C_parallel_plate.rlab`) handles the operator build, plate pinning via `pin_dirichlet` (mask in, identity rows out — the mechanism Lesson 05 builds by hand), energy / Gauss extraction, and the analytic overlay.
+The setup is coarse on purpose and it shows: `n = 25`, plates only 10×10 cells, a **2-cell** gap, and a grounded outer box. Energy gives $C/C_0 \approx 1.026$ and Gauss $\approx 1.409$. Both sit **below** the true $\approx 1.57$. They do not bracket it. The energy number is mostly the half-cell gap deficit on a 2-cell spacing (the plate term wants $\sim 1/2$ before fringing is added back). Gauss is higher but the grounded box and the 2-cell gap still cut off fringing that a resolved square plate would have. The strip value $1.28$ happens to fall between 1.026 and 1.409; that is not evidence the methods have trapped the physics.
 
 ```rustlab
 clf;
@@ -74,7 +74,7 @@ title("Finite parallel-plate fringing — strip 2-D estimate vs. numerical");
 legend("ideal", "strip 2-D estimate", "numerical (energy)", "numerical (Gauss)");
 ```
 
-Refining the grid by 2× narrows the bracket between the two methods onto the true square-plate value (above the strip estimate); the cost is $\sim 8\times$ solve time.
+A finer gap (more than two cells between the plates) and a box that does not sit on the fringing field are what move both numbers up toward $\approx 1.57$. Doubling $n$ is not, by itself, a proof that the two methods have the truth between them — on this mesh they are both low.
 
 ## Multi-Conductor Capacitance Matrices
 
@@ -168,13 +168,13 @@ The 3-D parallel-plate machinery transfers directly to real IC structures. Two f
 % From MIM_capacitor_3d.rlab (n³ = 25³ at anisotropic dx = dy = 1 µm,
 % dz = 25 nm). Numerical extraction:
 C_energy_MIM = 168.2e-15;       % F (= 168.2 fF)
-C_gauss_MIM  = 223.0e-15;       % F (= 223.0 fF) — within 1% of the analytic value
+C_gauss_MIM  = 223.0e-15;       % F (= 223.0 fF) — 0.7% above the parallel-plate formula
 C_ideal_MIM  = 221.4e-15;       % F (= 221.4 fF)
 print(C_gauss_MIM  / C_ideal_MIM)         % ≈ 1.007
 print(C_energy_MIM / C_ideal_MIM)         % ≈ 0.76 — energy under-shoots
 ```
 
-The Gauss method, computing flux right at the plate face, captures essentially the exact analytic value. The energy method under-shoots to $\approx 0.76$ for a concrete discretisation reason. The plates are pinned at cell centres four cells apart ($4\,\Delta z = 100\,\text{nm}$), but the $\varepsilon_r$-weighted energy sum only tags the **three interior** gap cells (`z_lo+1 .. z_hi-1`) as dielectric — half a cell of gap volume goes unweighted at each plate face. Three $\varepsilon_r$-weighted layers over a four-layer pin-to-pin gap gives exactly $3/4 = 0.75$ for the plate term; the printed $0.760$ sits about $1\%$ above that because fringing adds a little energy outside the gap. Refining $\Delta z$ shrinks that half-cell defect away.
+The Gauss result, $223\,\text{fF}$ against the parallel-plate $221.4\,\text{fF}$, is within 1 %. That agreement is likely fortuitous. Fringing on a $10\,\mu\text{m}$ plate over a $100\,\text{nm}$ gap should *add* a few percent (roughly 2–5 %), so a Gauss pillbox that lands 0.7 % high has probably cancelled a real fringing excess against a coarse-grid bias. Do not read "within 1 %" as a converged capacitance. The energy method under-shoots to $\approx 0.76$ for a concrete discretisation reason. The plates are pinned at cell centres four cells apart ($4\,\Delta z = 100\,\text{nm}$), but the $\varepsilon_r$-weighted energy sum only tags the **three interior** gap cells (`z_lo+1 .. z_hi-1`) as dielectric — half a cell of gap volume goes unweighted at each plate face. Three $\varepsilon_r$-weighted layers over a four-layer pin-to-pin gap gives exactly $3/4 = 0.75$ for the plate term; the printed $0.760$ sits about $1\%$ above that because fringing adds a little energy outside the gap. Refining $\Delta z$ shrinks that half-cell defect away.
 
 ### Example — IC bond pad over thick oxide
 
@@ -226,22 +226,36 @@ Sweep the gap $d$, extract $C'$ at each step, finite-difference $\partial C'/\pa
 
 ```rustlab
 clf;
-% From tunable_C_force.rlab.
+% Numerical F' from tunable_C_force.rlab (4 mm plates). The two
+% analytic curves are computed here: ideal parallel-plate, and the
+% derivative of the 2-D strip-fringing C'.
+eps0 = 8.854187817e-12;
+L_plate = 4.0e-3;
+V0 = 1.0;
 d_mm  = [0.4, 0.6, 0.8, 1.0, 1.4, 2.0];
+d_m   = d_mm * 1e-3;
 F_num = [-75.13, -56.36, -30.03, -15.88, -8.53, -5.82];     % nN/m
-F_ana = [-110.68, -49.19, -27.67, -17.71, -9.03, -4.43];    % nN/m
+F_ana = -0.5 * eps0 * L_plate * V0 * V0 ./ (d_m .^ 2) * 1e9;
+F_fringe = -0.5 * eps0 * V0 * V0 * (L_plate ./ (d_m .^ 2) + 1 ./ (pi * d_m)) * 1e9;
+Cdd = eps0 * L_plate * 1e15;                                 % ideal C'*d, pF·mm/m
+print(Cdd)
 
 hold on;
 plot(d_mm, F_num, "numerical F'");
-plot(d_mm, F_ana, "analytic −ε₀ L V² / (2 d²)");
+plot(d_mm, F_ana, "ideal −ε₀ L V² / (2 d²)");
+plot(d_mm, F_fringe, "strip-fringing reference");
 hold off;
 xlabel("gap d (mm)");
 ylabel("F' (nN/m)");
-title("Electrostatic force per unit z on a tunable parallel-plate cap");
-legend("numerical", "analytic");
+title("Force per unit z — ideal formula ignores fringing");
+legend("numerical", "ideal parallel-plate", "strip fringing");
 ```
 
-The match is roughly 5–15 % at moderate gaps (8.5 % at $d = 0.8$ mm, 10.3 % at 1.0 mm, 14.6 % at 0.6 mm — where the finite-difference $\partial C/\partial d$ resolves the local slope) and degrades further at the sweep endpoints where the gradient stencil becomes one-sided. The MEMS-comb-drive variant — multiple interleaved plates summed — uses the same identity and is left as an exercise.
+The plates are only $4\,\text{mm}$ wide and the sweep runs the gap out to $2\,\text{mm}$, so $L/d$ falls to $2$. Fringing then dominates: the script's $C' d$ rises from about $42$ to about $68\,\text{pF·mm/m}$ while the ideal parallel-plate value is $\varepsilon_0 L = 35.4\,\text{pF·mm/m}$. The analytic force $-\varepsilon_0 L V^2/(2d^2)$ ignores that extra capacitance, so a 5–15 % mismatch at moderate gaps (and worse at the one-sided endpoints) is the missing fringing, not a bug in $\partial C/\partial d$. The curve added below is the derivative of the 2-D strip formula,
+
+$$C' = \varepsilon_0\frac{L}{d} + \frac{\varepsilon_0}{\pi}\left(1 + \ln\frac{2\pi L}{d}\right), \qquad F'_{\rm fringe} = -\frac12\varepsilon_0 V^2\left(\frac{L}{d^2} + \frac{1}{\pi d}\right),$$
+
+which is the right reference for this 2-D cross-section. A comparison that stays close to $-\varepsilon_0 L V^2/(2d^2)$ needs gaps much smaller than the plate width. The MEMS-comb-drive variant — multiple interleaved plates summed — uses the same identity and is left as an exercise.
 
 ## Standalone Scripts
 
@@ -272,7 +286,7 @@ Run all six with `make lesson-15`, or one at a time via `rustlab run lessons/15-
 
 ## Exercises
 
-1. **Refine the parallel-plate grid.** `lumped_C_parallel_plate.rlab` runs at $n = 25$. Increase to $n = 30$ (≈ 17 s/solve) and confirm the energy–Gauss bracket narrows onto the true square-plate value ($C/C_0 \approx 1.56$ at $L/d = 5$) — *above* the strip 2-D estimate ($\approx 1.28$), which is a lower bound, not the convergence target. At $n = 40$ (≈ 2.5 min/solve) the energy and Gauss methods should agree to within 2 %.
+1. **Refine the parallel-plate grid.** `lumped_C_parallel_plate.rlab` runs at $n = 25$ with 10×10-cell plates and a 2-cell gap, where both energy ($C/C_0 \approx 1.03$) and Gauss ($\approx 1.41$) sit below the published square-plate value $\approx 1.57$. Increase the gap resolution (more than two cells between the plates) before expecting either method to approach that value. The strip 2-D estimate ($\approx 1.28$) is a lower bound on the true square plate, not a bracket the two numbers are supposed to close on.
 2. **Cached LU.** The capacitance-matrix scripts call `spsolve(A, b_k)` once per right-hand side, re-factoring the operator each time. Replace that with a single `F = lu(A)` factorisation plus one `solve(F, b_k)` per drive (both shipped in rustlab 0.3.6), profile `cap_matrix_three_trace.rlab` before and after, and report the speedup — the factor-once-solve-many gain. Lesson 17's `ind_matrix_microstrip.rlab` already uses this path.
 3. **5×5 differential pair bus.** Extend `cap_matrix_three_trace.rlab` to 5 traces arranged as two differential pairs plus a guard trace. Build the 5×5 Maxwell matrix; convert to mutual; identify the pair-coupling vs. far-coupling entries.
 4. **MIM dielectric stack.** Replace the single-material MIM gap with a two-layer stack ($\varepsilon_{r,1} = 25$, $\varepsilon_{r,2} = 4$) by switching the operator to a hand-rolled variable-$\varepsilon$ 3-D Laplacian (or wait for the upstream `laplacian_eps_3d` — requested in `dev/rustlab/requests/laplacian-eps-3d.md`). Verify the series-capacitor identity $1/C = 1/C_1 + 1/C_2$.
